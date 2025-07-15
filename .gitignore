@@ -1,0 +1,52 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native (kalau eject)
+android/
+ios/
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# macOS / Windows / Linux
+.DS_Store
+Thumbs.db
+ehthumbs.db
+*.pem
+
+# local env files
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# testing / coverage
+coverage/
+jest-html-reporters-*
+
+# IDE
+.vscode/
+
+# contoh app yg tidak perlu di-track
+app-example
