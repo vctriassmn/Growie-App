@@ -8,12 +8,12 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Menggunakan Ionicons dari Expo untuk ikon plus
+import { Ionicons } from '@expo/vector-icons';
 
-// Mengambil lebar layar untuk penyesuaian responsif
+
 const { width } = Dimensions.get('window');
 const SPACING = 15; // Spasi antar item
-const ITEM_WIDTH = (width - SPACING * 3) / 2; // Lebar item agar 2 kolom
+const ITEM_WIDTH = (width - SPACING * 3) / 2; 
 
 // Data dummy untuk folder jurnal
 const journalFolders = [
@@ -60,10 +60,7 @@ export default function ListJournalPage({ navigation }) {
     <TouchableOpacity
       style={styles.folderContainer}
       onPress={() => {
-        // Navigasi ke halaman listJournal.js ketika folder diklik
-        // Pastikan 'ListJournalDetail' adalah nama rute yang benar di navigator Anda
-        // navigation.navigate('ListJournalDetail', { folderId: item.id, folderTitle: item.title });
-        console.log(`Folder ${item.title} diklik!`); // Placeholder untuk navigasi
+        console.log(`Folder ${item.title} diklik!`); 
       }}
     >
       <ImageBackground source={{ uri: item.image }} style={styles.folderImage} imageStyle={styles.imageStyle}>
