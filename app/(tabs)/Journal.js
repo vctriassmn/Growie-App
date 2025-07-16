@@ -1,52 +1,38 @@
-import { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import FolderCard from './Journal/FolderCard';
+// File: app/(tabs)/Journal.js
 
-// Import gambar lokal
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getJournalFolders } from '../journalData'; // <--- JALUR YANG SUDAH ANDA KONFIRMASI
+import FolderCard from './Journal/FolderCard'; // Jalur ke komponen FolderCard
+
 const coverImage = require('../../assets/images/coverFolder.png');
 const addButtonImage = require('../../assets/images/add.png');
 
-// Dummy data folder jurnal awal (ditambahkan 2 item)
-const initialJournalFolders = [
-  { id: '1', title: 'My Baby Spinach', image: coverImage },
-  { id: '2', title: 'Nanem Jagung', image: coverImage },
-  { id: '3', title: 'Daily Progress', image: coverImage },
-  { id: '4', title: 'Beginner Guide', image: coverImage },
-  { id: '5', title: 'Folder 5', image: coverImage },
-  { id: '6', title: 'Folder 6', image: coverImage },
-  { id: '7', title: 'Folder 7', image: coverImage },
-  { id: '8', title: 'Folder 8', image: coverImage },
-];
+const initialJournalFolders = getJournalFolders();
 
 const HORIZONTAL_SPACING = 25;
-const VERTICAL_SPACING = 50;
+const VERTICAL_SPACING = 35;
 
-// Menggunakan Dimensions untuk menghitung lebar card
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = (width - (HORIZONTAL_SPACING * 2 + HORIZONTAL_SPACING)) / 2;
 
 const USER_NAME = "Ann";
 
-export default function ListJournalPage({ navigation }) {
+export default function JournalPage() {
   const [journalFolders, setJournalFolders] = useState(initialJournalFolders);
-
-  useEffect(() => {
-    if (navigation) {
-      const unsubscribe = navigation.addListener('focus', () => {
-        console.log('Layar Jurnal menjadi fokus');
-      });
-      return unsubscribe;
-    }
-  }, [navigation]);
 
   const renderJournalFolder = ({ item }) => (
     <TouchableOpacity
       style={styles.folderContainer}
       onPress={() => {
-        console.log('Navigasi ke folder:', item.title);
+        router.push({
+          pathname: 'Journal/ListJournal',
+          params: { folderTitle: item.title }
+        });
       }}
     >
-      <FolderCard title={item.title} image={item.image} />
+      <FolderCard title={item.title} image={coverImage} />
     </TouchableOpacity>
   );
 
@@ -65,20 +51,13 @@ export default function ListJournalPage({ navigation }) {
           numColumns={2}
           contentContainerStyle={styles.listContainer}
           columnWrapperStyle={styles.columnWrapper}
-          showsVerticalScrollIndicator={true} 
+          showsVerticalScrollIndicator={true}
         />
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => navigation.navigate('AddFolder', {
-            onAdd: (newFolderTitle) => {
-              const newFolder = {
-                id: Date.now().toString(),
-                title: newFolderTitle,
-                image: coverImage,
-              };
-              setJournalFolders(prevFolders => [...prevFolders, newFolder]);
-            }
-          })}
+          onPress={() => {
+            // router.push('AddFolder');
+          }}
         >
           <Image source={addButtonImage} style={styles.addButtonImage} />
         </TouchableOpacity>
@@ -90,32 +69,35 @@ export default function ListJournalPage({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#e0f2e0',
+    backgroundColor: '#FAFFFB',
+    fontFamily: 'Nunito_400Regular',
   },
   container: {
     flex: 1,
-    backgroundColor: '#e0f2e0',
+    backgroundColor: '#FAFFFB',
+    fontFamily: 'Nunito_400Regular',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 50,
+    marginBottom: 30,
+    marginTop: 70,
+    fontFamily: 'Nunito_400Regular',
   },
   headerText: {
     fontSize: 26,
-    color: '#5c8d5c',
+    color: '#448461',
   },
   headerTextBold: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#5c8d5c',
+    color: '#448461',
   },
   flatList: {
     flex: 1,
   },
   listContainer: {
     paddingHorizontal: HORIZONTAL_SPACING,
-    paddingBottom: 200, // Nilai dinaikkan
+    paddingBottom: 100,
   },
   columnWrapper: {
     justifyContent: 'space-between',
@@ -131,6 +113,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    marginTop: 10,
   },
   addButton: {
     position: 'absolute',
