@@ -1,13 +1,24 @@
-import { StatusBar } from 'expo-status-bar';
-import React, { useState, useRef } from 'react';
 import {
+  Nunito_300Light,
+  Nunito_400Regular,
+  Nunito_500Medium,
+  Nunito_600SemiBold,
+  Nunito_700Bold
+} from '@expo-google-fonts/nunito';
+import { useFonts } from 'expo-font';
+import { StatusBar } from 'expo-status-bar';
+import React, { useRef, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  FlatList,
+  Image,
+  Keyboard,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
-  ScrollView,
-  Image,
-  TouchableOpacity,
   TextInput,
+<<<<<<< Updated upstream
   FlatList,
   Animated,
   Keyboard,
@@ -20,6 +31,11 @@ import {
   Poppins_300Light,
   Poppins_500Medium
 } from '@expo-google-fonts/poppins';
+=======
+  TouchableOpacity,
+  View
+} from 'react-native';
+>>>>>>> Stashed changes
 
 import {
   Sora_400Regular,
