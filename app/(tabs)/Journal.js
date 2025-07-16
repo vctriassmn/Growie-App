@@ -1,181 +1,152 @@
-import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  ImageBackground,
-  FlatList,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import FolderCard from './Journal/FolderCard';
 
+// Import gambar lokal
+const coverImage = require('../../assets/images/coverFolder.png');
+const addButtonImage = require('../../assets/images/add.png');
 
-const { width } = Dimensions.get('window');
-const SPACING = 15; // Spasi antar item
-const ITEM_WIDTH = (width - SPACING * 3) / 2; 
-
-// Data dummy untuk folder jurnal
-const journalFolders = [
-  {
-    id: '1',
-    title: 'My Baby Spinach',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Spinach', // Placeholder gambar
-  },
-  {
-    id: '2',
-    title: 'Nanem Jagung',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Jagung', // Placeholder gambar
-  },
-  {
-    id: '3',
-    title: 'Daily Progress',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Progress', // Placeholder gambar
-  },
-  {
-    id: '4',
-    title: 'Beginner Guide',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Guide', // Placeholder gambar
-  },
-  {
-    id: '5',
-    title: 'Sayuran Organik',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Organik', // Placeholder gambar
-  },
-  {
-    id: '6',
-    title: 'Bunga Hias',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Bunga', // Placeholder gambar
-  },
-  {
-    id: '7',
-    title: 'Tanaman Obat',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Obat', // Placeholder gambar
-  },
+// Dummy data folder jurnal awal (ditambahkan 2 item)
+const initialJournalFolders = [
+  { id: '1', title: 'My Baby Spinach', image: coverImage },
+  { id: '2', title: 'Nanem Jagung', image: coverImage },
+  { id: '3', title: 'Daily Progress', image: coverImage },
+  { id: '4', title: 'Beginner Guide', image: coverImage },
+  { id: '5', title: 'Folder 5', image: coverImage },
+  { id: '6', title: 'Folder 6', image: coverImage },
+  { id: '7', title: 'Folder 7', image: coverImage },
+  { id: '8', title: 'Folder 8', image: coverImage },
 ];
 
+const HORIZONTAL_SPACING = 25;
+const VERTICAL_SPACING = 50;
+
+// Menggunakan Dimensions untuk menghitung lebar card
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = (width - (HORIZONTAL_SPACING * 2 + HORIZONTAL_SPACING)) / 2;
+
+const USER_NAME = "Ann";
+
 export default function ListJournalPage({ navigation }) {
-  // Fungsi untuk merender setiap item folder jurnal
+  const [journalFolders, setJournalFolders] = useState(initialJournalFolders);
+
+  useEffect(() => {
+    if (navigation) {
+      const unsubscribe = navigation.addListener('focus', () => {
+        console.log('Layar Jurnal menjadi fokus');
+      });
+      return unsubscribe;
+    }
+  }, [navigation]);
+
   const renderJournalFolder = ({ item }) => (
     <TouchableOpacity
       style={styles.folderContainer}
       onPress={() => {
-        console.log(`Folder ${item.title} diklik!`); 
+        console.log('Navigasi ke folder:', item.title);
       }}
     >
-      <ImageBackground source={{ uri: item.image }} style={styles.folderImage} imageStyle={styles.imageStyle}>
-        <View style={styles.overlay} />
-        <Text style={styles.folderTitle}>{item.title}</Text>
-      </ImageBackground>
+      <FolderCard title={item.title} image={item.image} />
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>This is Ann's</Text>
-        <Text style={styles.headerTextBold}>Journal</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>This is {USER_NAME}'s</Text>
+          <Text style={styles.headerTextBold}>Journal</Text>
+        </View>
+        <FlatList
+          style={styles.flatList}
+          data={journalFolders}
+          renderItem={renderJournalFolder}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.listContainer}
+          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={true} 
+        />
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate('AddFolder', {
+            onAdd: (newFolderTitle) => {
+              const newFolder = {
+                id: Date.now().toString(),
+                title: newFolderTitle,
+                image: coverImage,
+              };
+              setJournalFolders(prevFolders => [...prevFolders, newFolder]);
+            }
+          })}
+        >
+          <Image source={addButtonImage} style={styles.addButtonImage} />
+        </TouchableOpacity>
       </View>
-
-      {/* Daftar Folder Jurnal */}
-      <FlatList
-        data={journalFolders}
-        renderItem={renderJournalFolder}
-        keyExtractor={(item) => item.id}
-        numColumns={2} // Menampilkan 2 kolom
-        contentContainerStyle={styles.listContainer}
-        columnWrapperStyle={styles.columnWrapper}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Tombol Add Folder */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          // Navigasi ke halaman addFolder.js ketika tombol diklik
-          // Pastikan 'AddFolder' adalah nama rute yang benar di navigator Anda
-          // navigation.navigate('AddFolder');
-          console.log('Tombol Add Folder diklik!'); // Placeholder untuk navigasi
-        }}
-      >
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#e0f2e0',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#e0f2e0', // Warna latar belakang yang mirip gambar
-    paddingTop: 20, // Sedikit padding atas
+    backgroundColor: '#e0f2e0',
   },
   header: {
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: 50,
   },
   headerText: {
-    fontSize: 20,
-    color: '#5c8d5c', // Warna teks yang mirip gambar
+    fontSize: 26,
+    color: '#5c8d5c',
   },
   headerTextBold: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#5c8d5c', // Warna teks yang mirip gambar
+    color: '#5c8d5c',
+  },
+  flatList: {
+    flex: 1,
   },
   listContainer: {
-    paddingHorizontal: SPACING, // Padding horizontal untuk list
+    paddingHorizontal: HORIZONTAL_SPACING,
+    paddingBottom: 200, // Nilai dinaikkan
   },
   columnWrapper: {
-    justifyContent: 'space-between', // Meratakan item di antara kolom
-    marginBottom: SPACING, // Spasi antar baris
+    justifyContent: 'space-between',
+    marginBottom: VERTICAL_SPACING,
   },
   folderContainer: {
     width: ITEM_WIDTH,
-    height: ITEM_WIDTH, // Membuat kotak persegi
-    borderRadius: 15, // Sudut membulat
-    overflow: 'hidden', // Memastikan gambar dan overlay tidak keluar dari batas
-    elevation: 5, // Shadow untuk Android
-    shadowColor: '#000', // Shadow untuk iOS
+    height: ITEM_WIDTH,
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  folderImage: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageStyle: {
-    borderRadius: 15, // Sudut membulat pada gambar
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject, // Mengisi seluruh area parent
-    backgroundColor: 'rgba(0,0,0,0.3)', // Overlay gelap transparan
-    borderRadius: 15,
-  },
-  folderTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    paddingHorizontal: 5, // Padding horizontal untuk judul
-  },
   addButton: {
     position: 'absolute',
-    bottom: 90, // Posisi dari bawah (menyesuaikan dengan perkiraan navbar)
-    right: 30, // Posisi dari kanan
-    backgroundColor: '#5c8d5c', // Warna tombol add
-    width: 60,
-    height: 60,
-    borderRadius: 30, // Membuat lingkaran
+    bottom: 120,
+    right: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8, // Shadow untuk Android
-    shadowColor: '#000', // Shadow untuk iOS
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
+  },
+  addButtonImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#5c8d5c',
   },
 });
