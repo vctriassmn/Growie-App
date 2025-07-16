@@ -23,7 +23,7 @@ import {
   FlatList,
   Animated,
   Keyboard,
-  Alert // Ensure Alert is imported
+  Alert
 } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
@@ -32,16 +32,6 @@ import {
   Poppins_300Light,
   Poppins_500Medium
 } from '@expo-google-fonts/poppins';
-=======
-  TouchableOpacity,
-  View
-} from 'react-native';
->>>>>>> Stashed changes
-=======
-  TouchableOpacity,
-  View
-} from 'react-native';
->>>>>>> Stashed changes
 
 import {
   Sora_400Regular,
@@ -76,11 +66,12 @@ Start by choosing a pot with drainage holes to prevent root rot. Fill the bottom
 
 Once planted, water the soil slowly until it’s evenly moist and a bit drains from the bottom. Avoid placing your plant in direct sunlight right away—give it time to adjust in a bright, indirect light area.
 
-Over the next few days, monitor soil moisture and avoid overwatering. 
+Over the next few days, monitor soil moisture and avoid overwatering.
 
 Remember: every plant has different needs, so always check light and water preferences for your specific plant type.
 With patience and care, you’ll set your new plant up for long-term health and vibrant growth.
-`
+`,
+    liked: false // Added liked property
   },
   {
     id: '2',
@@ -98,7 +89,8 @@ With patience and care, you’ll set your new plant up for long-term health and 
 I've learned that consistency is key with these beauties. They don't like sudden changes in temperature or light. Also, proper watering is crucial – I make sure the soil is mostly dry before giving it a good soak.
 
 If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit dramatic, but with the right care, they truly become the centerpiece of any room.
-`
+`,
+    liked: false // Added liked property
   },
   {
     id: '3',
@@ -116,7 +108,8 @@ If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit d
 Its upright, sword-like leaves add a modern touch to any decor, and it's also excellent for air purification. I have one in my bedroom and one in the living room, and they always look great with minimal effort.
 
 If you want a plant that won't give you any trouble, the Snake Plant is definitely the way to go. It's almost impossible to kill!
-`
+`,
+    liked: false // Added liked property
   },
   {
     id: '4',
@@ -137,8 +130,9 @@ If you want a plant that won't give you any trouble, the Snake Plant is definite
 
   Always empty excess water from the tray or saucer to prevent root rot. Overwatering is more dangerous than underwatering for most plants.
 
-  Pay attention to signs: drooping, yellowing leaves, or soggy soil may indicate overwatering. Dry, crispy leaves can signal it’s too little. With practice, you’ll develop a rhythm your plants will love.`
-    },
+  Pay attention to signs: drooping, yellowing leaves, or soggy soil may indicate overwatering. Dry, crispy leaves can signal it’s too little. With practice, you’ll develop a rhythm your plants will love.`,
+    liked: false // Added liked property
+  },
   {
     id: '5',
     name: 'ZZ Plant',
@@ -155,7 +149,8 @@ If you want a plant that won't give you any trouble, the Snake Plant is definite
 I have it in a corner of my office that doesn't get much light, and it's perfectly happy. If you travel a lot or simply want a plant that doesn't demand much attention, the ZZ Plant is your best friend.
 
 Seriously, if you think you have a black thumb, try a ZZ plant. It's almost foolproof!
-`
+`,
+    liked: false // Added liked property
   },
   {
     id: '6',
@@ -173,7 +168,8 @@ Seriously, if you think you have a black thumb, try a ZZ plant. It's almost fool
 I keep it in a spot with medium, indirect light, and it seems to love the humidity from my bathroom. It's a classic houseplant for a reason—it's graceful, relatively easy, and benefits your indoor air quality.
 
 Highly recommend a Peace Lily if you want a plant that adds beauty and purpose to your home.
-`
+`,
+    liked: false // Added liked property
   },
   {
     id: '7',
@@ -191,15 +187,11 @@ Highly recommend a Peace Lily if you want a plant that adds beauty and purpose t
 It's been a rewarding challenge, experimenting with different soil mixes and light conditions to find what works best. This plant is a true testament to the joy of growing something entirely your own.
 
 I'll keep sharing updates as it matures. Stay tuned for more on this exciting journey!
-`
+`,
+    liked: false // Added liked property
   },
 ];
 
-// =====================================================================
-// This component will now be your "Article Screen"
-// We'll rename it for clarity.
-// It receives `navigation` as a prop from the navigator where it's rendered.
-// =====================================================================
 function ArticleScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('all');
   const [plants, setPlants] = useState(initialData);
@@ -207,6 +199,9 @@ function ArticleScreen({ navigation }) {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+
+  const [showArticleDetail, setShowArticleDetail] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
 
   const tabs = [
     { key: 'all', label: 'All' },
@@ -240,9 +235,46 @@ function ArticleScreen({ navigation }) {
       return;
     }
 
+    const deletableItems = plants.filter(item => selectedItems.includes(item.id) && item.category === 'publish');
+    const nonDeletableItems = selectedItems.filter(id => {
+      const item = plants.find(p => p.id === id);
+      return item && item.category !== 'publish';
+    });
+
+    if (nonDeletableItems.length > 0 && deletableItems.length === 0) {
+      Alert.alert(
+        'Deletion Restricted',
+        'You can only delete articles with the "My Publish" category.'
+      );
+      return;
+    }
+
+    if (nonDeletableItems.length > 0 && deletableItems.length > 0) {
+      Alert.alert(
+        'Mixed Selection',
+        `Some selected items are not in the "My Publish" category and cannot be deleted. Are you sure you want to delete the ${deletableItems.length} deletable item(s)?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            onPress: () => {
+              setPlants(plants.filter((item) => !(selectedItems.includes(item.id) && item.category === 'publish')));
+              exitSelectionMode();
+            },
+            style: 'destructive',
+          },
+        ],
+        { cancelable: true }
+      );
+      return;
+    }
+
     Alert.alert(
       'Confirm Deletion',
-      `Are you sure you want to delete ${selectedItems.length} selected item(s)?`,
+      `Are you sure you want to delete ${deletableItems.length} selected item(s)?`,
       [
         {
           text: 'Cancel',
@@ -259,6 +291,19 @@ function ArticleScreen({ navigation }) {
       ],
       { cancelable: true }
     );
+  };
+
+  // Function to toggle the liked status of a plant
+  const handleToggleLike = (id) => {
+    setPlants(prevPlants =>
+      prevPlants.map(plant =>
+        plant.id === id ? { ...plant, liked: !plant.liked } : plant
+      )
+    );
+    // If the article is currently in detail view, update its liked status as well
+    if (selectedArticle && selectedArticle.id === id) {
+      setSelectedArticle(prevArticle => ({ ...prevArticle, liked: !prevArticle.liked }));
+    }
   };
 
   const filteredPlants = React.useMemo(() => {
@@ -280,38 +325,47 @@ function ArticleScreen({ navigation }) {
     return currentPlants;
   }, [activeTab, plants, searchQuery]);
 
+  const handleCardPress = (item) => {
+    setSelectedArticle(item);
+    setShowArticleDetail(true);
+  };
+
+  const handleDetailBack = () => {
+    setShowArticleDetail(false);
+    setSelectedArticle(null);
+  };
+
   const renderItem = ({ item }) => (
     <PlantCard
       item={item}
       selectionMode={selectionMode}
       selectedItems={selectedItems}
       toggleSelection={toggleSelection}
-      navigation={navigation} // navigation prop is available here
       enterSelectionMode={enterSelectionMode}
+      onCardPress={handleCardPress}
+      onToggleLike={handleToggleLike} // Pass the new toggle like function
     />
   );
+
   let [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_700Bold,
-    Poppins_300Light,
-    Poppins_500Medium,
-    Sora_400Regular,
-    Sora_700Bold,
-    Sora_500Medium,
+    Nunito_700Bold,
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_500Medium,
+    Nunito_300Light
   });
 
   if (!fontsLoaded) {
     return null;
   }
 
-  // ===================================================================
-  // NEW: Handler for the Add button (FAB)
-  // ===================================================================
   const handleAdd = () => {
     Alert.alert('Add Button Pressed', 'You tapped the add button! Implement your add logic here.');
-    // You can navigate to a new screen for adding content, e.g.:
-    // navigation.navigate('AddPlantScreen');
   };
+
+  if (showArticleDetail && selectedArticle) {
+    return <DetailScreen plant={selectedArticle} onBack={handleDetailBack} onToggleLike={handleToggleLike} />; // Pass the new toggle like function
+  }
 
   return (
     <View style={styles.container}>
@@ -325,7 +379,7 @@ function ArticleScreen({ navigation }) {
         ) : (
           <TouchableOpacity
             style={styles.headerIcon}
-            onPress={() => navigation.goBack()} // Added goBack for the back icon
+            onPress={() => navigation.goBack()}
           >
             <Image source={require('../../assets/images/weui_back-outlined.png')} />
           </TouchableOpacity>
@@ -345,7 +399,7 @@ function ArticleScreen({ navigation }) {
         </TouchableOpacity>
         <TextInput
           placeholder="Search articles"
-          style={{ flex: 1, fontSize: 16, marginLeft: 10 }}
+          style={{ flex: 1, fontSize: 16, marginLeft: 10, fontFamily: 'Nunito_400Regular' }}
           value={searchQuery}
           onChangeText={setSearchQuery}
           returnKeyType="search"
@@ -386,13 +440,9 @@ function ArticleScreen({ navigation }) {
         )}
       />
 
-      {/* ===================================================================
-          NEW: Floating Action Button (FAB) for the Add icon
-          =================================================================== */}
       <TouchableOpacity style={styles.fab} onPress={handleAdd}>
-        {/* Placeholder for your add icon. Replace with your actual image. */}
         <Image
-          source={require('../../assets/images/add.png')} // <--- You need to add this image asset
+          source={require('../../assets/images/add.png')}
           style={styles.fabIcon}
         />
       </TouchableOpacity>
@@ -400,19 +450,13 @@ function ArticleScreen({ navigation }) {
   );
 }
 
-// =====================================================================
-// EXPORT THIS COMPONENT AS DEFAULT for your Article.js file
-// =====================================================================
 export default ArticleScreen;
 
-
-// Styles are defined outside the component for better practice
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    fontFamily: 'Sora_400Regular',
     height: 60,
     width: '100%',
     marginTop: 50,
@@ -429,7 +473,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   headerText: {
-    fontFamily: 'Sora_700Bold',
+    fontFamily: 'Nunito_700Bold',
     fontSize: 20,
     color: '#448461',
     position: 'absolute',
@@ -439,7 +483,6 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   headerButtonHapus: {
-    fontFamily: 'Sora_400Regular',
     position: 'absolute',
     right: 20,
     backgroundColor: '#448461',
@@ -464,7 +507,7 @@ const styles = StyleSheet.create({
   headerButtonTextContent: {
     fontSize: 14,
     color: 'white',
-    fontFamily: 'Sora_700Bold',
+    fontFamily: 'Nunito_700Bold',
   },
   search: {
     flexDirection: 'row',
@@ -481,14 +524,14 @@ const styles = StyleSheet.create({
   filterContainergeser: { paddingVertical: 5, paddingRight: 20 },
   tabButton: { borderWidth: 1, borderColor: '#448461', borderRadius: 15, paddingVertical: 8, paddingHorizontal: 16, marginHorizontal: 5 },
   activeTab: { backgroundColor: '#448461' },
-  tabText: { color: '#448461', fontSize: 14 },
-  activeText: { color: 'white', fontWeight: 'bold' },
+  tabText: { color: '#448461', fontSize: 14, fontFamily: 'Nunito_400Regular' },
+  activeText: { color: 'white', fontWeight: 'bold', fontFamily: 'Nunito_700Bold' },
 
   cardWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    width: 400,
+    width: 330,
     alignSelf: 'center',
   },
   checkboxContainer: {
@@ -512,7 +555,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
     flex: 1,
-    width: 330,
   },
   cardShrink: {
     width: 400,
@@ -521,11 +563,11 @@ const styles = StyleSheet.create({
   plantImage: { width: 230, height: 150, resizeMode: 'cover' },
   rightInfo: { backgroundColor: '#DCF0E4', width: 100, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, position: 'relative' },
   avatar: { width: 50, height: 50, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20 },
-  username: { fontSize: 14, color: '#448461', marginBottom: 10 },
-  heartButton: { width: 24, height: 24 },
+  username: { fontSize: 14, color: '#448461', marginBottom: 10, fontFamily: 'Nunito_600SemiBold' },
+  heartButton: { width: 24, height: 24, top: 5, left:20, alignSelf:'flex-end' },
   bottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
-  plantName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4 },
-  description: { fontSize: 13, color: '#666' },
+  plantName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4, fontFamily: 'Nunito_700Bold' },
+  description: { fontSize: 13, color: '#666', fontFamily: 'Nunito_400Regular' },
   emptyListContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -537,11 +579,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
+    fontFamily: 'Nunito_400Regular',
   },
-  // ===================================================================
-  // NEW: Styles for the Floating Action Button (FAB)
-  // Copied from detail.js and adjusted bottom position for navbar
-  // ===================================================================
   fab: {
     position: 'absolute',
     width: 60,
@@ -549,11 +588,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     right: 30,
-    bottom: 110, // Adjusted to be above the BottomNavBar (assuming navbar height ~80)
-    // backgroundColor: '#fff', // Green background
-    borderRadius: 30, // Makes it a perfect circle
-    elevation: 8, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    bottom: 110,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -562,6 +600,126 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     resizeMode: 'contain',
-    // tintColor: 'white', // Makes the icon white
+  },
+
+  // DetailScreen specific styles (prefixed)
+  detailScreenContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  detailScreenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 60,
+    width: '100%',
+    marginTop: 50,
+    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+  },
+  detailScreenHeaderButton: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailScreenHeaderIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+  detailScreenHeadertext: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#448461',
+    textAlign: 'center',
+    fontFamily: 'Nunito_700Bold',
+  },
+  detailScreenScrollContent: {
+    paddingBottom: 20,
+  },
+  detailScreenTopImageSection: {
+    width: '100%',
+    height: 250,
+    position: 'relative',
+  },
+  detailScreenMainPlantImage: {
+    borderTopLeftRadius: 10,
+    borderTopRightRadius:10,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  detailScreenOverlayInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(59, 59, 59, 0.4)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  detailScreenAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    borderColor: '#fff',
+    borderWidth: 1,
+    marginRight: 10,
+  },
+  detailScreenUsername: {
+    fontSize: 16,
+    color: '#fff',
+    fontFamily: 'Nunito_700Bold', // Changed to Nunito
+  },
+  detailScreenContentSection: {
+    padding: 20,
+  },
+  detailScreenPlantName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#448461',
+    marginBottom: 5,
+    fontFamily: 'Nunito_700Bold', // Changed to Nunito
+  },
+  detailScreenDateText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Nunito_400Regular', // Changed to Nunito
+    marginBottom: 20,
+  },
+  detailScreenSectionTitle: {
+    fontSize: 16,
+    color: '#448461',
+    marginTop: 10,
+    fontFamily: 'Nunito_700Bold', // Changed to Nunito
+    marginBottom: 10,
+  },
+  detailScreenPhotoOfDayImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  detailScreenQuoteText: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: '#888',
+    textAlign: 'center',
+    marginVertical: 15,
+    paddingHorizontal: 10,
+    fontFamily: 'Nunito_400Regular', // Changed to Nunito
+  },
+  detailScreenFullArticleText: {
+    fontSize: 15,
+    color: '#333',
+    fontFamily: 'Nunito_400Regular', // Changed to Nunito
+    lineHeight: 22,
+    marginTop: 10,
+    marginBottom:60
   },
 });
