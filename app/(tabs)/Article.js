@@ -19,6 +19,7 @@ import {
   Text,
   TextInput,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   FlatList,
   Animated,
   Keyboard,
@@ -31,6 +32,11 @@ import {
   Poppins_300Light,
   Poppins_500Medium
 } from '@expo-google-fonts/poppins';
+=======
+  TouchableOpacity,
+  View
+} from 'react-native';
+>>>>>>> Stashed changes
 =======
   TouchableOpacity,
   View
