@@ -1,25 +1,13 @@
-import {
-  Nunito_300Light,
-  Nunito_400Regular,
-  Nunito_500Medium,
-  Nunito_600SemiBold,
-  Nunito_700Bold
-} from '@expo-google-fonts/nunito';
-import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
-import React, { useRef, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  Alert,
-  Animated,
-  FlatList,
-  Image,
-  Keyboard,
-  ScrollView,
   StyleSheet,
   Text,
+  View,
+  ScrollView,
+  Image,
+  TouchableOpacity,
   TextInput,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
   FlatList,
   Animated,
   Keyboard,
@@ -27,27 +15,155 @@ import {
 } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
-  Poppins_400Regular,
-  Poppins_700Bold,
-  Poppins_300Light,
-  Poppins_500Medium
-} from '@expo-google-fonts/poppins';
+  Nunito_700Bold,
+  Nunito_400Regular,
+  Nunito_300Light,
+  Nunito_600SemiBold,
+  Nunito_500Medium
+} from '@expo-google-fonts/nunito';
+import { useNavigation } from '@react-navigation/native';
 
-import {
-  Sora_400Regular,
-  Sora_500Medium,
-  Sora_700Bold
-} from '@expo-google-fonts/sora';
+// PlantCard Component (Moved from (tabs)/Articledetail/plantcard.js)
+const PlantCard = ({ item, selectionMode, selectedItems, toggleSelection, enterSelectionMode, onCardPress, onToggleLike }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-// No need for NavigationContainer or createNativeStackNavigator here, as this will be a screen
-// import { NavigationContainer, getFocusedRouteNameFromState } from '@react-navigation/native';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
+  const handleLike = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.5,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    onToggleLike(item.id); // Call the parent's toggle like function
+  };
 
-import DetailScreen from './Article/detail';
-import PlantCard from './Article/plantcard';
-// No need to import BottomNavBar here, as it will be in your main App.js
+  return (
+    <TouchableOpacity
+      style={styles.cardWrapper}
+      onLongPress={() => enterSelectionMode(item.id)}
+      onPress={() => selectionMode ? toggleSelection(item.id) : onCardPress(item)}
+      activeOpacity={0.9}
+    >
+      {selectionMode && (
+        <TouchableOpacity
+          style={styles.checkboxContainer}
+          onPress={() => toggleSelection(item.id)}
+        >
+          <Image
+            source={
+              selectedItems.includes(item.id)
+                ? require('../../assets/images/checkbox_checked.png')
+                : require('../../assets/images/checkbox_unchecked.png')
+            }
+            style={styles.checkboxIcon}
+          />
+        </TouchableOpacity>
+      )}
+      <View style={[styles.card, selectionMode && styles.cardShrink]}>
+        <View style={styles.topSection}>
+          <Image source={item.image} style={styles.plantImage} />
+          <View style={styles.rightInfo}>
+            <TouchableOpacity onPress={handleLike} activeOpacity={0.8}>
+              <Animated.Image
+                source={
+                  item.liked // Use item.liked directly
+                    ? require('../../assets/images/like_active.png')
+                    : require('../../assets/images/like_inactive.png')
+                }
+                style={[styles.heartButton, { transform: [{ scale: scaleAnim }] }]}
+              />
+            </TouchableOpacity>
+            <Image source={item.avatar} style={styles.avatar} />
+            <Text style={styles.username}>{item.username}</Text>
+          </View>
+        </View>
+        <View style={styles.bottomSection}>
+          <Text style={styles.plantName}>{item.name}</Text>
+          <Text style={styles.description}>{item.description}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
-// Define your initialData outside the component
+// DetailScreen Component (Moved from (tabs)/Articledetail/detail.js)
+const DetailScreen = ({ plant, onBack, onToggleLike }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleLike = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    onToggleLike(plant.id); // Call the parent's toggle like function
+  };
+
+  return (
+    <View style={styles.detailScreenContainer}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#fff"
+        translucent={false}
+      />
+
+      <View style={styles.detailScreenHeader}>
+        <TouchableOpacity onPress={onBack} style={styles.detailScreenHeaderButton}>
+          <Image source={require('../../assets/images/weui_back-outlined.png')} style={styles.detailScreenHeaderIcon} />
+        </TouchableOpacity>
+        <Text style={styles.detailScreenHeadertext}>Article</Text>
+        <TouchableOpacity onPress={handleLike} style={styles.detailScreenHeaderButton}>
+          <Animated.Image
+            source={
+              plant.liked // Use plant.liked directly
+                ? require('../../assets/images/like_active.png')
+                : require('../../assets/images/like_inactive.png')
+            }
+            style={[styles.detailScreenHeaderIcon, { transform: [{ scale: scaleAnim }] }]}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.detailScreenScrollContent}>
+        <View style={styles.detailScreenTopImageSection}>
+          <Image source={plant.image} style={styles.detailScreenMainPlantImage} />
+          <View style={styles.detailScreenOverlayInfo}>
+            <Image source={plant.avatar} style={styles.detailScreenAvatar} />
+            <Text style={styles.detailScreenUsername}>{plant.username}</Text>
+          </View>
+        </View>
+
+        <View style={styles.detailScreenContentSection}>
+          <Text style={styles.detailScreenPlantName}>{plant.name}</Text>
+          <Text style={styles.detailScreenDateText}>Date: {plant.date}</Text>
+
+          <Text style={styles.detailScreenSectionTitle}>📸 Photo of the Day</Text>
+          <Image source={plant.photoOfTheDayImage} style={styles.detailScreenPhotoOfDayImage} />
+          <Text style={styles.detailScreenQuoteText}>{plant.quote}</Text>
+
+          <Text style={styles.detailScreenFullArticleText}>
+            {plant.fullArticle}
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+
 const initialData = [
   {
     id: '1',

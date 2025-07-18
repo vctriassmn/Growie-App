@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { deleteJournalEntries, getJournalEntriesByTitle } from '../../journalData'; // <--- JALUR YANG SUDAH ANDA KONFIRMASI
+import { deleteJournalEntries, getJournalEntriesByTitle } from './journalData'; // <--- JALUR YANG SUDAH ANDA KONFIRMASI
 
 // Impor gambar lokal untuk tombol tambah
 const addButtonImage = require('../../../assets/images/add.png');

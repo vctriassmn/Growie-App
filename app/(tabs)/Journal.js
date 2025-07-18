@@ -1,10 +1,8 @@
-// File: app/(tabs)/Journal.js
-
+import { useState, useRef, useEffect } from 'react';
+import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { getJournalFolders } from '../journalData'; // <--- JALUR YANG SUDAH ANDA KONFIRMASI
-import FolderCard from './Journal/FolderCard'; // Jalur ke komponen FolderCard
+import { getJournalFolders } from './Journal/journalData';
+import FolderCard from './Journal/FolderCard';
 
 const coverImage = require('../../assets/images/coverFolder.png');
 const addButtonImage = require('../../assets/images/add.png');
@@ -19,8 +17,43 @@ const ITEM_WIDTH = (width - (HORIZONTAL_SPACING * 2 + HORIZONTAL_SPACING)) / 2;
 
 const USER_NAME = "Ann";
 
+// Aktifkan LayoutAnimation di Android
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
+
 export default function JournalPage() {
   const [journalFolders, setJournalFolders] = useState(initialJournalFolders);
+  const flatListRef = useRef(null);
+  const isInitialMount = useRef(true);
+
+  // Gunakan useEffect untuk menggulir hanya setelah folder baru ditambahkan
+  useEffect(() => {
+    // Lewati eksekusi pada render pertama kali
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Gulir ke bawah hanya jika ada folder dan bukan render pertama
+    if (journalFolders.length > 0 && flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [journalFolders]);
+
+  const handleAddFolder = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+    const newId = Date.now().toString();
+    const newFolder = {
+      id: newId,
+      title: 'Untitled'
+    };
+    
+    setJournalFolders(prevFolders => [...prevFolders, newFolder]);
+  };
 
   const renderJournalFolder = ({ item }) => (
     <TouchableOpacity
@@ -44,6 +77,7 @@ export default function JournalPage() {
           <Text style={styles.headerTextBold}>Journal</Text>
         </View>
         <FlatList
+          ref={flatListRef}
           style={styles.flatList}
           data={journalFolders}
           renderItem={renderJournalFolder}
@@ -52,12 +86,11 @@ export default function JournalPage() {
           contentContainerStyle={styles.listContainer}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={true}
+          // Prop onContentSizeChange dihapus untuk mencegah scroll awal
         />
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => {
-            // router.push('AddFolder');
-          }}
+          onPress={handleAddFolder}
         >
           <Image source={addButtonImage} style={styles.addButtonImage} />
         </TouchableOpacity>
@@ -97,7 +130,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: HORIZONTAL_SPACING,
-    paddingBottom: 100,
+    paddingBottom: 100, // Padding Bottom 100 sudah benar
   },
   columnWrapper: {
     justifyContent: 'space-between',
