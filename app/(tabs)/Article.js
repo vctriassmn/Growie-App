@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,16 +15,19 @@ import {
 } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
-  Nunito_700Bold,
   Nunito_400Regular,
+  Nunito_700Bold,
   Nunito_300Light,
-  Nunito_600SemiBold,
   Nunito_500Medium
 } from '@expo-google-fonts/nunito';
-import { useNavigation } from '@react-navigation/native';
 
-// PlantCard Component (Moved from (tabs)/Articledetail/plantcard.js)
-const PlantCard = ({ item, selectionMode, selectedItems, toggleSelection, enterSelectionMode, onCardPress, onToggleLike }) => {
+// =============================================================================
+// Start of Merged Components
+// =============================================================================
+
+// Component from plantcard.js
+// Changed navigation prop to onCardPress for internal navigation within ArticleScreen
+const PlantCard = ({ item, selectionMode, selectedItems, toggleSelection, onCardPress, enterSelectionMode, isLiked, toggleLike }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handleLike = () => {
@@ -39,20 +42,21 @@ const PlantCard = ({ item, selectionMode, selectedItems, toggleSelection, enterS
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
-    onToggleLike(item.id); // Call the parent's toggle like function
+    ]).start(() => {
+      toggleLike(item.id); // Use parent's toggleLike
+    });
   };
 
   return (
     <TouchableOpacity
-      style={styles.cardWrapper}
+      style={styles.plantCardWrapper}
       onLongPress={() => enterSelectionMode(item.id)}
-      onPress={() => selectionMode ? toggleSelection(item.id) : onCardPress(item)}
+      onPress={() => selectionMode ? toggleSelection(item.id) : onCardPress(item)} // Call onCardPress
       activeOpacity={0.9}
     >
       {selectionMode && (
         <TouchableOpacity
-          style={styles.checkboxContainer}
+          style={styles.plantCardCheckboxContainer}
           onPress={() => toggleSelection(item.id)}
         >
           <Image
@@ -61,42 +65,43 @@ const PlantCard = ({ item, selectionMode, selectedItems, toggleSelection, enterS
                 ? require('../../assets/images/checkbox_checked.png')
                 : require('../../assets/images/checkbox_unchecked.png')
             }
-            style={styles.checkboxIcon}
+            style={styles.plantCardCheckboxIcon}
           />
         </TouchableOpacity>
       )}
-      <View style={[styles.card, selectionMode && styles.cardShrink]}>
-        <View style={styles.topSection}>
-          <Image source={item.image} style={styles.plantImage} />
-          <View style={styles.rightInfo}>
+      <View style={[styles.plantCard, selectionMode && styles.plantCardShrink]}>
+        <View style={styles.plantCardTopSection}>
+          <Image source={item.image} style={styles.plantCardImage} />
+          <View style={styles.plantCardRightInfo}>
             <TouchableOpacity onPress={handleLike} activeOpacity={0.8}>
               <Animated.Image
                 source={
-                  item.liked // Use item.liked directly
+                  isLiked
                     ? require('../../assets/images/like_active.png')
                     : require('../../assets/images/like_inactive.png')
                 }
-                style={[styles.heartButton, { transform: [{ scale: scaleAnim }] }]}
+                style={[styles.plantCardHeartButton, { transform: [{ scale: scaleAnim }] }]}
               />
             </TouchableOpacity>
-            <Image source={item.avatar} style={styles.avatar} />
-            <Text style={styles.username}>{item.username}</Text>
+            <Image source={item.avatar} style={styles.plantCardAvatar} />
+            <Text style={styles.plantCardUsername}>{item.username}</Text>
           </View>
         </View>
-        <View style={styles.bottomSection}>
-          <Text style={styles.plantName}>{item.name}</Text>
-          <Text style={styles.description}>{item.description}</Text>
+        <View style={styles.plantCardBottomSection}>
+          <Text style={styles.plantCardName}>{item.name}</Text>
+          <Text style={styles.plantCardDescription}>{item.description}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 };
 
-// DetailScreen Component (Moved from (tabs)/Articledetail/detail.js)
-const DetailScreen = ({ plant, onBack, onToggleLike }) => {
+// Component from detail.js
+// Changed navigation prop to onBack for internal navigation within ArticleScreen
+export function DetailScreen({ plant, isLiked, toggleLike, onBack }) { // removed route, navigation
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const handleLike = () => {
+  const handleLikePress = () => {
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 1.2,
@@ -108,61 +113,74 @@ const DetailScreen = ({ plant, onBack, onToggleLike }) => {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
-    onToggleLike(plant.id); // Call the parent's toggle like function
+    ]).start(() => {
+      toggleLike(plant.id);
+    });
   };
 
+  let [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <View style={styles.detailScreenContainer}>
+    <View style={styles.detailContainer}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor="#fff"
         translucent={false}
       />
 
-      <View style={styles.detailScreenHeader}>
-        <TouchableOpacity onPress={onBack} style={styles.detailScreenHeaderButton}>
-          <Image source={require('../../assets/images/weui_back-outlined.png')} style={styles.detailScreenHeaderIcon} />
+      <View style={styles.detailHeader}>
+        <TouchableOpacity onPress={onBack} style={styles.detailHeaderButton}> {/* Call onBack */}
+          <Image source={require('../../assets/images/weui_back-outlined.png')} style={styles.detailHeaderIcon} />
         </TouchableOpacity>
-        <Text style={styles.detailScreenHeadertext}>Article</Text>
-        <TouchableOpacity onPress={handleLike} style={styles.detailScreenHeaderButton}>
+        <Text style={styles.detailHeaderText}>Article</Text>
+        <TouchableOpacity onPress={handleLikePress} style={styles.detailHeaderButton}>
           <Animated.Image
             source={
-              plant.liked // Use plant.liked directly
+              isLiked
                 ? require('../../assets/images/like_active.png')
                 : require('../../assets/images/like_inactive.png')
             }
-            style={[styles.detailScreenHeaderIcon, { transform: [{ scale: scaleAnim }] }]}
+            style={[styles.detailHeaderIcon, { transform: [{ scale: scaleAnim }] }]}
           />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.detailScreenScrollContent}>
-        <View style={styles.detailScreenTopImageSection}>
-          <Image source={plant.image} style={styles.detailScreenMainPlantImage} />
-          <View style={styles.detailScreenOverlayInfo}>
-            <Image source={plant.avatar} style={styles.detailScreenAvatar} />
-            <Text style={styles.detailScreenUsername}>{plant.username}</Text>
+      <ScrollView contentContainerStyle={styles.detailScrollContent}>
+        <View style={styles.detailTopImageSection}>
+          <Image source={plant.image} style={styles.detailMainPlantImage} />
+          <View style={styles.detailOverlayInfo}>
+            <Image source={plant.avatar} style={styles.detailAvatar} />
+            <Text style={styles.detailUsername}>{plant.username}</Text>
           </View>
         </View>
 
-        <View style={styles.detailScreenContentSection}>
-          <Text style={styles.detailScreenPlantName}>{plant.name}</Text>
-          <Text style={styles.detailScreenDateText}>Date: {plant.date}</Text>
+        <View style={styles.detailContentSection}>
+          <Text style={styles.detailPlantName}>{plant.name}</Text>
+          <Text style={styles.detailDateText}>Date: {plant.date}</Text>
 
-          <Text style={styles.detailScreenSectionTitle}>📸 Photo of the Day</Text>
-          <Image source={plant.photoOfTheDayImage} style={styles.detailScreenPhotoOfDayImage} />
-          <Text style={styles.detailScreenQuoteText}>{plant.quote}</Text>
+          <Text style={styles.detailSectionTitle}>📸 Photo of the Day</Text>
+          <Image source={plant.photoOfTheDayImage} style={styles.detailPhotoOfDayImage} />
+          <Text style={styles.detailQuoteText}>{plant.quote}</Text>
 
-          <Text style={styles.detailScreenFullArticleText}>
+          <Text style={styles.detailFullArticleText}>
             {plant.fullArticle}
           </Text>
         </View>
       </ScrollView>
     </View>
   );
-};
+}
 
+// =============================================================================
+// End of Merged Components
+// =============================================================================
 
 const initialData = [
   {
@@ -186,8 +204,7 @@ Over the next few days, monitor soil moisture and avoid overwatering.
 
 Remember: every plant has different needs, so always check light and water preferences for your specific plant type.
 With patience and care, you’ll set your new plant up for long-term health and vibrant growth.
-`,
-    liked: false // Added liked property
+`
   },
   {
     id: '2',
@@ -205,8 +222,7 @@ With patience and care, you’ll set your new plant up for long-term health and 
 I've learned that consistency is key with these beauties. They don't like sudden changes in temperature or light. Also, proper watering is crucial – I make sure the soil is mostly dry before giving it a good soak.
 
 If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit dramatic, but with the right care, they truly become the centerpiece of any room.
-`,
-    liked: false // Added liked property
+`
   },
   {
     id: '3',
@@ -224,8 +240,7 @@ If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit d
 Its upright, sword-like leaves add a modern touch to any decor, and it's also excellent for air purification. I have one in my bedroom and one in the living room, and they always look great with minimal effort.
 
 If you want a plant that won't give you any trouble, the Snake Plant is definitely the way to go. It's almost impossible to kill!
-`,
-    liked: false // Added liked property
+`
   },
   {
     id: '4',
@@ -246,9 +261,8 @@ If you want a plant that won't give you any trouble, the Snake Plant is definite
 
   Always empty excess water from the tray or saucer to prevent root rot. Overwatering is more dangerous than underwatering for most plants.
 
-  Pay attention to signs: drooping, yellowing leaves, or soggy soil may indicate overwatering. Dry, crispy leaves can signal it’s too little. With practice, you’ll develop a rhythm your plants will love.`,
-    liked: false // Added liked property
-  },
+  Pay attention to signs: drooping, yellowing leaves, or soggy soil may indicate overwatering. Dry, crispy leaves can signal it’s too little. With practice, you’ll develop a rhythm your plants will love.`
+    },
   {
     id: '5',
     name: 'ZZ Plant',
@@ -265,8 +279,7 @@ If you want a plant that won't give you any trouble, the Snake Plant is definite
 I have it in a corner of my office that doesn't get much light, and it's perfectly happy. If you travel a lot or simply want a plant that doesn't demand much attention, the ZZ Plant is your best friend.
 
 Seriously, if you think you have a black thumb, try a ZZ plant. It's almost foolproof!
-`,
-    liked: false // Added liked property
+`
   },
   {
     id: '6',
@@ -284,8 +297,7 @@ Seriously, if you think you have a black thumb, try a ZZ plant. It's almost fool
 I keep it in a spot with medium, indirect light, and it seems to love the humidity from my bathroom. It's a classic houseplant for a reason—it's graceful, relatively easy, and benefits your indoor air quality.
 
 Highly recommend a Peace Lily if you want a plant that adds beauty and purpose to your home.
-`,
-    liked: false // Added liked property
+`
   },
   {
     id: '7',
@@ -303,8 +315,7 @@ Highly recommend a Peace Lily if you want a plant that adds beauty and purpose t
 It's been a rewarding challenge, experimenting with different soil mixes and light conditions to find what works best. This plant is a true testament to the joy of growing something entirely your own.
 
 I'll keep sharing updates as it matures. Stay tuned for more on this exciting journey!
-`,
-    liked: false // Added liked property
+`
   },
 ];
 
@@ -315,9 +326,23 @@ function ArticleScreen({ navigation }) {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [likedItems, setLikedItems] = useState(new Set()); // Global state for liked items
 
+  // State to manage showing the detail screen
   const [showArticleDetail, setShowArticleDetail] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
+
+  const toggleLike = useCallback((itemId) => {
+    setLikedItems(prevLikedItems => {
+      const newLikedItems = new Set(prevLikedItems);
+      if (newLikedItems.has(itemId)) {
+        newLikedItems.delete(itemId);
+      } else {
+        newLikedItems.add(itemId);
+      }
+      return newLikedItems;
+    });
+  }, []);
 
   const tabs = [
     { key: 'all', label: 'All' },
@@ -353,22 +378,39 @@ function ArticleScreen({ navigation }) {
 
     const deletableItems = plants.filter(item => selectedItems.includes(item.id) && item.category === 'publish');
     const nonDeletableItems = selectedItems.filter(id => {
-      const item = plants.find(p => p.id === id);
+      const item = plants.find(plant => plant.id === id);
       return item && item.category !== 'publish';
     });
 
     if (nonDeletableItems.length > 0 && deletableItems.length === 0) {
-      Alert.alert(
-        'Deletion Restricted',
-        'You can only delete articles with the "My Publish" category.'
-      );
+      Alert.alert('Deletion Restricted', 'Only articles with the category "My Publish" can be deleted.');
       return;
     }
 
-    if (nonDeletableItems.length > 0 && deletableItems.length > 0) {
+    if (nonDeletableItems.length > 0) {
       Alert.alert(
-        'Mixed Selection',
-        `Some selected items are not in the "My Publish" category and cannot be deleted. Are you sure you want to delete the ${deletableItems.length} deletable item(s)?`,
+        'Partial Deletion',
+        'Some selected items cannot be deleted because they are not from "My Publish" category. Do you want to delete the eligible items?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete Eligible',
+            onPress: () => {
+              setPlants(plants.filter(item => !(selectedItems.includes(item.id) && item.category === 'publish')));
+              exitSelectionMode();
+            },
+            style: 'destructive',
+          },
+        ],
+        { cancelable: true }
+      );
+    } else {
+      Alert.alert(
+        'Confirm Deletion',
+        `Are you sure you want to delete ${selectedItems.length} selected item(s)?`,
         [
           {
             text: 'Cancel',
@@ -377,7 +419,7 @@ function ArticleScreen({ navigation }) {
           {
             text: 'Delete',
             onPress: () => {
-              setPlants(plants.filter((item) => !(selectedItems.includes(item.id) && item.category === 'publish')));
+              setPlants(plants.filter((item) => !selectedItems.includes(item.id)));
               exitSelectionMode();
             },
             style: 'destructive',
@@ -385,40 +427,6 @@ function ArticleScreen({ navigation }) {
         ],
         { cancelable: true }
       );
-      return;
-    }
-
-    Alert.alert(
-      'Confirm Deletion',
-      `Are you sure you want to delete ${deletableItems.length} selected item(s)?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          onPress: () => {
-            setPlants(plants.filter((item) => !selectedItems.includes(item.id)));
-            exitSelectionMode();
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  // Function to toggle the liked status of a plant
-  const handleToggleLike = (id) => {
-    setPlants(prevPlants =>
-      prevPlants.map(plant =>
-        plant.id === id ? { ...plant, liked: !plant.liked } : plant
-      )
-    );
-    // If the article is currently in detail view, update its liked status as well
-    if (selectedArticle && selectedArticle.id === id) {
-      setSelectedArticle(prevArticle => ({ ...prevArticle, liked: !prevArticle.liked }));
     }
   };
 
@@ -441,12 +449,12 @@ function ArticleScreen({ navigation }) {
     return currentPlants;
   }, [activeTab, plants, searchQuery]);
 
-  const handleCardPress = (item) => {
-    setSelectedArticle(item);
+  const handleCardPress = (plant) => {
+    setSelectedArticle(plant);
     setShowArticleDetail(true);
   };
 
-  const handleDetailBack = () => {
+  const handleBackFromDetail = () => {
     setShowArticleDetail(false);
     setSelectedArticle(null);
   };
@@ -457,18 +465,17 @@ function ArticleScreen({ navigation }) {
       selectionMode={selectionMode}
       selectedItems={selectedItems}
       toggleSelection={toggleSelection}
+      onCardPress={handleCardPress} // Pass the new handler
       enterSelectionMode={enterSelectionMode}
-      onCardPress={handleCardPress}
-      onToggleLike={handleToggleLike} // Pass the new toggle like function
+      isLiked={likedItems.has(item.id)} // Pass liked status
+      toggleLike={toggleLike} // Pass toggle function
     />
   );
-
   let [fontsLoaded] = useFonts({
-    Nunito_700Bold,
     Nunito_400Regular,
-    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_300Light,
     Nunito_500Medium,
-    Nunito_300Light
   });
 
   if (!fontsLoaded) {
@@ -480,7 +487,14 @@ function ArticleScreen({ navigation }) {
   };
 
   if (showArticleDetail && selectedArticle) {
-    return <DetailScreen plant={selectedArticle} onBack={handleDetailBack} onToggleLike={handleToggleLike} />; // Pass the new toggle like function
+    return (
+      <DetailScreen
+        plant={selectedArticle}
+        isLiked={likedItems.has(selectedArticle.id)}
+        toggleLike={toggleLike}
+        onBack={handleBackFromDetail} // Pass the new back handler
+      />
+    );
   }
 
   return (
@@ -495,7 +509,7 @@ function ArticleScreen({ navigation }) {
         ) : (
           <TouchableOpacity
             style={styles.headerIcon}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.goBack()} // Keep navigation for the main tab back button
           >
             <Image source={require('../../assets/images/weui_back-outlined.png')} />
           </TouchableOpacity>
@@ -569,10 +583,12 @@ function ArticleScreen({ navigation }) {
 export default ArticleScreen;
 
 const styles = StyleSheet.create({
+  // Styles from original article.js
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    fontFamily: 'Nunito_400Regular',
     height: 60,
     width: '100%',
     marginTop: 50,
@@ -599,6 +615,7 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   headerButtonHapus: {
+    fontFamily: 'Nunito_400Regular',
     position: 'absolute',
     right: 20,
     backgroundColor: '#448461',
@@ -641,49 +658,7 @@ const styles = StyleSheet.create({
   tabButton: { borderWidth: 1, borderColor: '#448461', borderRadius: 15, paddingVertical: 8, paddingHorizontal: 16, marginHorizontal: 5 },
   activeTab: { backgroundColor: '#448461' },
   tabText: { color: '#448461', fontSize: 14, fontFamily: 'Nunito_400Regular' },
-  activeText: { color: 'white', fontWeight: 'bold', fontFamily: 'Nunito_700Bold' },
-
-  cardWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: 330,
-    alignSelf: 'center',
-  },
-  checkboxContainer: {
-    width: 30,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  checkboxIcon: {
-    width: 24,
-    height: 24,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 4,
-    flex: 1,
-  },
-  cardShrink: {
-    width: 400,
-  },
-  topSection: { flexDirection: 'row' },
-  plantImage: { width: 230, height: 150, resizeMode: 'cover' },
-  rightInfo: { backgroundColor: '#DCF0E4', width: 100, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, position: 'relative' },
-  avatar: { width: 50, height: 50, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20 },
-  username: { fontSize: 14, color: '#448461', marginBottom: 10, fontFamily: 'Nunito_600SemiBold' },
-  heartButton: { width: 24, height: 24, top: 5, left:20, alignSelf:'flex-end' },
-  bottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
-  plantName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4, fontFamily: 'Nunito_700Bold' },
-  description: { fontSize: 13, color: '#666', fontFamily: 'Nunito_400Regular' },
+  activeText: { color: 'white', fontWeight: 'bold' },
   emptyListContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -695,7 +670,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
-    fontFamily: 'Nunito_400Regular',
+    fontFamily: 'Nunito_400Regular'
   },
   fab: {
     position: 'absolute',
@@ -718,12 +693,55 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 
-  // DetailScreen specific styles (prefixed)
-  detailScreenContainer: {
+  // Styles from plantcard.js (prefixed with 'plantCard')
+  plantCardWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: 330,
+    alignSelf: 'center',
+  },
+  plantCardCheckboxContainer: {
+    width: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  plantCardCheckboxIcon: {
+    width: 24,
+    height: 24,
+  },
+  plantCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 4,
+    flex: 1,
+    width: 330,
+  },
+  plantCardShrink: {
+    width: 400,
+  },
+  plantCardTopSection: { flexDirection: 'row' },
+  plantCardImage: { width: 230, height: 150, resizeMode: 'cover' },
+  plantCardRightInfo: { backgroundColor: '#DCF0E4', width: 100, paddingVertical: 10 },
+  plantCardAvatar: { width: 50, height: 50, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20, alignSelf: 'center', justifyContent: 'center' },
+  plantCardUsername: { fontSize: 14, color: '#448461', marginBottom: 10, justifyContent: 'center', alignSelf: 'center' },
+  plantCardHeartButton: { width: 24, height: 24, alignSelf:'flex-end', marginRight: 10 },
+  plantCardBottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
+  plantCardName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4 },
+  plantCardDescription: { fontSize: 13, color: '#666' },
+
+  // Styles from detail.js (prefixed with 'detail')
+  detailContainer: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  detailScreenHeader: {
+  detailHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 60,
@@ -733,41 +751,41 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#fff',
   },
-  detailScreenHeaderButton: {
+  detailHeaderButton: {
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  detailScreenHeaderIcon: {
+  detailHeaderIcon: {
     width: 24,
     height: 24,
     resizeMode: 'contain',
   },
-  detailScreenHeadertext: {
+  detailHeaderText: {
     flex: 1,
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Nunito_700Bold',
     color: '#448461',
     textAlign: 'center',
-    fontFamily: 'Nunito_700Bold',
   },
-  detailScreenScrollContent: {
+  detailScrollContent: {
     paddingBottom: 20,
   },
-  detailScreenTopImageSection: {
+  detailTopImageSection: {
     width: '100%',
     height: 250,
     position: 'relative',
   },
-  detailScreenMainPlantImage: {
+  detailMainPlantImage: {
     borderTopLeftRadius: 10,
     borderTopRightRadius:10,
     width: '100%',
+    fontFamily: 'Nunito_700Bold',
     height: '100%',
     resizeMode: 'cover',
   },
-  detailScreenOverlayInfo: {
+  detailOverlayInfo: {
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -778,7 +796,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
   },
-  detailScreenAvatar: {
+  detailAvatar: {
     width: 50,
     height: 50,
     borderRadius: 30,
@@ -786,54 +804,53 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginRight: 10,
   },
-  detailScreenUsername: {
+  detailUsername: {
     fontSize: 16,
+    fontFamily: 'Nunito_700Bold',
     color: '#fff',
-    fontFamily: 'Nunito_700Bold', // Changed to Nunito
   },
-  detailScreenContentSection: {
+  detailContentSection: {
     padding: 20,
   },
-  detailScreenPlantName: {
+  detailPlantName: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Nunito_700Bold',
     color: '#448461',
     marginBottom: 5,
-    fontFamily: 'Nunito_700Bold', // Changed to Nunito
   },
-  detailScreenDateText: {
+  detailDateText: {
     fontSize: 14,
     color: '#666',
-    fontFamily: 'Nunito_400Regular', // Changed to Nunito
+    fontFamily: 'Nunito_400Regular',
     marginBottom: 20,
   },
-  detailScreenSectionTitle: {
+  detailSectionTitle: {
     fontSize: 16,
     color: '#448461',
     marginTop: 10,
-    fontFamily: 'Nunito_700Bold', // Changed to Nunito
+    fontFamily: 'Nunito_700Bold',
     marginBottom: 10,
   },
-  detailScreenPhotoOfDayImage: {
+  detailPhotoOfDayImage: {
     width: '100%',
     height: 200,
     resizeMode: 'cover',
     borderRadius: 8,
     marginBottom: 10,
   },
-  detailScreenQuoteText: {
+  detailQuoteText: {
     fontSize: 15,
     fontStyle: 'italic',
     color: '#888',
     textAlign: 'center',
     marginVertical: 15,
     paddingHorizontal: 10,
-    fontFamily: 'Nunito_400Regular', // Changed to Nunito
+    fontFamily: 'Nunito_400Regular'
   },
-  detailScreenFullArticleText: {
+  detailFullArticleText: {
     fontSize: 15,
     color: '#333',
-    fontFamily: 'Nunito_400Regular', // Changed to Nunito
+    fontFamily: 'Nunito_400Regular',
     lineHeight: 22,
     marginTop: 10,
     marginBottom:60
