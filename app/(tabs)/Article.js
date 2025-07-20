@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,31 +11,177 @@ import {
   FlatList,
   Animated,
   Keyboard,
-  Alert // Ensure Alert is imported
+  Alert
 } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
-  Poppins_400Regular,
-  Poppins_700Bold,
-  Poppins_300Light,
-  Poppins_500Medium
-} from '@expo-google-fonts/poppins';
+  Nunito_400Regular,
+  Nunito_700Bold,
+  Nunito_300Light,
+  Nunito_500Medium
+} from '@expo-google-fonts/nunito';
 
-import {
-  Sora_400Regular,
-  Sora_500Medium,
-  Sora_700Bold
-} from '@expo-google-fonts/sora';
+// =============================================================================
+// Start of Merged Components
+// =============================================================================
 
-// No need for NavigationContainer or createNativeStackNavigator here, as this will be a screen
-// import { NavigationContainer, getFocusedRouteNameFromState } from '@react-navigation/native';
-// import { createNativeStackNavigator } from '@react-navigation/native-stack';
+// Component from plantcard.js
+// Changed navigation prop to onCardPress for internal navigation within ArticleScreen
+const PlantCard = ({ item, selectionMode, selectedItems, toggleSelection, onCardPress, enterSelectionMode, isLiked, toggleLike }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-import DetailScreen from './Article/detail';
-import PlantCard from './Article/plantcard';
-// No need to import BottomNavBar here, as it will be in your main App.js
+  const handleLike = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.5,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      toggleLike(item.id); // Use parent's toggleLike
+    });
+  };
 
-// Define your initialData outside the component
+  return (
+    <TouchableOpacity
+      style={styles.plantCardWrapper}
+      onLongPress={() => enterSelectionMode(item.id)}
+      onPress={() => selectionMode ? toggleSelection(item.id) : onCardPress(item)} // Call onCardPress
+      activeOpacity={0.9}
+    >
+      {selectionMode && (
+        <TouchableOpacity
+          style={styles.plantCardCheckboxContainer}
+          onPress={() => toggleSelection(item.id)}
+        >
+          <Image
+            source={
+              selectedItems.includes(item.id)
+                ? require('../../assets/images/checkbox_checked.png')
+                : require('../../assets/images/checkbox_unchecked.png')
+            }
+            style={styles.plantCardCheckboxIcon}
+          />
+        </TouchableOpacity>
+      )}
+      <View style={[styles.plantCard, selectionMode && styles.plantCardShrink]}>
+        <View style={styles.plantCardTopSection}>
+          <Image source={item.image} style={styles.plantCardImage} />
+          <View style={styles.plantCardRightInfo}>
+            <TouchableOpacity onPress={handleLike} activeOpacity={0.8}>
+              <Animated.Image
+                source={
+                  isLiked
+                    ? require('../../assets/images/like_active.png')
+                    : require('../../assets/images/like_inactive.png')
+                }
+                style={[styles.plantCardHeartButton, { transform: [{ scale: scaleAnim }] }]}
+              />
+            </TouchableOpacity>
+            <Image source={item.avatar} style={styles.plantCardAvatar} />
+            <Text style={styles.plantCardUsername}>{item.username}</Text>
+          </View>
+        </View>
+        <View style={styles.plantCardBottomSection}>
+          <Text style={styles.plantCardName}>{item.name}</Text>
+          <Text style={styles.plantCardDescription}>{item.description}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+// Component from detail.js
+// Changed navigation prop to onBack for internal navigation within ArticleScreen
+export function DetailScreen({ plant, isLiked, toggleLike, onBack }) { // removed route, navigation
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleLikePress = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      toggleLike(plant.id);
+    });
+  };
+
+  let [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <View style={styles.detailContainer}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#fff"
+        translucent={false}
+      />
+
+      <View style={styles.detailHeader}>
+        <TouchableOpacity onPress={onBack} style={styles.detailHeaderButton}> {/* Call onBack */}
+          <Image source={require('../../assets/images/weui_back-outlined.png')} style={styles.detailHeaderIcon} />
+        </TouchableOpacity>
+        <Text style={styles.detailHeaderText}>Article</Text>
+        <TouchableOpacity onPress={handleLikePress} style={styles.detailHeaderButton}>
+          <Animated.Image
+            source={
+              isLiked
+                ? require('../../assets/images/like_active.png')
+                : require('../../assets/images/like_inactive.png')
+            }
+            style={[styles.detailHeaderIcon, { transform: [{ scale: scaleAnim }] }]}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.detailScrollContent}>
+        <View style={styles.detailTopImageSection}>
+          <Image source={plant.image} style={styles.detailMainPlantImage} />
+          <View style={styles.detailOverlayInfo}>
+            <Image source={plant.avatar} style={styles.detailAvatar} />
+            <Text style={styles.detailUsername}>{plant.username}</Text>
+          </View>
+        </View>
+
+        <View style={styles.detailContentSection}>
+          <Text style={styles.detailPlantName}>{plant.name}</Text>
+          <Text style={styles.detailDateText}>Date: {plant.date}</Text>
+
+          <Text style={styles.detailSectionTitle}>📸 Photo of the Day</Text>
+          <Image source={plant.photoOfTheDayImage} style={styles.detailPhotoOfDayImage} />
+          <Text style={styles.detailQuoteText}>{plant.quote}</Text>
+
+          <Text style={styles.detailFullArticleText}>
+            {plant.fullArticle}
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+// =============================================================================
+// End of Merged Components
+// =============================================================================
+
 const initialData = [
   {
     id: '1',
@@ -54,7 +200,7 @@ Start by choosing a pot with drainage holes to prevent root rot. Fill the bottom
 
 Once planted, water the soil slowly until it’s evenly moist and a bit drains from the bottom. Avoid placing your plant in direct sunlight right away—give it time to adjust in a bright, indirect light area.
 
-Over the next few days, monitor soil moisture and avoid overwatering. 
+Over the next few days, monitor soil moisture and avoid overwatering.
 
 Remember: every plant has different needs, so always check light and water preferences for your specific plant type.
 With patience and care, you’ll set your new plant up for long-term health and vibrant growth.
@@ -173,11 +319,6 @@ I'll keep sharing updates as it matures. Stay tuned for more on this exciting jo
   },
 ];
 
-// =====================================================================
-// This component will now be your "Article Screen"
-// We'll rename it for clarity.
-// It receives `navigation` as a prop from the navigator where it's rendered.
-// =====================================================================
 function ArticleScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('all');
   const [plants, setPlants] = useState(initialData);
@@ -185,6 +326,23 @@ function ArticleScreen({ navigation }) {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [likedItems, setLikedItems] = useState(new Set()); // Global state for liked items
+
+  // State to manage showing the detail screen
+  const [showArticleDetail, setShowArticleDetail] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+
+  const toggleLike = useCallback((itemId) => {
+    setLikedItems(prevLikedItems => {
+      const newLikedItems = new Set(prevLikedItems);
+      if (newLikedItems.has(itemId)) {
+        newLikedItems.delete(itemId);
+      } else {
+        newLikedItems.add(itemId);
+      }
+      return newLikedItems;
+    });
+  }, []);
 
   const tabs = [
     { key: 'all', label: 'All' },
@@ -218,25 +376,58 @@ function ArticleScreen({ navigation }) {
       return;
     }
 
-    Alert.alert(
-      'Confirm Deletion',
-      `Are you sure you want to delete ${selectedItems.length} selected item(s)?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          onPress: () => {
-            setPlants(plants.filter((item) => !selectedItems.includes(item.id)));
-            exitSelectionMode();
+    const deletableItems = plants.filter(item => selectedItems.includes(item.id) && item.category === 'publish');
+    const nonDeletableItems = selectedItems.filter(id => {
+      const item = plants.find(plant => plant.id === id);
+      return item && item.category !== 'publish';
+    });
+
+    if (nonDeletableItems.length > 0 && deletableItems.length === 0) {
+      Alert.alert('Deletion Restricted', 'Only articles with the category "My Publish" can be deleted.');
+      return;
+    }
+
+    if (nonDeletableItems.length > 0) {
+      Alert.alert(
+        'Partial Deletion',
+        'Some selected items cannot be deleted because they are not from "My Publish" category. Do you want to delete the eligible items?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
           },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true }
-    );
+          {
+            text: 'Delete Eligible',
+            onPress: () => {
+              setPlants(plants.filter(item => !(selectedItems.includes(item.id) && item.category === 'publish')));
+              exitSelectionMode();
+            },
+            style: 'destructive',
+          },
+        ],
+        { cancelable: true }
+      );
+    } else {
+      Alert.alert(
+        'Confirm Deletion',
+        `Are you sure you want to delete ${selectedItems.length} selected item(s)?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            onPress: () => {
+              setPlants(plants.filter((item) => !selectedItems.includes(item.id)));
+              exitSelectionMode();
+            },
+            style: 'destructive',
+          },
+        ],
+        { cancelable: true }
+      );
+    }
   };
 
   const filteredPlants = React.useMemo(() => {
@@ -258,38 +449,53 @@ function ArticleScreen({ navigation }) {
     return currentPlants;
   }, [activeTab, plants, searchQuery]);
 
+  const handleCardPress = (plant) => {
+    setSelectedArticle(plant);
+    setShowArticleDetail(true);
+  };
+
+  const handleBackFromDetail = () => {
+    setShowArticleDetail(false);
+    setSelectedArticle(null);
+  };
+
   const renderItem = ({ item }) => (
     <PlantCard
       item={item}
       selectionMode={selectionMode}
       selectedItems={selectedItems}
       toggleSelection={toggleSelection}
-      navigation={navigation} // navigation prop is available here
+      onCardPress={handleCardPress} // Pass the new handler
       enterSelectionMode={enterSelectionMode}
+      isLiked={likedItems.has(item.id)} // Pass liked status
+      toggleLike={toggleLike} // Pass toggle function
     />
   );
   let [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_700Bold,
-    Poppins_300Light,
-    Poppins_500Medium,
-    Sora_400Regular,
-    Sora_700Bold,
-    Sora_500Medium,
+    Nunito_400Regular,
+    Nunito_700Bold,
+    Nunito_300Light,
+    Nunito_500Medium,
   });
 
   if (!fontsLoaded) {
     return null;
   }
 
-  // ===================================================================
-  // NEW: Handler for the Add button (FAB)
-  // ===================================================================
   const handleAdd = () => {
     Alert.alert('Add Button Pressed', 'You tapped the add button! Implement your add logic here.');
-    // You can navigate to a new screen for adding content, e.g.:
-    // navigation.navigate('AddPlantScreen');
   };
+
+  if (showArticleDetail && selectedArticle) {
+    return (
+      <DetailScreen
+        plant={selectedArticle}
+        isLiked={likedItems.has(selectedArticle.id)}
+        toggleLike={toggleLike}
+        onBack={handleBackFromDetail} // Pass the new back handler
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -303,7 +509,7 @@ function ArticleScreen({ navigation }) {
         ) : (
           <TouchableOpacity
             style={styles.headerIcon}
-            onPress={() => navigation.goBack()} // Added goBack for the back icon
+            onPress={() => navigation.goBack()} // Keep navigation for the main tab back button
           >
             <Image source={require('../../assets/images/weui_back-outlined.png')} />
           </TouchableOpacity>
@@ -323,7 +529,7 @@ function ArticleScreen({ navigation }) {
         </TouchableOpacity>
         <TextInput
           placeholder="Search articles"
-          style={{ flex: 1, fontSize: 16, marginLeft: 10 }}
+          style={{ flex: 1, fontSize: 16, marginLeft: 10, fontFamily: 'Nunito_400Regular' }}
           value={searchQuery}
           onChangeText={setSearchQuery}
           returnKeyType="search"
@@ -364,13 +570,9 @@ function ArticleScreen({ navigation }) {
         )}
       />
 
-      {/* ===================================================================
-          NEW: Floating Action Button (FAB) for the Add icon
-          =================================================================== */}
       <TouchableOpacity style={styles.fab} onPress={handleAdd}>
-        {/* Placeholder for your add icon. Replace with your actual image. */}
         <Image
-          source={require('../../assets/images/add.png')} // <--- You need to add this image asset
+          source={require('../../assets/images/add.png')}
           style={styles.fabIcon}
         />
       </TouchableOpacity>
@@ -378,19 +580,15 @@ function ArticleScreen({ navigation }) {
   );
 }
 
-// =====================================================================
-// EXPORT THIS COMPONENT AS DEFAULT for your Article.js file
-// =====================================================================
 export default ArticleScreen;
 
-
-// Styles are defined outside the component for better practice
 const styles = StyleSheet.create({
+  // Styles from original article.js
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    fontFamily: 'Sora_400Regular',
+    fontFamily: 'Nunito_400Regular',
     height: 60,
     width: '100%',
     marginTop: 50,
@@ -407,7 +605,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   headerText: {
-    fontFamily: 'Sora_700Bold',
+    fontFamily: 'Nunito_700Bold',
     fontSize: 20,
     color: '#448461',
     position: 'absolute',
@@ -417,7 +615,7 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   headerButtonHapus: {
-    fontFamily: 'Sora_400Regular',
+    fontFamily: 'Nunito_400Regular',
     position: 'absolute',
     right: 20,
     backgroundColor: '#448461',
@@ -442,7 +640,7 @@ const styles = StyleSheet.create({
   headerButtonTextContent: {
     fontSize: 14,
     color: 'white',
-    fontFamily: 'Sora_700Bold',
+    fontFamily: 'Nunito_700Bold',
   },
   search: {
     flexDirection: 'row',
@@ -459,51 +657,8 @@ const styles = StyleSheet.create({
   filterContainergeser: { paddingVertical: 5, paddingRight: 20 },
   tabButton: { borderWidth: 1, borderColor: '#448461', borderRadius: 15, paddingVertical: 8, paddingHorizontal: 16, marginHorizontal: 5 },
   activeTab: { backgroundColor: '#448461' },
-  tabText: { color: '#448461', fontSize: 14 },
+  tabText: { color: '#448461', fontSize: 14, fontFamily: 'Nunito_400Regular' },
   activeText: { color: 'white', fontWeight: 'bold' },
-
-  cardWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: 400,
-    alignSelf: 'center',
-  },
-  checkboxContainer: {
-    width: 30,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  checkboxIcon: {
-    width: 24,
-    height: 24,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 4,
-    flex: 1,
-    width: 330,
-  },
-  cardShrink: {
-    width: 400,
-  },
-  topSection: { flexDirection: 'row' },
-  plantImage: { width: 230, height: 150, resizeMode: 'cover' },
-  rightInfo: { backgroundColor: '#DCF0E4', width: 100, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, position: 'relative' },
-  avatar: { width: 50, height: 50, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20 },
-  username: { fontSize: 14, color: '#448461', marginBottom: 10 },
-  heartButton: { width: 24, height: 24 },
-  bottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
-  plantName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4 },
-  description: { fontSize: 13, color: '#666' },
   emptyListContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -515,11 +670,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
+    fontFamily: 'Nunito_400Regular'
   },
-  // ===================================================================
-  // NEW: Styles for the Floating Action Button (FAB)
-  // Copied from detail.js and adjusted bottom position for navbar
-  // ===================================================================
   fab: {
     position: 'absolute',
     width: 60,
@@ -527,11 +679,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     right: 30,
-    bottom: 110, // Adjusted to be above the BottomNavBar (assuming navbar height ~80)
-    // backgroundColor: '#fff', // Green background
-    borderRadius: 30, // Makes it a perfect circle
-    elevation: 8, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    bottom: 110,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -540,6 +691,168 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     resizeMode: 'contain',
-    // tintColor: 'white', // Makes the icon white
+  },
+
+  // Styles from plantcard.js (prefixed with 'plantCard')
+  plantCardWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: 330,
+    alignSelf: 'center',
+  },
+  plantCardCheckboxContainer: {
+    width: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  plantCardCheckboxIcon: {
+    width: 24,
+    height: 24,
+  },
+  plantCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 4,
+    flex: 1,
+    width: 330,
+  },
+  plantCardShrink: {
+    width: 400,
+  },
+  plantCardTopSection: { flexDirection: 'row' },
+  plantCardImage: { width: 230, height: 150, resizeMode: 'cover' },
+  plantCardRightInfo: { backgroundColor: '#DCF0E4', width: 100, paddingVertical: 10 },
+  plantCardAvatar: { width: 50, height: 50, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20, alignSelf: 'center', justifyContent: 'center' },
+  plantCardUsername: { fontSize: 14, color: '#448461', marginBottom: 10, justifyContent: 'center', alignSelf: 'center' },
+  plantCardHeartButton: { width: 24, height: 24, alignSelf:'flex-end', marginRight: 10 },
+  plantCardBottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
+  plantCardName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4 },
+  plantCardDescription: { fontSize: 13, color: '#666' },
+
+  // Styles from detail.js (prefixed with 'detail')
+  detailContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 60,
+    width: '100%',
+    marginTop: 50,
+    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+  },
+  detailHeaderButton: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailHeaderIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+  detailHeaderText: {
+    flex: 1,
+    fontSize: 20,
+    fontFamily: 'Nunito_700Bold',
+    color: '#448461',
+    textAlign: 'center',
+  },
+  detailScrollContent: {
+    paddingBottom: 20,
+  },
+  detailTopImageSection: {
+    width: '100%',
+    height: 250,
+    position: 'relative',
+  },
+  detailMainPlantImage: {
+    borderTopLeftRadius: 10,
+    borderTopRightRadius:10,
+    width: '100%',
+    fontFamily: 'Nunito_700Bold',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  detailOverlayInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(59, 59, 59, 0.4)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  detailAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    borderColor: '#fff',
+    borderWidth: 1,
+    marginRight: 10,
+  },
+  detailUsername: {
+    fontSize: 16,
+    fontFamily: 'Nunito_700Bold',
+    color: '#fff',
+  },
+  detailContentSection: {
+    padding: 20,
+  },
+  detailPlantName: {
+    fontSize: 24,
+    fontFamily: 'Nunito_700Bold',
+    color: '#448461',
+    marginBottom: 5,
+  },
+  detailDateText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Nunito_400Regular',
+    marginBottom: 20,
+  },
+  detailSectionTitle: {
+    fontSize: 16,
+    color: '#448461',
+    marginTop: 10,
+    fontFamily: 'Nunito_700Bold',
+    marginBottom: 10,
+  },
+  detailPhotoOfDayImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  detailQuoteText: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: '#888',
+    textAlign: 'center',
+    marginVertical: 15,
+    paddingHorizontal: 10,
+    fontFamily: 'Nunito_400Regular'
+  },
+  detailFullArticleText: {
+    fontSize: 15,
+    color: '#333',
+    fontFamily: 'Nunito_400Regular',
+    lineHeight: 22,
+    marginTop: 10,
+    marginBottom:60
   },
 });
