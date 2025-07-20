@@ -2,14 +2,18 @@
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { deleteJournalEntries, getJournalEntriesByTitle } from './journalData'; // <--- JALUR YANG SUDAH ANDA KONFIRMASI
+import { useEffect, useState, useRef } from 'react';
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { deleteJournalEntries, getJournalEntriesByTitle, addJournalEntry, renameJournalFolder } from './journalData';
 
-// Impor gambar lokal untuk tombol tambah
 const addButtonImage = require('../../../assets/images/add.png');
+const SPACING = 30;
 
-const SPACING = 20;
+if (Platform.OS === 'android') {
+    if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+}
 
 export default function ListJournalScreen() {
     const { folderTitle } = useLocalSearchParams();
@@ -17,11 +21,73 @@ export default function ListJournalScreen() {
     const [journalData, setJournalData] = useState([]);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedItems, setSelectedItems] = useState(new Set());
+
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [tempTitle, setTempTitle] = useState(folderTitle);
     
+    const flatListRef = useRef(null);
+    const isInitialMount = useRef(true);
+    const titleInputRef = useRef(null);
+
+    // FIX BUG 1: Perbarui tempTitle setiap kali folderTitle berubah
+    useEffect(() => {
+        setTempTitle(folderTitle);
+    }, [folderTitle]);
+
+    // Effect untuk mengambil data jurnal saat folderTitle berubah
     useEffect(() => {
         const entries = getJournalEntriesByTitle(folderTitle);
         setJournalData(entries);
     }, [folderTitle]);
+    
+    // Effect untuk memfokuskan TextInput saat mode edit aktif
+    useEffect(() => {
+        if (isEditingTitle && titleInputRef.current) {
+            // FIX BUG 2: Gunakan setTimeout untuk memberi waktu pada UI
+            setTimeout(() => {
+                titleInputRef.current.focus();
+            }, 100); 
+        }
+    }, [isEditingTitle]);
+
+    // Effect untuk menggulir ke bawah saat ada entri baru
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        
+        if (flatListRef.current) {
+            setTimeout(() => {
+                flatListRef.current.scrollToEnd({ animated: true });
+            }, 50);
+        }
+    }, [journalData]);
+
+
+    const handleSaveTitle = () => {
+        if (tempTitle && tempTitle !== folderTitle) {
+            renameJournalFolder(folderTitle, tempTitle);
+            router.setParams({ folderTitle: tempTitle });
+        }
+        Keyboard.dismiss();
+        setIsEditingTitle(false);
+    };
+
+    const handleAddJournal = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        
+        const newEntry = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            day: 'New Entry',
+            content: 'Write something here...'
+        };
+        
+        addJournalEntry(folderTitle, newEntry);
+        
+        const updatedEntries = getJournalEntriesByTitle(folderTitle);
+        setJournalData([...updatedEntries]);
+    };
 
     const handleSelect = (itemId) => {
       setSelectedItems(prev => {
@@ -37,8 +103,10 @@ export default function ListJournalScreen() {
     
     const handleDelete = () => {
       deleteJournalEntries(folderTitle, selectedItems);
+      
       const newJournalData = getJournalEntriesByTitle(folderTitle);
-      setJournalData(newJournalData);
+      setJournalData([...newJournalData]);
+
       setIsSelectionMode(false);
       setSelectedItems(new Set());
     };
@@ -105,19 +173,44 @@ export default function ListJournalScreen() {
                   <TouchableOpacity onPress={handleBackPress}>
                     <Ionicons name="chevron-back" size={30} color="#000000" />
                   </TouchableOpacity>
-                  <Text style={styles.headerTitle}>{folderTitle}</Text>
+                  {isEditingTitle ? (
+                      <TextInput
+                          ref={titleInputRef}
+                          style={styles.headerTitleInput}
+                          value={tempTitle}
+                          onChangeText={setTempTitle}
+                          // onBlur akan memicu handleSaveTitle secara otomatis
+                          onBlur={handleSaveTitle}
+                          onSubmitEditing={handleSaveTitle}
+                          returnKeyType="done"
+                      />
+                  ) : (
+                      <TouchableOpacity onPress={() => setIsEditingTitle(true)}>
+                          <Text style={styles.headerTitle}>{folderTitle}</Text>
+                      </TouchableOpacity>
+                  )}
                   <TouchableOpacity onPress={() => console.log('More options')}>
                     <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.subTitle}>made in July, 2024</Text>
+                
                 <FlatList
+                    ref={flatListRef}
                     data={journalData}
                     renderItem={renderJournalEntry}
                     keyExtractor={(item) => item.id}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.listContainer}
                 />
+                
+                {isEditingTitle && (
+                    // Cukup panggil Keyboard.dismiss() untuk menutup keyboard.
+                    // onBlur pada TextInput akan menangani proses penyimpanan.
+                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                        <View style={styles.overlay} />
+                    </TouchableWithoutFeedback>
+                )}
             
                 {isSelectionMode && selectedItems.size > 0 && (
                     <TouchableOpacity
@@ -131,9 +224,7 @@ export default function ListJournalScreen() {
                 {!isSelectionMode && (
                   <TouchableOpacity
                     style={styles.addButton}
-                    onPress={() => {
-                      // router.push('AddJournal');
-                    }}
+                    onPress={handleAddJournal}
                   >
                     <Image source={addButtonImage} style={styles.addButtonImage} />
                   </TouchableOpacity>
@@ -165,6 +256,16 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#6A804F',
     },
+    headerTitleInput: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        color: '#6A804F',
+        borderBottomWidth: 1,
+        borderBottomColor: '#6A804F',
+        paddingBottom: 5,
+        flex: 1,
+        marginHorizontal: 10,
+    },
     subTitle: {
         fontSize: 14,
         color: '#888',
@@ -173,7 +274,7 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
     },
     listContainer: {
-        paddingBottom: 100,
+        paddingBottom: 200, 
     },
     entryRow: {
         flexDirection: 'row',
@@ -195,17 +296,17 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
     },
     selectedEntryCard: {
-      borderColor: '#448461',
-      borderWidth: 2,
+        borderColor: '#448461',
+        borderWidth: 2,
     },
     checkboxContainer: {
-      marginRight: 10,
-      width: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
+        marginRight: 20,
+        width: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     textContainer: {
-      flex: 1,
+        flex: 1,
     },
     entryDay: {
         fontSize: 20,
@@ -220,7 +321,7 @@ const styles = StyleSheet.create({
     },
     addButton: {
         position: 'absolute',
-        bottom: 120,
+        bottom: 15,
         right: 30,
         justifyContent: 'center',
         alignItems: 'center',
@@ -252,5 +353,9 @@ const styles = StyleSheet.create({
       color: '#FFFFFF',
       fontSize: 16,
       fontWeight: 'bold',
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject, 
+        zIndex: 1, 
     },
 });

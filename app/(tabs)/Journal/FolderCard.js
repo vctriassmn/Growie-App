@@ -26,14 +26,13 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.1)', // Mengurangi opasitas agar gambar lebih terlihat
+    ...StyleSheet.absoluteFillObject, // Mengurangi opasitas agar gambar lebih terlihat
     borderRadius: 15,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#448461',
     textAlign: 'center',
     paddingHorizontal: 5,
   },
