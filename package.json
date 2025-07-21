@@ -37,6 +37,10 @@
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
+<<<<<<< Updated upstream
+=======
+    "react-native-svg": "15.11.2",
+>>>>>>> Stashed changes
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5"
   },
