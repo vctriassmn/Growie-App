@@ -48,7 +48,12 @@
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
+<<<<<<< Updated upstream
     "react-native-wheel-picker-android": "^2.0.6"
+=======
+    "react-native-wheel-picker-android": "^2.0.6",
+    "react-native-wheel-picker-expo": "^0.5.4"
+>>>>>>> Stashed changes
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
