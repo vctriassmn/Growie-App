@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,7 +28,7 @@ export default function PlantDetail() {
             <StatusBar style="light" backgroundColor="#694B40" />
             <ScrollView style={styles.container}>
                 {/* back button */}
-                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden/pages')}>
                     <BackIcon width={40} height={40} />
                 </TouchableOpacity>
 
@@ -89,9 +89,11 @@ export default function PlantDetail() {
             </ScrollView>
 
             <View style={[styles.container, {flex: 1}]}>
-                <TouchableOpacity style={styles.editButton} onPress={() => router.push('edit-plant')}>
-                    <EditIcon width={60} height={60} />
-                </TouchableOpacity>
+                <Link href={`/MyGarden/plant/${id}/edit`} asChild>
+                    <TouchableOpacity style={styles.editButton}>
+                        <EditIcon width={60} height={60} />
+                    </TouchableOpacity>
+                </Link>
             </View>
 
 
