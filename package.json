@@ -53,7 +53,10 @@
 =======
     "react-native-wheel-picker-android": "^2.0.6",
     "react-native-wheel-picker-expo": "^0.5.4"
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> main
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
