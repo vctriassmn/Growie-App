@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// profile.js
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,28 +15,48 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '../../context/UserContext'; 
 
 export default function ProfilePage() {
   const router = useRouter();
+  // Ambil userName dan setUserName dari UserContext
+  const { userName, setUserName, profilePicture, setProfilePicture } = useUser();
 
-  const [profile, setProfile] = useState({
-    name: 'Ann',
+  // Gunakan state lokal untuk input yang dapat diedit, diinisialisasi dari context
+  const [tempName, setTempName] = useState(userName);
+  const [tempProfilePicture, setTempProfilePicture] = useState(profilePicture);
+
+  // State lokal untuk data profil lainnya yang belum diintegrasikan ke context
+  const [otherProfileData, setOtherProfileData] = useState({
     username: '@kejugoreng',
     email: 'annplant@mail.com',
     phoneNumber: '0822287162883',
-    profilePicture: 'https://placehold.co/150x150/E0E0E0/333333?text=Ann',
   });
+
+  // Sinkronkan state lokal tempName dan tempProfilePicture dengan context saat context berubah
+  useEffect(() => {
+    setTempName(userName);
+    setTempProfilePicture(profilePicture);
+  }, [userName, profilePicture]);
 
   const [isEditing, setIsEditing] = useState(false);
 
+  // Fungsi untuk menangani perubahan input
   const handleChange = (key, value) => {
-    setProfile((prev) => ({ ...prev, [key]: value }));
+    if (key === 'name') {
+      setTempName(value);
+    } else if (key === 'profilePicture') {
+      setTempProfilePicture(value);
+    } else {
+      setOtherProfileData((prev) => ({ ...prev, [key]: value }));
+    }
   };
 
+  // Fungsi untuk memilih gambar dari galeri
   const handleImagePick = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      return Alert.alert('Permission Denied', 'We need camera roll permission!');
+      return Alert.alert('Izin Ditolak', 'Kami memerlukan izin akses galeri!');
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -50,8 +71,16 @@ export default function ProfilePage() {
     }
   };
 
+  // Fungsi untuk menyimpan perubahan profil
   const handleSaveChanges = () => {
-    Alert.alert('Profile Updated', 'Your profile has been updated successfully!');
+    // Perbarui nama pengguna dan gambar profil di context
+    setUserName(tempName);
+    setProfilePicture(tempProfilePicture);
+
+    // Anda bisa menambahkan logika penyimpanan data lain ke database/AsyncStorage di sini
+    // Contoh: AsyncStorage.setItem('userOtherData', JSON.stringify(otherProfileData));
+
+    Alert.alert('Profil Diperbarui', 'Profil Anda telah berhasil diperbarui!');
     setIsEditing(false);
   };
 
@@ -68,49 +97,72 @@ export default function ProfilePage() {
         </View>
 
         <View style={styles.profileImageWrapper}>
-          <Image source={{ uri: profile.profilePicture }} style={styles.profileImage} />
+          {/* Tampilkan gambar profil dari context */}
+          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
         </View>
 
         {isEditing ? (
           <TouchableOpacity onPress={handleImagePick}>
-            <Text style={styles.changePicText}>Change Picture</Text>
+            <Text style={styles.changePicText}>Ubah Gambar</Text>
           </TouchableOpacity>
         ) : (
           <>
-            <Text style={styles.name}>{profile.name}</Text>
-            <Text style={styles.username}>{profile.username}</Text>
+            {/* Tampilkan nama pengguna dari context */}
+            <Text style={styles.name}>{userName}</Text>
+            {/* Username, email, dan phone number masih menggunakan state lokal */}
+            <Text style={styles.username}>{otherProfileData.username}</Text>
             <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
-              <Text style={styles.editButtonText}>edit profile</Text>
+              <Text style={styles.editButtonText}>edit profil</Text>
             </TouchableOpacity>
           </>
         )}
 
-        {/* Account header */}
         {!isEditing && (
           <View style={styles.accountHeader}>
-            <Text style={styles.accountHeaderText}>My Account</Text>
+            <Text style={styles.accountHeaderText}>Akun Saya</Text>
           </View>
         )}
 
         <View style={styles.card}>
           {isEditing ? (
             <>
-              <LabelledInput label="Name" value={profile.name} onChangeText={(text) => handleChange('name', text)} />
-              <LabelledInput label="Username" value={profile.username} onChangeText={(text) => handleChange('username', text)} />
-              <LabelledInput label="Email" value={profile.email} onChangeText={(text) => handleChange('email', text)} />
-              <LabelledInput label="Phone number" value={profile.phoneNumber} onChangeText={(text) => handleChange('phoneNumber', text)} />
+              {/* Input untuk Nama (menggunakan tempName dari context) */}
+              <LabelledInput
+                label="Nama"
+                value={tempName}
+                onChangeText={(text) => handleChange('name', text)}
+              />
+              {/* Input untuk Username */}
+              <LabelledInput
+                label="Username"
+                value={otherProfileData.username}
+                onChangeText={(text) => handleChange('username', text)}
+              />
+              {/* Input untuk Email */}
+              <LabelledInput
+                label="Email"
+                value={otherProfileData.email}
+                onChangeText={(text) => handleChange('email', text)}
+              />
+              {/* Input untuk Nomor Telepon */}
+              <LabelledInput
+                label="Nomor Telepon"
+                value={otherProfileData.phoneNumber}
+                onChangeText={(text) => handleChange('phoneNumber', text)}
+              />
               <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                <Text style={styles.saveButtonText}>Simpan Perubahan</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <InfoItem label="Name" value={profile.name} />
-              <InfoItem label="Username" value={profile.username} />
-              <InfoItem label="Email" value={profile.email} />
-              <InfoItem label="Phone Number" value={profile.phoneNumber} />
+              {/* Tampilkan informasi dari context dan state lokal */}
+              <InfoItem label="Nama" value={userName} />
+              <InfoItem label="Username" value={otherProfileData.username} />
+              <InfoItem label="Email" value={otherProfileData.email} />
+              <InfoItem label="Nomor Telepon" value={otherProfileData.phoneNumber} />
               <TouchableOpacity style={styles.logoutButton}>
-                <Text style={styles.logoutText}>Log Out</Text>
+                <Text style={styles.logoutText}>Keluar</Text>
               </TouchableOpacity>
             </>
           )}
@@ -120,6 +172,7 @@ export default function ProfilePage() {
   );
 }
 
+// Komponen pembantu untuk input berlabel
 function LabelledInput({ label, value, onChangeText }) {
   return (
     <View style={styles.inputWrapper}>
@@ -129,6 +182,7 @@ function LabelledInput({ label, value, onChangeText }) {
   );
 }
 
+// Komponen pembantu untuk menampilkan informasi
 function InfoItem({ label, value }) {
   return (
     <View style={styles.infoItem}>
@@ -203,7 +257,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#7c9e82',
     paddingVertical: 10,
-    alignItems: 'left',
+    alignItems: 'flex-start', // Menggunakan flex-start untuk rata kiri
     marginTop: 0,
     paddingLeft: 40,
   },

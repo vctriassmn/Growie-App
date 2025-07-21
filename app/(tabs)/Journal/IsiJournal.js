@@ -3,13 +3,22 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useFonts } from 'expo-font';
+import {
+    Nunito_400Regular,
+    Nunito_700Bold,
+    Nunito_300Light,
+    Nunito_500Medium
+} from '@expo-google-fonts/nunito';
 
-// Dummy data untuk semua entri, termasuk konten dan gambar penuh
+// Anda bisa menghapus atau mengabaikan allJournalEntries ini jika Anda hanya ingin menampilkan data dari ArticleScreen
+// Jika ada bagian lain dari aplikasi Anda yang masih mengandalkan data statis ini,
+// Anda bisa menyimpannya, tetapi pastikan logika di bawah memprioritaskan data dari params.
 const allJournalEntries = {
     '1a': {
         day: 'Day - 1',
         title: 'My Baby Spinach',
-        image: require('../../../assets/images/babyspinach.png'), // Ganti dengan path gambar yang sesuai
+        image: require('../../../assets/images/babyspinach.png'),
         content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
     },
     '2a': {
@@ -48,19 +57,42 @@ const allJournalEntries = {
         image: require('../../../assets/images/babyspinach.png'),
         content: 'Penyiraman pertama, tanah masih lembab. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
     },
-    // Tambahkan data dummy lainnya untuk folder 'Daily Progress' dan 'Beginner Guide'
-    // ...
 };
 
 export default function IsiJournalScreen() {
-    const { entryId } = useLocalSearchParams();
-    const journalEntry = allJournalEntries[entryId];
+    const params = useLocalSearchParams();
+    let journalEntry = null;
+
+    // Try to parse journalEntryData sent from ArticleScreen
+    if (params.journalEntryData) {
+        try {
+            journalEntry = JSON.parse(params.journalEntryData);
+        } catch (e) {
+            console.error("Failed to parse journalEntryData:", e);
+            journalEntry = null; // Ensure journalEntry is null if parsing fails
+        }
+    } else if (params.entryId) {
+        // Fallback for backward compatibility if other parts still send entryId
+        // Ensure allJournalEntries exists if you intend to use this.
+        journalEntry = allJournalEntries[params.entryId];
+    }
+
+    let [fontsLoaded] = useFonts({
+        Nunito_400Regular,
+        Nunito_700Bold,
+        Nunito_300Light,
+        Nunito_500Medium,
+    });
+
+    if (!fontsLoaded) {
+        return null;
+    }
 
     if (!journalEntry) {
         return (
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.container}>
-                    <Text style={styles.errorText}>Journal entry not found!</Text>
+                    <Text style={styles.errorText}>Journal entry not found or data is invalid!</Text>
                 </View>
             </SafeAreaView>
         );
@@ -82,10 +114,11 @@ export default function IsiJournalScreen() {
 
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                     <Text style={styles.entryDay}>{journalEntry.day}</Text>
-                    <Image source={journalEntry.image} style={styles.mainImage} />
+                    {/* Handle cases where image can be a require (number) or a URI (string) */}
+                    <Image source={typeof journalEntry.image === 'number' ? journalEntry.image : { uri: journalEntry.image }} style={styles.mainImage} />
                     <Text style={styles.entryContent}>{journalEntry.content}</Text>
 
-                    {/* Tiga tombol di bagian bawah */}
+                    {/* Three buttons at the bottom */}
                     <View style={styles.bottomButtonsContainer}>
                         <TouchableOpacity style={styles.bottomButton} onPress={() => console.log('Button 1 pressed')} />
                         <TouchableOpacity style={styles.bottomButton} onPress={() => console.log('Button 2 pressed')} />
@@ -119,6 +152,7 @@ const styles = StyleSheet.create({
         fontSize: 26,
         fontWeight: 'bold',
         color: '#6A804F',
+        fontFamily: 'Nunito_700Bold',
     },
     scrollContainer: {
         paddingBottom: 50,
@@ -128,6 +162,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#448461',
         marginBottom: 30,
+        fontFamily: 'Nunito_700Bold',
     },
     mainImage: {
         width: '100%',
@@ -140,9 +175,10 @@ const styles = StyleSheet.create({
         color: '#448461',
         lineHeight: 22,
         marginBottom: 30,
-        textAlign: 'justify', // Menjadikan tulisan rata kanan kiri
+        textAlign: 'justify',
         paddingRight:10,
         paddingLeft: 10,
+        fontFamily: 'Nunito_400Regular',
     },
     bottomButtonsContainer: {
         flexDirection: 'row',
@@ -163,5 +199,6 @@ const styles = StyleSheet.create({
         color: 'red',
         textAlign: 'center',
         marginTop: 50,
+        fontFamily: 'Nunito_400Regular',
     },
 });

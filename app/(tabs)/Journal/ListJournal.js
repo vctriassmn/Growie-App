@@ -1,12 +1,12 @@
-// File: app/(tabs)/Journal/ListJournal.js
+// File: src/app/Journal/ListJournalScreen.js
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState, useRef } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { deleteJournalEntries, getJournalEntriesByTitle, addJournalEntry, renameJournalFolder } from './journalData';
+import { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager, TextInput, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useJournalAndArticle } from '../../../context/JournalAndArticleStore'; 
 
-const addButtonImage = require('../../../assets/images/add.png');
 const SPACING = 30;
 
 if (Platform.OS === 'android') {
@@ -17,40 +17,41 @@ if (Platform.OS === 'android') {
 
 export default function ListJournalScreen() {
     const { folderTitle } = useLocalSearchParams();
+    const navigation = useNavigation();
     
-    const [journalData, setJournalData] = useState([]);
-    const [isSelectionMode, setIsSelectionMode] = useState(false);
-    const [selectedItems, setSelectedItems] = useState(new Set());
+    // Pastikan fungsi publishJournalEntries diimpor dari store
+    const { journals, addJournalEntry, deleteJournalEntries, publishJournalEntries } = useJournalAndArticle();
 
+    const [selectionMode, setSelectionMode] = useState(null);
+    const [selectedEntries, setSelectedEntries] = useState([]);
+    
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState(folderTitle);
     
     const flatListRef = useRef(null);
     const isInitialMount = useRef(true);
     const titleInputRef = useRef(null);
+    
+    const journalData = journals[folderTitle] || [];
 
-    // FIX BUG 1: Perbarui tempTitle setiap kali folderTitle berubah
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerShown: false,
+        });
+    }, [navigation]);
+
     useEffect(() => {
         setTempTitle(folderTitle);
     }, [folderTitle]);
 
-    // Effect untuk mengambil data jurnal saat folderTitle berubah
-    useEffect(() => {
-        const entries = getJournalEntriesByTitle(folderTitle);
-        setJournalData(entries);
-    }, [folderTitle]);
-    
-    // Effect untuk memfokuskan TextInput saat mode edit aktif
     useEffect(() => {
         if (isEditingTitle && titleInputRef.current) {
-            // FIX BUG 2: Gunakan setTimeout untuk memberi waktu pada UI
             setTimeout(() => {
                 titleInputRef.current.focus();
             }, 100); 
         }
     }, [isEditingTitle]);
 
-    // Effect untuk menggulir ke bawah saat ada entri baru
     useEffect(() => {
         if (isInitialMount.current) {
             isInitialMount.current = false;
@@ -64,10 +65,8 @@ export default function ListJournalScreen() {
         }
     }, [journalData]);
 
-
     const handleSaveTitle = () => {
         if (tempTitle && tempTitle !== folderTitle) {
-            renameJournalFolder(folderTitle, tempTitle);
             router.setParams({ folderTitle: tempTitle });
         }
         Keyboard.dismiss();
@@ -76,77 +75,115 @@ export default function ListJournalScreen() {
 
     const handleAddJournal = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        
         const newEntry = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
             day: 'New Entry',
             content: 'Write something here...'
         };
-        
         addJournalEntry(folderTitle, newEntry);
-        
-        const updatedEntries = getJournalEntriesByTitle(folderTitle);
-        setJournalData([...updatedEntries]);
     };
 
-    const handleSelect = (itemId) => {
-      setSelectedItems(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(itemId)) {
-          newSet.delete(itemId);
+    const toggleSelection = (entryId) => {
+        const isSelected = selectedEntries.includes(entryId);
+        if (isSelected) {
+            setSelectedEntries(selectedEntries.filter(id => id !== entryId));
         } else {
-          newSet.add(itemId);
+            setSelectedEntries([...selectedEntries, entryId]);
         }
-        return newSet;
-      });
     };
     
-    const handleDelete = () => {
-      deleteJournalEntries(folderTitle, selectedItems);
-      
-      const newJournalData = getJournalEntriesByTitle(folderTitle);
-      setJournalData([...newJournalData]);
+    const handleMoreOptions = () => {
+        Alert.alert(
+            "Pilih Aksi",
+            "Apa yang ingin Anda lakukan?",
+            [
+                {
+                    text: "Batal",
+                    onPress: () => console.log("Cancel Pressed"),
+                    style: "cancel"
+                },
+                {
+                    text: "Publish",
+                    onPress: () => setSelectionMode('publish')
+                },
+                {
+                    text: "Delete",
+                    onPress: () => setSelectionMode('delete')
+                }
+            ]
+        );
+    };
 
-      setIsSelectionMode(false);
-      setSelectedItems(new Set());
+    const handlePublish = () => {
+        if (selectedEntries.length === 0) {
+            Alert.alert("Peringatan", "Pilih setidaknya satu entri untuk dipublikasikan.");
+            return;
+        }
+        const entriesToPublish = journalData.filter(entry => selectedEntries.includes(entry.id));
+        
+        // Panggil fungsi publishJournalEntries dari store
+        publishJournalEntries(folderTitle, entriesToPublish);
+        
+        Alert.alert("Sukses", `${entriesToPublish.length} entri berhasil dipublikasikan!`);
+        setSelectionMode(null);
+        setSelectedEntries([]);
+    };
+
+    const handleDelete = () => {
+        if (selectedEntries.length === 0) {
+            Alert.alert("Peringatan", "Pilih setidaknya satu entri untuk dihapus.");
+            return;
+        }
+        Alert.alert(
+            "Konfirmasi Hapus",
+            `Anda yakin ingin menghapus ${selectedEntries.length} entri?`,
+            [
+                { text: "Batal", style: "cancel" },
+                {
+                    text: "Hapus",
+                    onPress: () => {
+                        deleteJournalEntries(folderTitle, selectedEntries);
+                        setSelectedEntries([]);
+                        setSelectionMode(null);
+                        Alert.alert("Sukses", `${selectedEntries.length} entri berhasil dihapus.`);
+                    },
+                    style: "destructive"
+                }
+            ]
+        );
+    };
+
+    const handleCancelSelection = () => {
+        setSelectionMode(null);
+        setSelectedEntries([]);
     };
 
     const renderJournalEntry = ({ item }) => {
-        const isSelected = selectedItems.has(item.id);
-        const checkboxIcon = isSelected ? 'checkbox-outline' : 'square-outline';
-
         const handlePress = () => {
-          if (isSelectionMode) {
-            handleSelect(item.id);
-          } else {
-            router.push({
-              pathname: 'Journal/IsiJournal',
-              params: { entryId: item.id }
-            });
-          }
-        };
-
-        const handleLongPress = () => {
-          setIsSelectionMode(true);
-          handleSelect(item.id);
+            if (selectionMode) {
+                toggleSelection(item.id);
+            } else {
+                router.push({
+                    pathname: 'Journal/IsiJournal',
+                    params: { entryId: item.id }
+                });
+            }
         };
 
         return (
-            <TouchableOpacity
-                onPress={handlePress}
-                onLongPress={handleLongPress}
-            >
+            <TouchableOpacity onPress={handlePress}>
                 <View style={styles.entryRow}>
-                    {isSelectionMode && (
-                        <View style={styles.checkboxContainer}>
-                            <Ionicons
-                                name={checkboxIcon}
-                                size={24}
-                                color={isSelected ? '#448461' : '#A9A9A9'}
+                    {selectionMode && (
+                        <TouchableOpacity onPress={() => toggleSelection(item.id)} style={styles.checkboxContainer}>
+                            <Image
+                                source={selectedEntries.includes(item.id) 
+                                    ? require('../../../assets/images/checkbox_checked.png')
+                                    : require('../../../assets/images/checkbox_unchecked.png')}
+                                style={styles.checkboxImage}
                             />
-                        </View>
+                        </TouchableOpacity>
                     )}
-                    <View style={[styles.entryCard, isSelected && styles.selectedEntryCard]}>
+                    <View style={styles.entryCard}>
                         <View style={styles.textContainer}>
                             <Text style={styles.entryDay}>{item.day}</Text>
                             <Text style={styles.entryContent} numberOfLines={1}>{item.content}</Text>
@@ -158,40 +195,40 @@ export default function ListJournalScreen() {
     };
 
     const handleBackPress = () => {
-      if (isSelectionMode) {
-        setIsSelectionMode(false);
-        setSelectedItems(new Set());
-      } else {
         router.navigate('../Journal');
-      }
     };
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
                 <View style={styles.header}>
-                  <TouchableOpacity onPress={handleBackPress}>
-                    <Ionicons name="chevron-back" size={30} color="#000000" />
-                  </TouchableOpacity>
-                  {isEditingTitle ? (
-                      <TextInput
-                          ref={titleInputRef}
-                          style={styles.headerTitleInput}
-                          value={tempTitle}
-                          onChangeText={setTempTitle}
-                          // onBlur akan memicu handleSaveTitle secara otomatis
-                          onBlur={handleSaveTitle}
-                          onSubmitEditing={handleSaveTitle}
-                          returnKeyType="done"
-                      />
-                  ) : (
-                      <TouchableOpacity onPress={() => setIsEditingTitle(true)}>
-                          <Text style={styles.headerTitle}>{folderTitle}</Text>
-                      </TouchableOpacity>
-                  )}
-                  <TouchableOpacity onPress={() => console.log('More options')}>
-                    <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
-                  </TouchableOpacity>
+                    <TouchableOpacity onPress={handleBackPress}>
+                        <Ionicons name="chevron-back" size={30} color="#000000" />
+                    </TouchableOpacity>
+                    {isEditingTitle ? (
+                        <TextInput
+                            ref={titleInputRef}
+                            style={styles.headerTitleInput}
+                            value={tempTitle}
+                            onChangeText={setTempTitle}
+                            onBlur={handleSaveTitle}
+                            onSubmitEditing={handleSaveTitle}
+                            returnKeyType="done"
+                        />
+                    ) : (
+                        <TouchableOpacity onPress={() => setIsEditingTitle(true)}>
+                            <Text style={styles.headerTitle}>{folderTitle}</Text>
+                        </TouchableOpacity>
+                    )}
+                    {selectionMode ? (
+                        <TouchableOpacity onPress={handleCancelSelection}>
+                            <Text style={styles.cancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity onPress={handleMoreOptions}>
+                            <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
+                        </TouchableOpacity>
+                    )}
                 </View>
                 <Text style={styles.subTitle}>made in July, 2024</Text>
                 
@@ -204,30 +241,21 @@ export default function ListJournalScreen() {
                     contentContainerStyle={styles.listContainer}
                 />
                 
-                {isEditingTitle && (
-                    // Cukup panggil Keyboard.dismiss() untuk menutup keyboard.
-                    // onBlur pada TextInput akan menangani proses penyimpanan.
-                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                        <View style={styles.overlay} />
-                    </TouchableWithoutFeedback>
-                )}
-            
-                {isSelectionMode && selectedItems.size > 0 && (
-                    <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={handleDelete}
-                    >
-                        <Text style={styles.deleteButtonText}>Delete ({selectedItems.size})</Text>
+                {selectionMode === 'publish' ? (
+                    <TouchableOpacity style={styles.fabTextButton} onPress={handlePublish}>
+                        <Text style={styles.fabText}>Publish</Text>
                     </TouchableOpacity>
-                )}
-                
-                {!isSelectionMode && (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handleAddJournal}
-                  >
-                    <Image source={addButtonImage} style={styles.addButtonImage} />
-                  </TouchableOpacity>
+                ) : selectionMode === 'delete' ? (
+                    <TouchableOpacity style={[styles.fabTextButton, styles.deleteButton]} onPress={handleDelete}>
+                        <Text style={styles.fabText}>Delete</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity style={styles.fabImageButton} onPress={handleAddJournal}>
+                        <Image
+                            source={require('../../../assets/images/add.png')}
+                            style={styles.fabImage}
+                        />
+                    </TouchableOpacity>
                 )}
             </View>
         </SafeAreaView>
@@ -266,6 +294,10 @@ const styles = StyleSheet.create({
         flex: 1,
         marginHorizontal: 10,
     },
+    cancelText: {
+        fontSize: 18,
+        color: '#888',
+    },
     subTitle: {
         fontSize: 14,
         color: '#888',
@@ -274,7 +306,7 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
     },
     listContainer: {
-        paddingBottom: 200, 
+        paddingBottom: 20,
     },
     entryRow: {
         flexDirection: 'row',
@@ -295,16 +327,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 3,
     },
-    selectedEntryCard: {
-        borderColor: '#448461',
-        borderWidth: 2,
-    },
-    checkboxContainer: {
-        marginRight: 20,
-        width: 36,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     textContainer: {
         flex: 1,
     },
@@ -319,43 +341,61 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         marginTop: 10,
     },
-    addButton: {
+    checkboxContainer: {
+        paddingRight: 10,
+    },
+    checkboxImage: {
+        width: 24,
+        height: 24,
+    },
+    fabTextButton: {
         position: 'absolute',
-        bottom: 15,
-        right: 30,
+        bottom: 120,
+        right: SPACING,
+        backgroundColor: '#448461',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4.65,
+        elevation: 8,
     },
-    addButtonImage: {
+    deleteButton: {
+        backgroundColor: '#DC143C',
+    },
+    fabText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    fabImageButton: {
+        position: 'absolute',
+        bottom: 120,
+        right: SPACING,
         width: 60,
         height: 60,
         borderRadius: 30,
         backgroundColor: '#5c8d5c',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
     },
-    deleteButton: {
-      position: 'absolute',
-      bottom: 120,
-      right: 30,
-      backgroundColor: '#FF6347',
-      paddingVertical: 15,
-      paddingHorizontal: 25,
-      borderRadius: 30,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4.65,
-    },
-    deleteButtonText: {
-      color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: 'bold',
+    fabImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
     },
     overlay: {
-        ...StyleSheet.absoluteFillObject, 
-        zIndex: 1, 
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 1,
+        backgroundColor: 'transparent',
     },
 });

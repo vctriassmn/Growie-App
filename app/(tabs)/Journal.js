@@ -1,181 +1,172 @@
-// File: app/(tabs)/Journal.js
+import React, { useState } from 'react';
+import {
+    StyleSheet,
+    Text,
+    View,
+    FlatList,
+    TouchableOpacity,
+    Alert,
+    Image
+} from 'react-native';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { router, useFocusEffect } from 'expo-router'; 
-import { getJournalFolders, addJournalFolder } from './Journal/journalData'; 
-import FolderCard from './Journal/FolderCard';
+// Import context yang sudah kita buat
+import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
 
-const coverImage = require('../../assets/images/coverFolder.png');
-const addButtonImage = require('../../assets/images/add.png');
+// Data contoh untuk jurnal. Dalam aplikasi nyata, ini bisa dari state atau database.
+const initialJournalEntries = [
+    {
+        id: 'journal-1',
+        name: 'My First Journal Entry',
+        description: 'Today I planted a beautiful new sunflower in my garden.',
+        image: require('../../assets/images/peacelily.png'),
+        avatar: require('../../assets/images/pp.jpg'),
+        username: 'JournalUser',
+        date: 'July 20, 2025',
+        photoOfTheDayImage: require('../../assets/images/plant.png'),
+        quote: '"Sunflowers always make me happy."',
+        fullArticle: 'My first entry about planting a sunflower. It was a great day. I hope it grows tall and strong!',
+    },
+    {
+        id: 'journal-2',
+        name: 'Caring for a new cactus',
+        description: 'A little guide on how to not overwater your cactus.',
+        image: require('../../assets/images/plant.png'),
+        avatar: require('../../assets/images/pp.jpg'),
+        username: 'CactusLover',
+        date: 'July 19, 2025',
+        photoOfTheDayImage: require('../../assets/images/alatgardening.png'),
+        quote: '"Less water, more sun!"',
+        fullArticle: 'I recently got a new cactus and learned that they need very little water. Just a little every few weeks is enough to keep it healthy and happy.',
+    },
+    // Tambahkan entri jurnal lainnya di sini
+];
 
-const HORIZONTAL_SPACING = 25;
-const VERTICAL_SPACING = 35;
+const JournalScreen = () => {
+    // Mengambil fungsi dari context
+    const { publishedArticles, addPublishedArticle } = useJournalAndArticle();
 
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = (width - (HORIZONTAL_SPACING * 2 + HORIZONTAL_SPACING)) / 2;
-
-const USER_NAME = "Ann";
-
-// Aktifkan LayoutAnimation di Android
-if (Platform.OS === 'android') {
-  if (UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }
-}
-
-export default function JournalPage() {
-  const [journalFolders, setJournalFolders] = useState([]);
-  const flatListRef = useRef(null);
-  const untitledCounter = useRef(0); // Tambahkan counter untuk judul
-
-  // Gunakan useFocusEffect untuk memuat data setiap kali layar aktif/difokuskan
-  useFocusEffect(
-    useCallback(() => {
-      const folders = getJournalFolders();
-      setJournalFolders(folders);
-    }, [])
-  );
-  
-  const handleAddFolder = () => {
-    // Terapkan animasi layout
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-
-    // Dapatkan hitungan folder untitled yang ada
-    const existingUntitledCount = journalFolders.filter(f => f.title.includes('Untitled')).length;
-    untitledCounter.current = existingUntitledCount + 1;
-
-    // Buat judul baru yang unik
-    const newTitle = `Untitled ${untitledCounter.current}`;
-    const newId = newTitle; // Menggunakan judul unik sebagai id
-    
-    const newFolder = {
-      id: newId,
-      title: newTitle
-    };
-    
-    // Tambahkan folder ke data persisten terlebih dahulu
-    addJournalFolder(newFolder);
-
-    // Muat ulang data dari sumber persisten untuk memastikan UI sinkron
-    const updatedFolders = getJournalFolders();
-    setJournalFolders(updatedFolders);
+    // State lokal untuk entri jurnal
+    const [journalEntries, setJournalEntries] = useState(initialJournalEntries);
     
-    // Pindahkan logika scroll ke sini
-    if (flatListRef.current) {
-        setTimeout(() => {
-            flatListRef.current.scrollToEnd({ animated: true });
-        }, 50);
-    }
-  };
+    // Fungsi untuk menandai sebuah jurnal sebagai "published"
+    const isPublished = (journalId) => {
+        return publishedArticles.some(article => article.id === journalId);
+    };
 
-  const renderJournalFolder = ({ item }) => (
-    <TouchableOpacity
-      style={styles.folderContainer}
-      onPress={() => {
-        router.push({
-          pathname: 'Journal/ListJournal',
-          params: { folderTitle: item.title }
-        });
-      }}
-    >
-      <FolderCard title={item.title} image={coverImage} />
-    </TouchableOpacity>
-  );
+    const handlePublish = (journalEntry) => {
+        // Panggil fungsi dari context untuk menambahkan artikel
+        addPublishedArticle(journalEntry);
+        Alert.alert('Published!', `${journalEntry.name} has been published to your articles.`);
+    };
 
-  const renderFooter = () => (
-    <View style={{ height: 100 }} />
-  );
+    const renderItem = ({ item }) => (
+        <View style={styles.journalCard}>
+            <Image source={item.image} style={styles.journalImage} />
+            <View style={styles.journalContent}>
+                <Text style={styles.journalTitle}>{item.name}</Text>
+                <Text style={styles.journalDescription}>{item.description}</Text>
+            </View>
+            <View style={styles.buttonContainer}>
+                {isPublished(item.id) ? (
+                    <Text style={styles.publishedText}>Published</Text>
+                ) : (
+                    <TouchableOpacity
+                        style={styles.publishButton}
+                        onPress={() => handlePublish(item)}
+                    >
+                        <Text style={styles.buttonText}>Publish</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+        </View>
+    );
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>This is {USER_NAME}'s</Text>
-          <Text style={styles.headerTextBold}>Journal</Text>
-        </View>
-        <FlatList
-          ref={flatListRef}
-          style={styles.flatList}
-          data={journalFolders}
-          renderItem={renderJournalFolder}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.listContainer}
-          columnWrapperStyle={styles.columnWrapper}
-          showsVerticalScrollIndicator={true}
-          ListFooterComponent={renderFooter}
-        />
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={handleAddFolder}
-        >
-          <Image source={addButtonImage} style={styles.addButtonImage} />
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.headerText}>My Journal</Text>
+            </View>
+            <FlatList
+                data={journalEntries}
+                renderItem={renderItem}
+                keyExtractor={item => item.id}
+                contentContainerStyle={styles.listContent}
+            />
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FAFFFB',
-    fontFamily: 'Nunito_400Regular',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#FAFFFB',
-    fontFamily: 'Nunito_400Regular',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-    marginTop: 70,
-    fontFamily: 'Nunito_400Regular',
-  },
-  headerText: {
-    fontSize: 26,
-    color: '#448461',
-  },
-  headerTextBold: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#448461',
-  },
-  flatList: {
-    flex: 1,
-  },
-  listContainer: {
-    paddingHorizontal: HORIZONTAL_SPACING,
-  },
-  columnWrapper: {
-    justifyContent: 'space-between',
-    marginBottom: VERTICAL_SPACING,
-  },
-  folderContainer: {
-    width: ITEM_WIDTH,
-    height: ITEM_WIDTH,
-    borderRadius: 15,
-    overflow: 'hidden',
-    elevation: 10,
-    marginTop: 10,
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: 120,
-    right: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-  },
-  addButtonImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#5c8d5c',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+    header: {
+        height: 100,
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        backgroundColor: '#448461',
+        paddingBottom: 15,
+    },
+    headerText: {
+        fontSize: 24,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    listContent: {
+        paddingVertical: 20,
+    },
+    journalCard: {
+        flexDirection: 'row',
+        backgroundColor: '#FBF2D6',
+        borderRadius: 10,
+        marginHorizontal: 20,
+        marginBottom: 15,
+        overflow: 'hidden',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    journalImage: {
+        width: 100,
+        height: 100,
+        resizeMode: 'cover',
+    },
+    journalContent: {
+        flex: 1,
+        padding: 10,
+        justifyContent: 'center',
+    },
+    journalTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 5,
+    },
+    journalDescription: {
+        fontSize: 12,
+        color: '#666',
+    },
+    buttonContainer: {
+        justifyContent: 'center',
+        paddingRight: 10,
+    },
+    publishButton: {
+        backgroundColor: '#448461',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 5,
+    },
+    buttonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    publishedText: {
+        color: 'green',
+        fontWeight: 'bold',
+        paddingHorizontal: 15,
+    }
 });
+
+export default JournalScreen;
