@@ -186,20 +186,14 @@ export const JournalAndArticleProvider = ({ children }) => {
     const publishJournalEntries = (folderTitle, entriesToPublish) => {
     setPublishedArticles(prevArticles => {
         const newPublishedArticles = entriesToPublish.map(entry => ({
-            id: `published-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            name: entry.day || `Journal from ${folderTitle}`,
-            description: entry.content || 'A journal entry published by a user.',
+            id: `published-...`, // ID baru dibuat
+            name: entry.day,
+            description: entry.content,
             image: entry.image,
-            
-            avatar: require('../assets/images/pp.jpg'), // Tetap gunakan avatar default
-            username: 'MySelf',
-            category: 'publish',
-            date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-            photoOfTheDayImage: entry.image || require('../assets/images/plant.png'), // Gunakan gambar jurnal juga untuk photo of the day
-            quote: `"My green creation, growing strong!"`,
+            category: 'publish', // Kategori di-set ke 'publish'
             fullArticle: entry.content
+            // ... properti lain
         }));
-        
         return [...newPublishedArticles, ...prevArticles];
     });
 };

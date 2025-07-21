@@ -6,19 +6,9 @@ import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, Vi
 import { useJournalAndArticle } from '../../../context/JournalAndArticleStore';
 
 export default function IsiJournalScreen() {
-    // 1. Ambil ID yang dibutuhkan dari parameter rute
     const { folderTitle, entryId } = useLocalSearchParams();
-    
-    // 2. Ambil fungsi yang kita butuhkan dari context
     const { getJournalEntryById } = useJournalAndArticle();
-
-    // 3. Ambil data HANYA dari context sebagai sumber kebenaran tunggal
     const journalEntry = getJournalEntryById(folderTitle, entryId);
-    
-    // HAPUS: const allJournalEntries = {...}
-    // HAPUS: const [fontsLoaded] = useFonts({...})
-
-    // Tampilan jika data tidak ditemukan
     if (!journalEntry) {
         return (
             <SafeAreaView style={styles.safeArea}>
@@ -50,7 +40,7 @@ export default function IsiJournalScreen() {
                     <Text style={styles.entryDay}>{journalEntry.day}</Text>
                     
                     <Image 
-                        source={journalEntry.image} // Tambahkan gambar placeholder
+                        source={journalEntry.image} 
                         style={styles.mainImage} 
                     />
                     
@@ -61,7 +51,6 @@ export default function IsiJournalScreen() {
     );
 }
 
-// Stylesheet yang sudah diperbarui dengan font global
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -82,7 +71,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 26,
         color: '#6A804F',
-        fontFamily: 'Nunito-Bold', // Gunakan font global
+        fontFamily: 'Nunito-Bold', 
     },
     scrollContainer: {
         paddingBottom: 50,
@@ -91,14 +80,14 @@ const styles = StyleSheet.create({
         fontSize: 20,
         color: '#448461',
         marginBottom: 30,
-        fontFamily: 'Nunito-Bold', // Gunakan font global
+        fontFamily: 'Nunito-Bold', 
     },
     mainImage: {
         width: '100%',
         height: 250,
         borderRadius: 25,
         marginBottom: 30,
-        backgroundColor: '#e0e0e0' // Warna latar jika gambar gagal dimuat
+        backgroundColor: '#e0e0e0'
     },
     entryContent: {
         fontSize: 14,
@@ -107,7 +96,7 @@ const styles = StyleSheet.create({
         marginBottom: 30,
         textAlign: 'justify',
         paddingHorizontal: 10,
-        fontFamily: 'Nunito-Regular', // Gunakan font global
+        fontFamily: 'Nunito-Regular', 
     },
     errorText: {
         fontSize: 18,

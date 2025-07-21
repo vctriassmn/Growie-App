@@ -468,24 +468,9 @@ function ArticleScreen({ navigation }) {
     }, [activeTab, plants, searchQuery, publishedArticles]); // Add publishedArticles as a dependency
 
     const handleCardPress = (plant) => {
-        // If the category is 'publish', navigate to IsiJournalScreen with the entire article object
-        if (plant.category === 'publish') {
-            const journalData = {
-                day: plant.date ? `Published on ${plant.date}` : 'No Date', 
-                title: plant.name,
-                image: plant.image,
-                content: plant.fullArticle, // Pass the full article content
-            };
-            router.push({
-                pathname: '/Journal/IsiJournal',
-                params: { journalEntryData: JSON.stringify(journalData) } // Send the entire object as a JSON string
-            });
-        } else {
-            // For other categories, show the Article Detail screen as before
-            setSelectedArticle(plant);
-            setShowArticleDetail(true);
-        }
-    };
+        setSelectedArticle(plant);
+        setShowArticleDetail(true);
+};
 
     const handleBackFromDetail = () => {
         setShowArticleDetail(false);
