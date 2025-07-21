@@ -1,84 +1,182 @@
-// File: app/(tabs)/Journal/ListJournal.js
-
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { deleteJournalEntries, getJournalEntriesByTitle } from '../../journalData'; // <--- JALUR YANG SUDAH ANDA KONFIRMASI
+import { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useJournalAndArticle } from '../../../context/JournalAndArticleStore'; 
 
-// Impor gambar lokal untuk tombol tambah
-const addButtonImage = require('../../../assets/images/add.png');
+const SPACING = 30;
 
-const SPACING = 20;
+if (Platform.OS === 'android') {
+    if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+}
 
 export default function ListJournalScreen() {
     const { folderTitle } = useLocalSearchParams();
+    const navigation = useNavigation();
     
-    const [journalData, setJournalData] = useState([]);
-    const [isSelectionMode, setIsSelectionMode] = useState(false);
-    const [selectedItems, setSelectedItems] = useState(new Set());
+    const { journals, addJournalEntry, deleteJournalEntries, publishJournalEntries, renameJournalFolder } = useJournalAndArticle();
+
+    const [selectionMode, setSelectionMode] = useState(null);
+    const [isMenuVisible, setIsMenuVisible] = useState(false);
+    const [selectedEntries, setSelectedEntries] = useState([]);
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [tempTitle, setTempTitle] = useState(folderTitle);
     
+    // --- PERUBAHAN 1: Tambahkan state dan ref untuk posisi menu ---
+    const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+    const optionsIconRef = useRef(null); // Ref untuk ikon ellipsis
+    
+    const flatListRef = useRef(null);
+    const titleInputRef = useRef(null);
+    
+    const journalData = journals[folderTitle] || [];
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerShown: false,
+        });
+    }, [navigation]);
+
     useEffect(() => {
-        const entries = getJournalEntriesByTitle(folderTitle);
-        setJournalData(entries);
+        setTempTitle(folderTitle);
     }, [folderTitle]);
 
-    const handleSelect = (itemId) => {
-      setSelectedItems(prev => {
-        const newSet = new Set(prev);
-        if (newSet.has(itemId)) {
-          newSet.delete(itemId);
-        } else {
-          newSet.add(itemId);
+    useEffect(() => {
+        if (isEditingTitle && titleInputRef.current) {
+            setTimeout(() => {
+                titleInputRef.current.focus();
+            }, 100); 
         }
-        return newSet;
-      });
+    }, [isEditingTitle]);
+
+    const handleSaveTitle = () => {
+        if (tempTitle && tempTitle !== folderTitle) {
+            renameJournalFolder(folderTitle, tempTitle);
+            router.replace({
+                pathname: '/Journal/ListJournal', 
+                params: { folderTitle: tempTitle }
+            });
+        }
+        Keyboard.dismiss();
+        setIsEditingTitle(false);
+    };
+
+    const handleAddJournal = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        const newEntry = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            day: 'New Entry',
+            content: 'Write something here...'
+        };
+        addJournalEntry(folderTitle, newEntry);
+        
+        setTimeout(() => {
+            if (flatListRef.current) {
+                flatListRef.current.scrollToEnd({ animated: true });
+            }
+        }, 100); 
+    };
+
+    const toggleSelection = (entryId) => {
+        const isSelected = selectedEntries.includes(entryId);
+        if (isSelected) {
+            setSelectedEntries(selectedEntries.filter(id => id !== entryId));
+        } else {
+            setSelectedEntries([...selectedEntries, entryId]);
+        }
     };
     
+    // --- PERUBAHAN 2: Fungsi handleMoreOptions sekarang mengukur posisi ikon ---
+    const handleMoreOptions = () => {
+        optionsIconRef.current.measure((x, y, width, height, pageX, pageY) => {
+            // pageY adalah jarak dari atas layar ke ikon
+            // height adalah tinggi ikon itu sendiri
+            setMenuPosition({
+                top: pageY + height, // Posisikan menu tepat di bawah ikon
+                right: Dimensions.get('window').width - pageX - width, // Posisikan di kanan
+            });
+            setIsMenuVisible(true);
+        });
+    };
+    
+    const handleSelectAction = (action) => {
+        setSelectionMode(action);
+        setIsMenuVisible(false);
+    };
+
+    const handlePublish = () => {
+        if (selectedEntries.length === 0) {
+            Alert.alert("Peringatan", "Pilih setidaknya satu entri untuk dipublikasikan.");
+            return;
+        }
+        const entriesToPublish = journalData.filter(entry => selectedEntries.includes(entry.id));
+        publishJournalEntries(folderTitle, entriesToPublish);
+        Alert.alert("Sukses", `${entriesToPublish.length} entri berhasil dipublikasikan!`);
+        setSelectionMode(null);
+        setSelectedEntries([]);
+    };
+
     const handleDelete = () => {
-      deleteJournalEntries(folderTitle, selectedItems);
-      const newJournalData = getJournalEntriesByTitle(folderTitle);
-      setJournalData(newJournalData);
-      setIsSelectionMode(false);
-      setSelectedItems(new Set());
+        if (selectedEntries.length === 0) {
+            Alert.alert("Peringatan", "Pilih setidaknya satu entri untuk dihapus.");
+            return;
+        }
+        Alert.alert(
+            "Konfirmasi Hapus",
+            `Anda yakin ingin menghapus ${selectedEntries.length} entri?`,
+            [
+                { text: "Batal", style: "cancel" },
+                {
+                    text: "Hapus",
+                    onPress: () => {
+                        deleteJournalEntries(folderTitle, selectedEntries);
+                        setSelectedEntries([]);
+                        setSelectionMode(null);
+                        Alert.alert("Sukses", `${selectedEntries.length} entri berhasil dihapus.`);
+                    },
+                    style: "destructive"
+                }
+            ]
+        );
+    };
+
+    const handleCancelSelection = () => {
+        setSelectionMode(null);
+        setSelectedEntries([]);
     };
 
     const renderJournalEntry = ({ item }) => {
-        const isSelected = selectedItems.has(item.id);
-        const checkboxIcon = isSelected ? 'checkbox-outline' : 'square-outline';
-
         const handlePress = () => {
-          if (isSelectionMode) {
-            handleSelect(item.id);
-          } else {
+        if (selectionMode) {
+            toggleSelection(item.id);
+        } else {
             router.push({
-              pathname: 'Journal/IsiJournal',
-              params: { entryId: item.id }
+                pathname: 'Journal/IsiJournal',
+                params: { 
+                    entryId: item.id,
+                    folderTitle: folderTitle 
+                }
             });
-          }
-        };
-
-        const handleLongPress = () => {
-          setIsSelectionMode(true);
-          handleSelect(item.id);
-        };
+        }
+    };
 
         return (
-            <TouchableOpacity
-                onPress={handlePress}
-                onLongPress={handleLongPress}
-            >
+            <TouchableOpacity onPress={handlePress}>
                 <View style={styles.entryRow}>
-                    {isSelectionMode && (
-                        <View style={styles.checkboxContainer}>
-                            <Ionicons
-                                name={checkboxIcon}
-                                size={24}
-                                color={isSelected ? '#448461' : '#A9A9A9'}
+                    {selectionMode && (
+                        <TouchableOpacity onPress={() => toggleSelection(item.id)} style={styles.checkboxContainer}>
+                            <Image
+                                source={selectedEntries.includes(item.id) 
+                                    ? require('../../../assets/images/checkbox_checked.png')
+                                    : require('../../../assets/images/checkbox_unchecked.png')}
+                                style={styles.checkboxImage}
                             />
-                        </View>
+                        </TouchableOpacity>
                     )}
-                    <View style={[styles.entryCard, isSelected && styles.selectedEntryCard]}>
+                    <View style={styles.entryCard}>
                         <View style={styles.textContainer}>
                             <Text style={styles.entryDay}>{item.day}</Text>
                             <Text style={styles.entryContent} numberOfLines={1}>{item.content}</Text>
@@ -90,59 +188,96 @@ export default function ListJournalScreen() {
     };
 
     const handleBackPress = () => {
-      if (isSelectionMode) {
-        setIsSelectionMode(false);
-        setSelectedItems(new Set());
-      } else {
         router.navigate('../Journal');
-      }
     };
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
                 <View style={styles.header}>
-                  <TouchableOpacity onPress={handleBackPress}>
-                    <Ionicons name="chevron-back" size={30} color="#000000" />
-                  </TouchableOpacity>
-                  <Text style={styles.headerTitle}>{folderTitle}</Text>
-                  <TouchableOpacity onPress={() => console.log('More options')}>
-                    <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
-                  </TouchableOpacity>
+                    <TouchableOpacity onPress={handleBackPress}>
+                        <Ionicons name="chevron-back" size={30} color="#000000" />
+                    </TouchableOpacity>
+                    {isEditingTitle ? (
+                        <TextInput
+                            ref={titleInputRef}
+                            style={styles.headerTitleInput}
+                            value={tempTitle}
+                            onChangeText={setTempTitle}
+                            onBlur={handleSaveTitle}
+                            onSubmitEditing={handleSaveTitle}
+                            returnKeyType="done"
+                        />
+                    ) : (
+                        <TouchableOpacity onPress={() => setIsEditingTitle(true)}>
+                            <Text style={styles.headerTitle}>{folderTitle}</Text>
+                        </TouchableOpacity>
+                    )}
+
+                    <View>
+                        {selectionMode ? (
+                            <TouchableOpacity onPress={handleCancelSelection}>
+                                <Text style={styles.cancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            // --- PERUBAHAN 3: Tambahkan ref ke TouchableOpacity ---
+                            <TouchableOpacity ref={optionsIconRef} onPress={handleMoreOptions}>
+                                <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
+
+                {isMenuVisible && (
+                    <>
+                        <TouchableWithoutFeedback onPress={() => setIsMenuVisible(false)}>
+                            <View style={styles.overlay} />
+                        </TouchableWithoutFeedback>
+                        {/* --- PERUBAHAN 4: Gunakan posisi dinamis dari state --- */}
+                        <View style={[styles.flyoutMenu, { top: menuPosition.top, right: menuPosition.right }]}>
+                            <TouchableOpacity style={styles.menuItem} onPress={() => handleSelectAction('publish')}>
+                                <Text style={styles.menuItemText}>Publish</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.menuItem} onPress={() => handleSelectAction('delete')}>
+                                <Text style={[styles.menuItemText, { color: '#DC143C' }]}>Delete</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
+
                 <Text style={styles.subTitle}>made in July, 2024</Text>
+                
                 <FlatList
+                    ref={flatListRef}
                     data={journalData}
                     renderItem={renderJournalEntry}
                     keyExtractor={(item) => item.id}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.listContainer}
                 />
-            
-                {isSelectionMode && selectedItems.size > 0 && (
-                    <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={handleDelete}
-                    >
-                        <Text style={styles.deleteButtonText}>Delete ({selectedItems.size})</Text>
-                    </TouchableOpacity>
-                )}
                 
-                {!isSelectionMode && (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => {
-                      // router.push('AddJournal');
-                    }}
-                  >
-                    <Image source={addButtonImage} style={styles.addButtonImage} />
-                  </TouchableOpacity>
+                {selectionMode === 'publish' ? (
+                    <TouchableOpacity style={styles.fabTextButton} onPress={handlePublish}>
+                        <Text style={styles.fabText}>Publish</Text>
+                    </TouchableOpacity>
+                ) : selectionMode === 'delete' ? (
+                    <TouchableOpacity style={[styles.fabTextButton, styles.deleteButton]} onPress={handleDelete}>
+                        <Text style={styles.fabText}>Delete</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity style={styles.fabImageButton} onPress={handleAddJournal}>
+                        <Image
+                            source={require('../../../assets/images/add.png')}
+                            style={styles.fabImage}
+                        />
+                    </TouchableOpacity>
                 )}
             </View>
         </SafeAreaView>
     );
 }
 
+// --- PERUBAHAN 5: Stylesheet diperbarui dengan font Nunito ---
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -159,21 +294,37 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 40,
         marginTop: 10,
+        zIndex: 10,
     },
     headerTitle: {
         fontSize: 26,
-        fontWeight: 'bold',
         color: '#6A804F',
+        fontFamily: 'Nunito-ExtraBold',
+    },
+    headerTitleInput: {
+        fontSize: 26,
+        color: '#6A804F',
+        borderBottomWidth: 1,
+        borderBottomColor: '#6A804F',
+        paddingBottom: 5,
+        flex: 1,
+        marginHorizontal: 10,
+        fontFamily: 'Nunito-Bold',
+    },
+    cancelText: {
+        fontSize: 18,
+        color: '#888',
+        fontFamily: 'Nunito-SemiBold',
     },
     subTitle: {
         fontSize: 14,
         color: '#888',
         marginBottom: 20,
         alignSelf: 'flex-start',
-        fontStyle: 'italic',
+        fontFamily: 'Nunito-Italic',
     },
     listContainer: {
-        paddingBottom: 100,
+        paddingBottom: 20,
     },
     entryRow: {
         flexDirection: 'row',
@@ -194,63 +345,98 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 3,
     },
-    selectedEntryCard: {
-      borderColor: '#448461',
-      borderWidth: 2,
-    },
-    checkboxContainer: {
-      marginRight: 10,
-      width: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
     textContainer: {
-      flex: 1,
+        flex: 1,
     },
     entryDay: {
         fontSize: 20,
-        fontWeight: 'bold',
         color: '#448461',
+        fontFamily: 'Nunito-Bold',
     },
     entryContent: {
         fontSize: 12,
         color: '#448461',
         lineHeight: 20,
         marginTop: 10,
+        fontFamily: 'Nunito-Regular',
     },
-    addButton: {
+    checkboxContainer: {
+        paddingRight: 10,
+    },
+    checkboxImage: {
+        width: 24,
+        height: 24,
+    },
+    fabTextButton: {
         position: 'absolute',
         bottom: 120,
-        right: 30,
+        right: SPACING,
+        backgroundColor: '#448461',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4.65,
+        elevation: 8,
     },
-    addButtonImage: {
+    deleteButton: {
+        backgroundColor: '#DC143C',
+    },
+    fabText: {
+        color: 'white',
+        fontSize: 16,
+        fontFamily: 'Nunito-Bold',
+    },
+    fabImageButton: {
+        position: 'absolute',
+        bottom: 120,
+        right: SPACING,
         width: 60,
         height: 60,
         borderRadius: 30,
         backgroundColor: '#5c8d5c',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
     },
-    deleteButton: {
-      position: 'absolute',
-      bottom: 120,
-      right: 30,
-      backgroundColor: '#FF6347',
-      paddingVertical: 15,
-      paddingHorizontal: 25,
-      borderRadius: 30,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4.65,
+    fabImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
     },
-    deleteButtonText: {
-      color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: 'bold',
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        zIndex: 20,
+    },
+    flyoutMenu: {
+        position: 'absolute',
+        backgroundColor: '#FBF2D6',
+        borderRadius: 8,
+        paddingVertical: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        zIndex: 30,
+        width: 200,
+    },
+    menuItem: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+    },
+    menuItemText: {
+        fontSize: 16,
+        color: '#333',
+        fontFamily: 'Nunito-SemiBold',
     },
 });
