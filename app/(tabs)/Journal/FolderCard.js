@@ -5,6 +5,7 @@ export default function FolderCard({ title, image }) {
     <View style={styles.container}>
       <ImageBackground source={image} style={styles.image} imageStyle={styles.imageStyle}>
         <View style={styles.overlay} />
+        {/* Teks judul folder */}
         <Text style={styles.title}>{title}</Text>
       </ImageBackground>
     </View>
@@ -13,7 +14,7 @@ export default function FolderCard({ title, image }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Mengisi ruang yang tersedia di folderContainer
+    flex: 1,
     borderRadius: 15,
     overflow: 'hidden',
   },
@@ -26,14 +27,14 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject, // Mengurangi opasitas agar gambar lebih terlihat
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 15,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#448461',
+    color: '#448461', 
     textAlign: 'center',
     paddingHorizontal: 5,
+    fontFamily: 'Nunito-Bold', 
   },
 });

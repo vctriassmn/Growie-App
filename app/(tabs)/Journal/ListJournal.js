@@ -1,9 +1,7 @@
-// File: src/app/Journal/ListJournalScreen.js
-
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, useRef, useLayoutEffect } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager, TextInput, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager, TextInput, TouchableWithoutFeedback, Keyboard, Alert, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useJournalAndArticle } from '../../../context/JournalAndArticleStore'; 
 
@@ -19,17 +17,19 @@ export default function ListJournalScreen() {
     const { folderTitle } = useLocalSearchParams();
     const navigation = useNavigation();
     
-    // Pastikan fungsi publishJournalEntries diimpor dari store
-    const { journals, addJournalEntry, deleteJournalEntries, publishJournalEntries } = useJournalAndArticle();
+    const { journals, addJournalEntry, deleteJournalEntries, publishJournalEntries, renameJournalFolder } = useJournalAndArticle();
 
     const [selectionMode, setSelectionMode] = useState(null);
+    const [isMenuVisible, setIsMenuVisible] = useState(false);
     const [selectedEntries, setSelectedEntries] = useState([]);
-    
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState(folderTitle);
     
+    // --- PERUBAHAN 1: Tambahkan state dan ref untuk posisi menu ---
+    const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+    const optionsIconRef = useRef(null); // Ref untuk ikon ellipsis
+    
     const flatListRef = useRef(null);
-    const isInitialMount = useRef(true);
     const titleInputRef = useRef(null);
     
     const journalData = journals[folderTitle] || [];
@@ -52,22 +52,13 @@ export default function ListJournalScreen() {
         }
     }, [isEditingTitle]);
 
-    useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
-        }
-        
-        if (flatListRef.current) {
-            setTimeout(() => {
-                flatListRef.current.scrollToEnd({ animated: true });
-            }, 50);
-        }
-    }, [journalData]);
-
     const handleSaveTitle = () => {
         if (tempTitle && tempTitle !== folderTitle) {
-            router.setParams({ folderTitle: tempTitle });
+            renameJournalFolder(folderTitle, tempTitle);
+            router.replace({
+                pathname: '/Journal/ListJournal', 
+                params: { folderTitle: tempTitle }
+            });
         }
         Keyboard.dismiss();
         setIsEditingTitle(false);
@@ -81,6 +72,12 @@ export default function ListJournalScreen() {
             content: 'Write something here...'
         };
         addJournalEntry(folderTitle, newEntry);
+        
+        setTimeout(() => {
+            if (flatListRef.current) {
+                flatListRef.current.scrollToEnd({ animated: true });
+            }
+        }, 100); 
     };
 
     const toggleSelection = (entryId) => {
@@ -92,26 +89,22 @@ export default function ListJournalScreen() {
         }
     };
     
+    // --- PERUBAHAN 2: Fungsi handleMoreOptions sekarang mengukur posisi ikon ---
     const handleMoreOptions = () => {
-        Alert.alert(
-            "Pilih Aksi",
-            "Apa yang ingin Anda lakukan?",
-            [
-                {
-                    text: "Batal",
-                    onPress: () => console.log("Cancel Pressed"),
-                    style: "cancel"
-                },
-                {
-                    text: "Publish",
-                    onPress: () => setSelectionMode('publish')
-                },
-                {
-                    text: "Delete",
-                    onPress: () => setSelectionMode('delete')
-                }
-            ]
-        );
+        optionsIconRef.current.measure((x, y, width, height, pageX, pageY) => {
+            // pageY adalah jarak dari atas layar ke ikon
+            // height adalah tinggi ikon itu sendiri
+            setMenuPosition({
+                top: pageY + height, // Posisikan menu tepat di bawah ikon
+                right: Dimensions.get('window').width - pageX - width, // Posisikan di kanan
+            });
+            setIsMenuVisible(true);
+        });
+    };
+    
+    const handleSelectAction = (action) => {
+        setSelectionMode(action);
+        setIsMenuVisible(false);
     };
 
     const handlePublish = () => {
@@ -120,10 +113,7 @@ export default function ListJournalScreen() {
             return;
         }
         const entriesToPublish = journalData.filter(entry => selectedEntries.includes(entry.id));
-        
-        // Panggil fungsi publishJournalEntries dari store
         publishJournalEntries(folderTitle, entriesToPublish);
-        
         Alert.alert("Sukses", `${entriesToPublish.length} entri berhasil dipublikasikan!`);
         setSelectionMode(null);
         setSelectedEntries([]);
@@ -160,15 +150,18 @@ export default function ListJournalScreen() {
 
     const renderJournalEntry = ({ item }) => {
         const handlePress = () => {
-            if (selectionMode) {
-                toggleSelection(item.id);
-            } else {
-                router.push({
-                    pathname: 'Journal/IsiJournal',
-                    params: { entryId: item.id }
-                });
-            }
-        };
+        if (selectionMode) {
+            toggleSelection(item.id);
+        } else {
+            router.push({
+                pathname: 'Journal/IsiJournal',
+                params: { 
+                    entryId: item.id,
+                    folderTitle: folderTitle 
+                }
+            });
+        }
+    };
 
         return (
             <TouchableOpacity onPress={handlePress}>
@@ -220,16 +213,38 @@ export default function ListJournalScreen() {
                             <Text style={styles.headerTitle}>{folderTitle}</Text>
                         </TouchableOpacity>
                     )}
-                    {selectionMode ? (
-                        <TouchableOpacity onPress={handleCancelSelection}>
-                            <Text style={styles.cancelText}>Cancel</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={handleMoreOptions}>
-                            <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
-                        </TouchableOpacity>
-                    )}
+
+                    <View>
+                        {selectionMode ? (
+                            <TouchableOpacity onPress={handleCancelSelection}>
+                                <Text style={styles.cancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            // --- PERUBAHAN 3: Tambahkan ref ke TouchableOpacity ---
+                            <TouchableOpacity ref={optionsIconRef} onPress={handleMoreOptions}>
+                                <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
+
+                {isMenuVisible && (
+                    <>
+                        <TouchableWithoutFeedback onPress={() => setIsMenuVisible(false)}>
+                            <View style={styles.overlay} />
+                        </TouchableWithoutFeedback>
+                        {/* --- PERUBAHAN 4: Gunakan posisi dinamis dari state --- */}
+                        <View style={[styles.flyoutMenu, { top: menuPosition.top, right: menuPosition.right }]}>
+                            <TouchableOpacity style={styles.menuItem} onPress={() => handleSelectAction('publish')}>
+                                <Text style={styles.menuItemText}>Publish</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.menuItem} onPress={() => handleSelectAction('delete')}>
+                                <Text style={[styles.menuItemText, { color: '#DC143C' }]}>Delete</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
+
                 <Text style={styles.subTitle}>made in July, 2024</Text>
                 
                 <FlatList
@@ -262,6 +277,7 @@ export default function ListJournalScreen() {
     );
 }
 
+// --- PERUBAHAN 5: Stylesheet diperbarui dengan font Nunito ---
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -278,32 +294,34 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 40,
         marginTop: 10,
+        zIndex: 10,
     },
     headerTitle: {
         fontSize: 26,
-        fontWeight: 'bold',
         color: '#6A804F',
+        fontFamily: 'Nunito-ExtraBold',
     },
     headerTitleInput: {
         fontSize: 26,
-        fontWeight: 'bold',
         color: '#6A804F',
         borderBottomWidth: 1,
         borderBottomColor: '#6A804F',
         paddingBottom: 5,
         flex: 1,
         marginHorizontal: 10,
+        fontFamily: 'Nunito-Bold',
     },
     cancelText: {
         fontSize: 18,
         color: '#888',
+        fontFamily: 'Nunito-SemiBold',
     },
     subTitle: {
         fontSize: 14,
         color: '#888',
         marginBottom: 20,
         alignSelf: 'flex-start',
-        fontStyle: 'italic',
+        fontFamily: 'Nunito-Italic',
     },
     listContainer: {
         paddingBottom: 20,
@@ -332,14 +350,15 @@ const styles = StyleSheet.create({
     },
     entryDay: {
         fontSize: 20,
-        fontWeight: 'bold',
         color: '#448461',
+        fontFamily: 'Nunito-Bold',
     },
     entryContent: {
         fontSize: 12,
         color: '#448461',
         lineHeight: 20,
         marginTop: 10,
+        fontFamily: 'Nunito-Regular',
     },
     checkboxContainer: {
         paddingRight: 10,
@@ -369,8 +388,8 @@ const styles = StyleSheet.create({
     },
     fabText: {
         color: 'white',
-        fontWeight: 'bold',
         fontSize: 16,
+        fontFamily: 'Nunito-Bold',
     },
     fabImageButton: {
         position: 'absolute',
@@ -395,7 +414,29 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        zIndex: 1,
-        backgroundColor: 'transparent',
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        zIndex: 20,
+    },
+    flyoutMenu: {
+        position: 'absolute',
+        backgroundColor: '#FBF2D6',
+        borderRadius: 8,
+        paddingVertical: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        zIndex: 30,
+        width: 200,
+    },
+    menuItem: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+    },
+    menuItemText: {
+        fontSize: 16,
+        color: '#333',
+        fontFamily: 'Nunito-SemiBold',
     },
 });

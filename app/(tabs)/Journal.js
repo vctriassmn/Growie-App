@@ -1,172 +1,258 @@
-import React, { useState } from 'react';
-import {
-    StyleSheet,
-    Text,
-    View,
-    FlatList,
-    TouchableOpacity,
-    Alert,
-    Image
-} from 'react-native';
-
-// Import context yang sudah kita buat
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
+import FolderCard from './Journal/FolderCard'; // Ingat, file ini juga perlu diubah
+import { useUser } from '../../context/UserContext';
 
-// Data contoh untuk jurnal. Dalam aplikasi nyata, ini bisa dari state atau database.
-const initialJournalEntries = [
-    {
-        id: 'journal-1',
-        name: 'My First Journal Entry',
-        description: 'Today I planted a beautiful new sunflower in my garden.',
-        image: require('../../assets/images/peacelily.png'),
-        avatar: require('../../assets/images/pp.jpg'),
-        username: 'JournalUser',
-        date: 'July 20, 2025',
-        photoOfTheDayImage: require('../../assets/images/plant.png'),
-        quote: '"Sunflowers always make me happy."',
-        fullArticle: 'My first entry about planting a sunflower. It was a great day. I hope it grows tall and strong!',
-    },
-    {
-        id: 'journal-2',
-        name: 'Caring for a new cactus',
-        description: 'A little guide on how to not overwater your cactus.',
-        image: require('../../assets/images/plant.png'),
-        avatar: require('../../assets/images/pp.jpg'),
-        username: 'CactusLover',
-        date: 'July 19, 2025',
-        photoOfTheDayImage: require('../../assets/images/alatgardening.png'),
-        quote: '"Less water, more sun!"',
-        fullArticle: 'I recently got a new cactus and learned that they need very little water. Just a little every few weeks is enough to keep it healthy and happy.',
-    },
-    // Tambahkan entri jurnal lainnya di sini
-];
+const coverImage = require('../../assets/images/coverFolder.png');
+const addButtonImage = require('../../assets/images/add.png');
 
-const JournalScreen = () => {
-    // Mengambil fungsi dari context
-    const { publishedArticles, addPublishedArticle } = useJournalAndArticle();
+const HORIZONTAL_SPACING = 25;
+const VERTICAL_SPACING = 35;
 
-    // State lokal untuk entri jurnal
-    const [journalEntries, setJournalEntries] = useState(initialJournalEntries);
-    
-    // Fungsi untuk menandai sebuah jurnal sebagai "published"
-    const isPublished = (journalId) => {
-        return publishedArticles.some(article => article.id === journalId);
-    };
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = (width - (HORIZONTAL_SPACING * 2 + HORIZONTAL_SPACING)) / 2;
 
-    const handlePublish = (journalEntry) => {
-        // Panggil fungsi dari context untuk menambahkan artikel
-        addPublishedArticle(journalEntry);
-        Alert.alert('Published!', `${journalEntry.name} has been published to your articles.`);
-    };
+// Aktifkan LayoutAnimation di Android
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 
-    const renderItem = ({ item }) => (
-        <View style={styles.journalCard}>
-            <Image source={item.image} style={styles.journalImage} />
-            <View style={styles.journalContent}>
-                <Text style={styles.journalTitle}>{item.name}</Text>
-                <Text style={styles.journalDescription}>{item.description}</Text>
-            </View>
-            <View style={styles.buttonContainer}>
-                {isPublished(item.id) ? (
-                    <Text style={styles.publishedText}>Published</Text>
-                ) : (
-                    <TouchableOpacity
-                        style={styles.publishButton}
-                        onPress={() => handlePublish(item)}
-                    >
-                        <Text style={styles.buttonText}>Publish</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
-        </View>
-    );
+export default function JournalPage() {
+  const { userName } = useUser();
+  const { getJournalFolders, addJournalFolder, deleteJournalFolders } = useJournalAndArticle();
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>My Journal</Text>
-            </View>
-            <FlatList
-                data={journalEntries}
-                renderItem={renderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContent}
-            />
-        </View>
-    );
-};
+  const [journalFolders, setJournalFolders] = useState([]);
+  const [selectedMode, setSelectedMode] = useState(false);
+  const [selectedFolders, setSelectedFolders] = useState([]);
+  const flatListRef = useRef(null);
+  const untitledCounter = useRef(0);
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    header: {
-        height: 100,
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        backgroundColor: '#448461',
-        paddingBottom: 15,
-    },
-    headerText: {
-        fontSize: 24,
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    listContent: {
-        paddingVertical: 20,
-    },
-    journalCard: {
-        flexDirection: 'row',
-        backgroundColor: '#FBF2D6',
-        borderRadius: 10,
-        marginHorizontal: 20,
-        marginBottom: 15,
-        overflow: 'hidden',
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    journalImage: {
-        width: 100,
-        height: 100,
-        resizeMode: 'cover',
-    },
-    journalContent: {
-        flex: 1,
-        padding: 10,
-        justifyContent: 'center',
-    },
-    journalTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    journalDescription: {
-        fontSize: 12,
-        color: '#666',
-    },
-    buttonContainer: {
-        justifyContent: 'center',
-        paddingRight: 10,
-    },
-    publishButton: {
-        backgroundColor: '#448461',
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-    },
-    buttonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    publishedText: {
-        color: 'green',
-        fontWeight: 'bold',
-        paddingHorizontal: 15,
+  useFocusEffect(
+    useCallback(() => {
+      const folders = getJournalFolders();
+      setJournalFolders(folders);
+      setSelectedMode(false);
+      setSelectedFolders([]);
+    }, [getJournalFolders])
+  );
+
+  const handleAddFolder = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    const existingUntitledCount = journalFolders.filter(f => f.title.includes('Untitled')).length;
+    untitledCounter.current = existingUntitledCount + 1;
+    const newTitle = `Untitled ${untitledCounter.current}`;
+    const newFolder = { id: newTitle, title: newTitle };
+
+    addJournalFolder(newFolder);
+    const updatedFolders = getJournalFolders();
+    setJournalFolders(updatedFolders);
+
+    if (flatListRef.current) {
+      setTimeout(() => {
+        flatListRef.current.scrollToEnd({ animated: true });
+      }, 50);
     }
-});
+  };
 
-export default JournalScreen;
+  const toggleFolderSelection = (folderId) => {
+    if (selectedFolders.includes(folderId)) {
+      setSelectedFolders(selectedFolders.filter((id) => id !== folderId));
+    } else {
+      setSelectedFolders([...selectedFolders, folderId]);
+    }
+  };
+
+  const handleDeleteFolders = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    deleteJournalFolders(selectedFolders);
+    const updatedFolders = getJournalFolders();
+    setJournalFolders(updatedFolders);
+    setSelectedMode(false);
+    setSelectedFolders([]);
+  };
+
+  const handleCancelSelection = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSelectedMode(false);
+    setSelectedFolders([]);
+  };
+
+  const renderJournalFolder = ({ item }) => {
+    const isSelected = selectedFolders.includes(item.id);
+  
+    return (
+      <TouchableOpacity
+        style={styles.folderContainer}
+        onPress={() => {
+          if (selectedMode) {
+            toggleFolderSelection(item.id);
+          } else {
+            router.push({
+              pathname: 'Journal/ListJournal',
+              params: { folderTitle: item.title }
+            });
+          }
+        }}
+        onLongPress={() => {
+          if (!selectedMode) {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setSelectedMode(true);
+            toggleFolderSelection(item.id);
+          }
+        }}
+      >
+        <FolderCard title={item.title} image={coverImage} />
+        {isSelected && (
+          <View style={styles.selectedOverlay} />
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderFooter = () => (
+    <View style={{ height: 100 }} />
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          {selectedMode ? (
+            <>
+              <TouchableOpacity onPress={handleCancelSelection} style={styles.cancelButton}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerTextBold}>Selected ({selectedFolders.length})</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.headerText}>This is {userName}'s</Text>
+              <Text style={styles.headerTextBold}>Journal</Text>
+            </>
+          )}
+        </View>
+        <FlatList
+          ref={flatListRef}
+          style={styles.flatList}
+          data={journalFolders}
+          renderItem={renderJournalFolder}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.listContainer}
+          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={true}
+          ListFooterComponent={renderFooter}
+        />
+        {selectedMode ? (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={handleDeleteFolders}
+            disabled={selectedFolders.length === 0}
+          >
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={[styles.actionButton, styles.addButton]} onPress={handleAddFolder}>
+            <Image source={addButtonImage} style={styles.actionButtonImage} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// --- BAGIAN STYLESHEET YANG DIPERBARUI ---
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FAFFFB',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFFFB',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 70,
+  },
+  headerText: {
+    fontSize: 26,
+    color: '#448461',
+    fontFamily: 'Nunito-Regular',
+  },
+  headerTextBold: {
+    fontSize: 32,
+    color: '#448461',
+    fontFamily: 'Nunito-ExtraBold', 
+  },
+  flatList: {
+    flex: 1,
+  },
+  listContainer: {
+    paddingHorizontal: HORIZONTAL_SPACING,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: VERTICAL_SPACING,
+  },
+  folderContainer: {
+    width: ITEM_WIDTH,
+    height: ITEM_WIDTH,
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 10,
+    marginTop: 10,
+    position: 'relative',
+  },
+  actionButton: {
+    position: 'absolute',
+    bottom: 120,
+    right: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+  },
+  addButton: {
+    backgroundColor: '#5c8d5c',
+    borderRadius: 30,
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontFamily: 'Nunito-Bold',
+  },
+  actionButtonImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  cancelButton: {
+    position: 'absolute',
+    left: 20,
+    top: -30,
+  },
+  cancelText: {
+    fontSize: 18,
+    color: '#448461',
+    fontFamily: 'Nunito-SemiBold',
+  },
+  selectedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(68, 132, 97, 0.4)',
+    borderRadius: 15,
+  },
+});

@@ -1,98 +1,32 @@
-// File: app/(tabs)/Journal/IsiJournal.js
+// File: app/(tabs)/Journal/IsiJournal.js (Kode Final yang Bersih)
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useFonts } from 'expo-font';
-import {
-    Nunito_400Regular,
-    Nunito_700Bold,
-    Nunito_300Light,
-    Nunito_500Medium
-} from '@expo-google-fonts/nunito';
-
-// Anda bisa menghapus atau mengabaikan allJournalEntries ini jika Anda hanya ingin menampilkan data dari ArticleScreen
-// Jika ada bagian lain dari aplikasi Anda yang masih mengandalkan data statis ini,
-// Anda bisa menyimpannya, tetapi pastikan logika di bawah memprioritaskan data dari params.
-const allJournalEntries = {
-    '1a': {
-        day: 'Day - 1',
-        title: 'My Baby Spinach',
-        image: require('../../../assets/images/babyspinach.png'),
-        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    },
-    '2a': {
-        day: 'Day - 2',
-        title: 'My Baby Spinach',
-        image: require('../../../assets/images/babyspinach.png'),
-        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    },
-    '3a': {
-        day: 'Day - 3',
-        title: 'My Baby Spinach',
-        image: require('../../../assets/images/babyspinach.png'),
-        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    },
-    '4a': {
-        day: 'Day - 4',
-        title: 'My Baby Spinach',
-        image: require('../../../assets/images/babyspinach.png'),
-        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    },
-    '5a': {
-        day: 'Day - 5',
-        title: 'My Baby Spinach',
-        image: require('../../../assets/images/babyspinach.png'),
-        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    },
-    '1b': {
-        day: 'Hari Ke-1',
-        title: 'Nanem Jagung',
-        image: require('../../../assets/images/babyspinach.png'),
-        content: 'Mulai menanam jagung, semoga tumbuh subur. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Mulai menanam jagung, semoga tumbuh subur. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
-    },
-    '2b': {
-        day: 'Hari Ke-2',
-        title: 'Nanem Jagung',
-        image: require('../../../assets/images/babyspinach.png'),
-        content: 'Penyiraman pertama, tanah masih lembab. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
-    },
-};
+import { useJournalAndArticle } from '../../../context/JournalAndArticleStore';
 
 export default function IsiJournalScreen() {
-    const params = useLocalSearchParams();
-    let journalEntry = null;
+    // 1. Ambil ID yang dibutuhkan dari parameter rute
+    const { folderTitle, entryId } = useLocalSearchParams();
+    
+    // 2. Ambil fungsi yang kita butuhkan dari context
+    const { getJournalEntryById } = useJournalAndArticle();
 
-    // Try to parse journalEntryData sent from ArticleScreen
-    if (params.journalEntryData) {
-        try {
-            journalEntry = JSON.parse(params.journalEntryData);
-        } catch (e) {
-            console.error("Failed to parse journalEntryData:", e);
-            journalEntry = null; // Ensure journalEntry is null if parsing fails
-        }
-    } else if (params.entryId) {
-        // Fallback for backward compatibility if other parts still send entryId
-        // Ensure allJournalEntries exists if you intend to use this.
-        journalEntry = allJournalEntries[params.entryId];
-    }
+    // 3. Ambil data HANYA dari context sebagai sumber kebenaran tunggal
+    const journalEntry = getJournalEntryById(folderTitle, entryId);
+    
+    // HAPUS: const allJournalEntries = {...}
+    // HAPUS: const [fontsLoaded] = useFonts({...})
 
-    let [fontsLoaded] = useFonts({
-        Nunito_400Regular,
-        Nunito_700Bold,
-        Nunito_300Light,
-        Nunito_500Medium,
-    });
-
-    if (!fontsLoaded) {
-        return null;
-    }
-
+    // Tampilan jika data tidak ditemukan
     if (!journalEntry) {
         return (
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.container}>
-                    <Text style={styles.errorText}>Journal entry not found or data is invalid!</Text>
+                    <Text style={styles.errorText}>Entri Jurnal tidak ditemukan!</Text>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Text style={styles.backLink}>Kembali ke Daftar</Text>
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
@@ -101,12 +35,12 @@ export default function IsiJournalScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
-                {/* Header (Back, Title, More) */}
+                {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()}>
                         <Ionicons name="chevron-back" size={30} color="#000000" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>{journalEntry.title}</Text>
+                    <Text style={styles.headerTitle}>{folderTitle}</Text>
                     <TouchableOpacity onPress={() => console.log('More options')}>
                         <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
                     </TouchableOpacity>
@@ -114,22 +48,20 @@ export default function IsiJournalScreen() {
 
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                     <Text style={styles.entryDay}>{journalEntry.day}</Text>
-                    {/* Handle cases where image can be a require (number) or a URI (string) */}
-                    <Image source={typeof journalEntry.image === 'number' ? journalEntry.image : { uri: journalEntry.image }} style={styles.mainImage} />
+                    
+                    <Image 
+                        source={journalEntry.image} // Tambahkan gambar placeholder
+                        style={styles.mainImage} 
+                    />
+                    
                     <Text style={styles.entryContent}>{journalEntry.content}</Text>
-
-                    {/* Three buttons at the bottom */}
-                    <View style={styles.bottomButtonsContainer}>
-                        <TouchableOpacity style={styles.bottomButton} onPress={() => console.log('Button 1 pressed')} />
-                        <TouchableOpacity style={styles.bottomButton} onPress={() => console.log('Button 2 pressed')} />
-                        <TouchableOpacity style={styles.bottomButton} onPress={() => console.log('Button 3 pressed')} />
-                    </View>
                 </ScrollView>
             </View>
         </SafeAreaView>
     );
 }
 
+// Stylesheet yang sudah diperbarui dengan font global
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -139,7 +71,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FAFFFB',
         paddingHorizontal: 20,
-        paddingBottom: 100,
     },
     header: {
         flexDirection: 'row',
@@ -150,25 +81,24 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 26,
-        fontWeight: 'bold',
         color: '#6A804F',
-        fontFamily: 'Nunito_700Bold',
+        fontFamily: 'Nunito-Bold', // Gunakan font global
     },
     scrollContainer: {
         paddingBottom: 50,
     },
     entryDay: {
         fontSize: 20,
-        fontWeight: 'bold',
         color: '#448461',
         marginBottom: 30,
-        fontFamily: 'Nunito_700Bold',
+        fontFamily: 'Nunito-Bold', // Gunakan font global
     },
     mainImage: {
         width: '100%',
         height: 250,
         borderRadius: 25,
         marginBottom: 30,
+        backgroundColor: '#e0e0e0' // Warna latar jika gambar gagal dimuat
     },
     entryContent: {
         fontSize: 14,
@@ -176,29 +106,22 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         marginBottom: 30,
         textAlign: 'justify',
-        paddingRight:10,
-        paddingLeft: 10,
-        fontFamily: 'Nunito_400Regular',
-    },
-    bottomButtonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        marginTop: 15,
-    },
-    bottomButton: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: '#D9ECE1',
-        justifyContent: 'center',
-        alignItems: 'center',
+        paddingHorizontal: 10,
+        fontFamily: 'Nunito-Regular', // Gunakan font global
     },
     errorText: {
         fontSize: 18,
         color: 'red',
         textAlign: 'center',
         marginTop: 50,
-        fontFamily: 'Nunito_400Regular',
+        fontFamily: 'Nunito-Regular',
     },
+    backLink: {
+        fontSize: 16,
+        color: '#448461',
+        textAlign: 'center',
+        marginTop: 20,
+        fontFamily: 'Nunito-Bold',
+        textDecorationLine: 'underline',
+    }
 });
