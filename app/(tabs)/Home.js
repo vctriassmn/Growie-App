@@ -1,9 +1,9 @@
 
-import { StyleSheet, Text, View, Button } from 'react-native';
-import { useRouter } from 'expo-router';
+// import { StyleSheet, Text, View,  } from 'react-native';
+// import { useRouter } from 'expo-router';
 
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
+import { StyleSheet, Text, View, Button, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
 
 // Data dummy
@@ -198,16 +198,16 @@ export default function HomePage() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  const router = useRouter();
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Ini adalah Halaman Home</Text>
-      <Button title="Go to Profile" onPress={() => router.push('/Profile')} />
-    </View>
-  );
-}
+// return (
+//   <View style={styles.container}>
+//       <Text style={styles.text}>Ini adalah Halaman Home</Text>
+//       <Button title="Go to Profile" onPress={() => router.push('/Profile')} />
+//     </View>
+//   );
+)}
 
+// const router = useRouter();
 
 // Objek Shadow
 const shadowStyle = {
@@ -273,4 +273,4 @@ const styles = StyleSheet.create({
   articleDescription: { fontSize: 13, color: '#666', fontFamily: 'Nunito_400Regular' },
   articleLikeButton: { position: 'absolute', top: 10, right: 10, padding: 5, },
   articleLikeIcon: { width: 24, height: 24, },
-});
+}});
