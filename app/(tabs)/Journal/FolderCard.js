@@ -31,10 +31,10 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#448461', 
     textAlign: 'center',
     paddingHorizontal: 5,
-    fontFamily: 'Nunito-Bold', 
+    fontFamily: 'Nunito-ExtraBold', // Gunakan font yang sesuai
   },
 });

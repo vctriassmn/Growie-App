@@ -97,8 +97,10 @@ export default function ProfilePage() {
         </View>
 
         <View style={styles.profileImageWrapper}>
-          {/* Tampilkan gambar profil dari context */}
-          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+          <Image 
+            source={typeof tempProfilePicture === 'string' ? { uri: tempProfilePicture } : tempProfilePicture} 
+            style={styles.profileImage} 
+          />
         </View>
 
         {isEditing ? (
@@ -272,7 +274,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginTop: 5,
-    marginBottom: 40,
+    marginBottom: 50,
   },
   infoItem: {
     marginBottom: 14,
@@ -286,7 +288,7 @@ const styles = StyleSheet.create({
     color: '#4f704f',
   },
   inputWrapper: {
-    marginBottom: 25,
+    marginBottom: 12,
   },
   inputLabel: {
     fontWeight: '500',
