@@ -1,9 +1,7 @@
-
-// import { StyleSheet, Text, View,  } from 'react-native';
-// import { useRouter } from 'expo-router';
+// Lokasi file: app/(tabs)/Home.js
 
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, Button, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
 
 // Data dummy
@@ -27,11 +25,10 @@ const remindersData = [
 
 // Impor Aset
 import BellIcon from '../../assets/images/bell.svg'; 
-import ProfileBorderSVG from '../../assets/icons/profile.svg'; // SVG untuk bingkai
-const profilePic = require('../../assets/images/profile-image.png'); // Gambar profil PNG
+import ProfileBorderSVG from '../../assets/icons/profile.svg';
+const profilePic = require('../../assets/images/profile-image.png');
 const heartIconActive = require('../../assets/images/like_active.png');
 const heartIconInactive = require('../../assets/images/like_inactive.png');
-
 
 // Komponen ArticleCard
 const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
@@ -63,7 +60,6 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
     </TouchableOpacity>
   );
 };
-
 
 // Komponen Utama HomePage
 export default function HomePage() {
@@ -97,6 +93,7 @@ export default function HomePage() {
       scrollViewRef.current.scrollTo({ y: articleSectionY.current, animated: true });
     }
   };
+
   const scrollToTop = () => {
     if (scrollViewRef.current) {
       setIsPanelUp(false);
@@ -118,15 +115,12 @@ export default function HomePage() {
             {/* Header dengan Profil SVG */}
             <View style={styles.header}>
               <View style={styles.profileContainer}>
-                {/* Layer Bawah: Bingkai SVG */}
                 <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
-                {/* Layer Atas: Gambar Profil PNG */}
                 <Image source={profilePic} style={styles.profileImage} />
               </View>
               <Text style={styles.greetingText}>Hello! akusaygkamu</Text>
             </View>
             
-            {/* Sisa konten atas */}
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeTitle}>Welcome to Homepage!</Text>
               <TouchableOpacity onPress={() => router.push('/Notification')}>
@@ -169,7 +163,6 @@ export default function HomePage() {
             </View>
         </View>
 
-        {/* Bagian Artikel yang bisa digeser */}
         <View 
           style={styles.articlesSection}
           onLayout={(event) => { articleSectionY.current = event.nativeEvent.layout.y; }}
@@ -198,16 +191,8 @@ export default function HomePage() {
         </View>
       </ScrollView>
     </SafeAreaView>
-
-// return (
-//   <View style={styles.container}>
-//       <Text style={styles.text}>Ini adalah Halaman Home</Text>
-//       <Button title="Go to Profile" onPress={() => router.push('/Profile')} />
-//     </View>
-//   );
-)}
-
-// const router = useRouter();
+  );
+}
 
 // Objek Shadow
 const shadowStyle = {
@@ -226,7 +211,6 @@ const styles = StyleSheet.create({
   paddedContent: { paddingHorizontal: 20, },
   header: { backgroundColor: '#FBF2D6', padding: 15, borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginTop: 10, ...shadowStyle, },
   
-  // Style untuk Profil dengan SVG
   profileContainer: {
     width: 60,
     height: 60,
@@ -238,11 +222,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#5c8d5c',
-    marginBottom: 20,
   },
   
   greetingText: { fontSize: 20, fontWeight: 'normal', color: '#333' },
@@ -270,7 +249,7 @@ const styles = StyleSheet.create({
   articleUsername: { fontSize: 14, color: '#448461', fontWeight: '600', },
   articleBottomSection: { paddingVertical: 15, paddingHorizontal: 20, },
   articleName: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 4, },
-  articleDescription: { fontSize: 13, color: '#666', fontFamily: 'Nunito_400Regular' },
+  articleDescription: { fontSize: 13, color: '#666', }, // Sebelumnya fontFamily: 'Nunito_400Regular'
   articleLikeButton: { position: 'absolute', top: 10, right: 10, padding: 5, },
   articleLikeIcon: { width: 24, height: 24, },
-}});
+});
