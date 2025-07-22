@@ -1,5 +1,5 @@
-// File: app/(tabs)/Journal/IsiJournal.js
 
+// File: app/(tabs)/Journal/IsiJournal.js
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState, useRef, useEffect } from 'react';
@@ -100,6 +100,7 @@ export default function IsiJournalScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
+
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 <View style={styles.container}>
                     <View style={styles.header}>
