@@ -1,4 +1,4 @@
-// context/UserContext.js
+// Lokasi file: context/UserContext.js
 // File ini akan menyimpan state global untuk nama pengguna dan gambar profil.
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Pastikan Anda sudah menginstal ini

@@ -15,8 +15,8 @@ import EditIcon from '../../../../assets/icons/edit.svg';
 import BackIcon from '../../../../assets/icons/back.svg';
 
 export const options = {
-  tabBarStyle: { display: 'none' }, // untuk tab bawaan
-  tabBarVisible: false,             // untuk beberapa custom layout (non-standard)
+  tabBarStyle: { display: 'none' }, 
+  tabBarVisible: false,             
 };
 
 export default function PlantDetail() {
@@ -27,8 +27,6 @@ export default function PlantDetail() {
     const screenWidth = Dimensions.get('window').width;
     const router = useRouter();
 
-    
-    
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#694B40' }}>
             <StatusBar style="light" backgroundColor="#694B40" />
