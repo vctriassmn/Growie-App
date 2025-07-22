@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Image, Switch, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Image, Animated, ActivityIndicator } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as Font from 'expo-font';
 import { useIsFocused } from '@react-navigation/native';
 
 export default function Reminder() {
   const navigation = useNavigation();
+  const route = useRoute();
   const currentDate = new Date();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const isFocused = useIsFocused();
@@ -16,67 +17,67 @@ export default function Reminder() {
   const [reminders, setReminders] = useState([
     { 
       id: '1', 
-      time: '07:30', 
+      time: '07.30', 
       title: 'Baby Spinach', 
       category: 'Watering',
       active: true, 
-      days: {M: true, T: true, W: true, Th: true, F: true, S: false, Su: false} 
+      days: {M: true, T: true, W: true, T: true, F: true, S: false, S: false} 
     },
     { 
       id: '2', 
-      time: '08:00', 
+      time: '08.00', 
       title: 'Peace Lily', 
       category: 'Watering',
       active: false, 
-      days: {M: true, T: true, W: true, Th: true, F: true, S: false, Su: false} 
+      days: {M: true, T: true, W: true, T: true, F: true, S: false, S: false} 
     },
     { 
       id: '3', 
-      time: '09:15', 
+      time: '09.15', 
       title: 'Snake Plant', 
       category: 'Fertilizing',
       active: true, 
-      days: {M: false, T: false, W: false, Th: false, F: true, S: true, Su: true} 
+      days: {M: false, T: false, W: false, T: false, F: true, S: true, S: true} 
     },
     { 
       id: '4', 
-      time: '12:45', 
+      time: '12.45', 
       title: 'Monstera', 
       category: 'Pruning',
       active: false, 
-      days: {M: true, T: false, W: true, Th: false, F: true, S: false, Su: false} 
+      days: {M: true, T: false, W: true, T: false, F: true, S: false, S: false} 
     },
     { 
       id: '5', 
-      time: '14:30', 
+      time: '14.30', 
       title: 'Fiddle Leaf Fig', 
       category: 'Watering',
       active: true, 
-      days: {M: true, T: false, W: true, Th: false, F: true, S: false, Su: false} 
+      days: {M: true, T: false, W: true, T: false, F: true, S: false, S: false} 
     },
     { 
       id: '6', 
-      time: '15:45', 
+      time: '15.45', 
       title: 'Pothos', 
       category: 'Fertilizing',
       active: false, 
-      days: {M: false, T: true, W: false, Th: true, F: false, S: true, Su: false} 
+      days: {M: false, T: true, W: false, T: true, F: false, S: true, S: false} 
     },
     { 
       id: '7', 
-      time: '17:00', 
+      time: '17.00', 
       title: 'Orchid', 
       category: 'Watering',
       active: true, 
-      days: {M: true, T: true, W: true, Th: true, F: true, S: true, Su: true} 
+      days: {M: true, T: true, W: true, T: true, F: true, S: true, S: true} 
     },
     { 
       id: '8', 
-      time: '19:15', 
+      time: '19.15', 
       title: 'Rubber Plant', 
       category: 'Pruning',
       active: false, 
-      days: {M: false, T: false, W: false, Th: false, F: false, S: true, Su: true} 
+      days: {M: false, T: false, W: false, T: false, F: false, S: true, S: true} 
     }
   ]);
 
@@ -86,13 +87,39 @@ export default function Reminder() {
   });
 
   useEffect(() => {
-    // Simulate data loading (in a real app, this would fetch from API or storage)
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [isFocused]);
+    // Check if we have a returned reminder from the addReminder screen
+    if (isFocused && navigation.isFocused()) {
+      const updatedReminder = route?.params?.updatedReminder;
+      const isNewReminder = route?.params?.isNewReminder;
+
+      if (updatedReminder) {
+        // Cek apakah reminder ini sudah ada dalam array
+        const reminderExists = reminders.some(r => r.id === updatedReminder.id);
+        
+        if (isNewReminder && !reminderExists) {
+          // Add the new reminder to the list
+          setReminders(prev => [updatedReminder, ...prev]);
+        } else if (reminderExists) {
+          // Update the existing reminder
+          setReminders(prev => 
+            prev.map(reminder => 
+              reminder.id === updatedReminder.id ? updatedReminder : reminder
+            )
+          );
+        }
+        
+        // Clear the params after using them
+        navigation.setParams({ updatedReminder: null, isNewReminder: null });
+      }
+
+      // Simulate data loading (in a real app, this would fetch from API or storage)
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isFocused, navigation]);
 
   if (!fontsLoaded || isLoading) {
     return (
@@ -291,29 +318,44 @@ export default function Reminder() {
                     <View style={styles.daysSwitchContainer}>
                       {/* Weekday indicators */}
                       <View style={styles.daysContainer}>
-                        {Object.entries(item.days).map(([day, isActive], index) => (
-                          <Text 
-                            key={index} 
-                            style={[
-                              styles.dayIndicator,
-                              isActive && styles.activeDayIndicator,
-                              !item.active && isActive && styles.inactiveDayIndicator
-                            ]}
-                          >
-                            {day}
-                          </Text>
-                        ))}
+                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => {
+                          // Get the corresponding day key 
+                          const dayKey = Object.keys(item.days)[index];
+                          const isActive = item.days[dayKey];
+                          return (
+                            <Text 
+                              key={index} 
+                              style={[
+                                styles.dayIndicator,
+                                isActive && styles.activeDayIndicator,
+                                !item.active && isActive && styles.inactiveDayIndicator
+                              ]}
+                            >
+                              {day}
+                            </Text>
+                          );
+                        })}
                       </View>
                       
-                      {/* Toggle switch */}
-                      <Switch
-                        trackColor={{ false: '#D9ECE1', true: '#7BAB91' }}
-                        thumbColor={'#fff'}
-                        ios_backgroundColor="#D9ECE1"
-                        onValueChange={() => handleToggleReminder(item.id)}
-                        value={item.active}
-                        style={styles.reminderSwitch}
-                      />
+                      {/* Custom Toggle Switch */}
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => handleToggleReminder(item.id)}
+                        style={styles.switchContainer}
+                      >
+                        <View 
+                          style={[
+                            styles.customSwitch,
+                            item.active ? styles.customSwitchActive : styles.customSwitchInactive
+                          ]}
+                        />
+                        <Animated.View 
+                          style={[
+                            styles.customSwitchThumb,
+                            item.active ? { left: 30 } : { left: 4 }
+                          ]}
+                        />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -358,7 +400,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontFamily: 'Nunito',
+    fontFamily: 'Nunito-Bold',
     fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
@@ -366,11 +408,11 @@ const styles = StyleSheet.create({
   divider: {
     height: 2,
     backgroundColor: '#448461',
-    marginBottom: 20,
+    marginBottom: 25,
     width: '70%', // Approximately 4/6 of the screen width
   },
   upcomingContainer: {
-    marginBottom: 25,
+    marginBottom: 45,
     maxHeight: 120,
   },
   daysRow: {
@@ -389,13 +431,13 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 18,
+    fontWeight: 'bold',
+    fontSize: 27,
     color: '#000',
     textAlign: 'left',
-    marginBottom: 8,
   },
   dateContainer: {
-    marginTop: 6,
+    marginStart: 3,
   },
   yearText: {
     fontFamily: 'Nunito-Bold',
@@ -419,15 +461,17 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 28,
     fontFamily: 'Nunito-Bold',
+    fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
   },
   categoryContainer: {
     flexDirection: 'row',
-    marginVertical: 15,
+    marginBottom: 20,
     justifyContent: 'space-between',
+    width: '60%'
   },
   categoryButton: {
     paddingVertical: 8,
@@ -436,8 +480,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#448461',
     backgroundColor: 'transparent',
-    minWidth: 100,
+    minWidth: 70,
     alignItems: 'center',
+    marginEnd: 15,
   },
   categoryButtonSelected: {
     backgroundColor: '#448461',
@@ -455,14 +500,14 @@ const styles = StyleSheet.create({
   },
   reminderContainer: {
     marginBottom: 16,
-    height: 80,
+    height: 130,
     position: 'relative',
   },
   reminderCardBackground: {
     position: 'absolute',
     top: 0,
-    left: 5,
-    right: 0,
+    left: 0,
+    right: 8,
     bottom: 0,
     borderRadius: 15,
   },
@@ -475,33 +520,37 @@ const styles = StyleSheet.create({
   reminderCard: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 8,
+    left: 12, 
+    right: 0,
     bottom: 0,
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
     paddingHorizontal: 16,
     paddingVertical: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 1, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 6,
   },
   reminderContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    // alignItems: 'center',
     height: '100%',
   },
   reminderTime: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 22,
-    marginBottom: 4,
+    fontWeight: 'bold',
+    fontSize: 35,
+    marginStart: 15,
+    marginBottom: 11,
   },
   reminderTitle: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 14,
+    fontWeight: 'bold',
+    marginStart: 15,
+    fontSize: 19,
   },
   activeText: {
     color: '#448461',
@@ -512,25 +561,62 @@ const styles = StyleSheet.create({
   daysSwitchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'absolute',
+    top: 12,
+    right: 12,
   },
   daysContainer: {
     flexDirection: 'row',
-    marginRight: 12,
+    alignItems: 'center',
   },
   dayIndicator: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 12,
-    marginRight: 2,
+    fontSize: 11,
+    marginRight: 4,
     color: '#CCCCCC',
   },
   activeDayIndicator: {
     color: '#448461',
+    fontWeight: 'bold',
   },
   inactiveDayIndicator: {
     color: '#AAC8B8',
   },
   reminderSwitch: {
-    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+    marginLeft: 6,
+  },
+  customSwitch: {
+    width: 60,
+    height: 32,
+    borderRadius: 16,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  customSwitchActive: {
+    backgroundColor: '#7BAB91',
+  },
+  customSwitchInactive: {
+    backgroundColor: '#D9ECE1',
+  },
+  customSwitchThumb: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+    position: 'absolute',
+    top: 3,
+  },
+  switchContainer: {
+    width: 52,
+    height: 32,
+    position: 'relative',
+    marginLeft: 8,
   },
   fab: {
     position: 'absolute',

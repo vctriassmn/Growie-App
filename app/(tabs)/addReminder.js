@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -39,12 +39,76 @@ export default function AddReminderScreen({ route }) {
   const [selectedDates, setSelectedDates] = useState([]);
   const [notes, setNotes] = useState("");
   const [showDateModal, setShowDateModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [reminderId, setReminderId] = useState(null);
 
   const [fontsLoaded] = useFonts({
     'Nunito-Bold': require('../../assets/fonts/Nunito-Bold.ttf'),
   });
 
-  const reminderTitle = route?.params?.title || "Untitled";
+  // Jika ada reminderData, gunakan judul reminder yang sebenarnya
+  const reminderData = route?.params?.reminderData;
+  const reminderTitle = reminderData ? `Edit ${reminderData.title}` : (route?.params?.title || "Untitled");
+
+  // Populate form with existing reminder data if in edit mode
+  useEffect(() => {
+    if (reminderData) {
+      setIsEditMode(true);
+      setReminderId(reminderData.id);
+      
+      // Set plant name
+      setName(reminderData.title || "");
+      
+      // Set category
+      if (reminderData.category) {
+        setCategory(reminderData.category.toUpperCase());
+      } else {
+        setCategory("WATERING"); // Default category
+      }
+      
+      // Set time (hour & minute)
+      if (reminderData.time) {
+        const [hourStr, minuteStr] = reminderData.time.split('.');
+        setHour(parseInt(hourStr, 10));
+        setMinute(parseInt(minuteStr, 10));
+      }
+      
+      // Set repeater to DAILY by default and populate days
+      setRepeater("DAILY");
+      
+      if (reminderData.days) {
+        // Convert days object to selected days array
+        const dayKeys = Object.keys(reminderData.days);
+        const selectedDayIds = [];
+        
+        // We'll use the index to map to our day IDs
+        dayKeys.forEach((key, index) => {
+          if (reminderData.days[key]) {
+            // Map day letter to day id based on index
+            if (index < days.length) { // Make sure we don't go out of bounds
+              const dayId = days[index].id;
+              selectedDayIds.push(dayId);
+            }
+          }
+        });
+        
+        // If no days were selected, default to Monday
+        if (selectedDayIds.length === 0) {
+          selectedDayIds.push('mon');
+        }
+        
+        setSelectedDays(selectedDayIds);
+      } else {
+        // Default to Monday if no days data
+        setSelectedDays(['mon']);
+      }
+      
+      // Set notes if available
+      if (reminderData.notes) {
+        setNotes(reminderData.notes);
+      }
+    }
+  }, [reminderData]);
 
   if (!fontsLoaded) {
     return null;
@@ -53,12 +117,35 @@ export default function AddReminderScreen({ route }) {
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
+  // Refs for FlatList to allow scrolling programmatically
+  const hourListRef = useRef(null);
+  const minuteListRef = useRef(null);
+
+  // Scroll to the correct time values when the component mounts
+  useEffect(() => {
+    if (hourListRef.current && minuteListRef.current) {
+      setTimeout(() => {
+        // Scroll to the hour
+        hourListRef.current.scrollToIndex({
+          index: hour,
+          animated: true,
+        });
+        
+        // Scroll to the minute
+        minuteListRef.current.scrollToIndex({
+          index: minute,
+          animated: true,
+        });
+      }, 300); // Small timeout to ensure rendering is complete
+    }
+  }, [hour, minute]);
+
   const onScrollEnd = (e, type) => {
     const index = Math.round(e.nativeEvent.contentOffset.y / (ITEM_HEIGHT + ITEM_GAP));
     if (type === "hour") {
-      setHour(hours[index]);
+      setHour(parseInt(hours[index], 10));
     } else {
-      setMinute(minutes[index]);
+      setMinute(parseInt(minutes[index], 10));
     }
   };
 
@@ -91,7 +178,19 @@ export default function AddReminderScreen({ route }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Reminder')}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            // Konfirmasi jika sudah mengubah data
+            if (isEditMode || name || category || repeater || selectedDays.length > 0 || notes) {
+              if (window.confirm('Perubahan belum disimpan. Yakin ingin kembali?')) {
+                navigation.navigate('Reminder');
+              }
+            } else {
+              navigation.navigate('Reminder');
+            }
+          }}
+        >
           <Ionicons name="chevron-back" size={24} color="#444" />
         </TouchableOpacity>
         <Text style={styles.title}>{reminderTitle}</Text>
@@ -117,13 +216,14 @@ export default function AddReminderScreen({ route }) {
         </View>
         <View style={styles.listWrapper}>
           <FlatList
+            ref={hourListRef}
             data={hours}
             keyExtractor={(item) => `hour-${item}`}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
             decelerationRate="fast"
             style={{ flexGrow: 0, zIndex: 2 }}
-            initialScrollIndex={8}
+            initialScrollIndex={isEditMode ? hour : 8}
             contentContainerStyle={{
               paddingTop: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
               paddingBottom: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
@@ -131,17 +231,21 @@ export default function AddReminderScreen({ route }) {
             onMomentumScrollEnd={(e) => onScrollEnd(e, "hour")}
             renderItem={({ item }) => renderItem(item)}
             getItemLayout={(_, index) => ({ length: ITEM_HEIGHT + ITEM_GAP, offset: (ITEM_HEIGHT + ITEM_GAP) * index, index })}
+            onScrollToIndexFailed={(info) => {
+              console.log('Scroll to index failed for hour:', info);
+            }}
           />
         </View>
         <View style={styles.listWrapper}>
           <FlatList
+            ref={minuteListRef}
             data={minutes}
             keyExtractor={(item) => `minute-${item}`}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
             decelerationRate="fast"
             style={{ flexGrow: 0, zIndex: 2 }}
-            initialScrollIndex={50}
+            initialScrollIndex={isEditMode ? minute : 50}
             contentContainerStyle={{
               paddingTop: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
               paddingBottom: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
@@ -149,6 +253,9 @@ export default function AddReminderScreen({ route }) {
             onMomentumScrollEnd={(e) => onScrollEnd(e, "minute")}
             renderItem={({ item }) => renderItem(item)}
             getItemLayout={(_, index) => ({ length: ITEM_HEIGHT + ITEM_GAP, offset: (ITEM_HEIGHT + ITEM_GAP) * index, index })}
+            onScrollToIndexFailed={(info) => {
+              console.log('Scroll to index failed for minute:', info);
+            }}
           />
         </View>
       </View>
@@ -162,6 +269,7 @@ export default function AddReminderScreen({ route }) {
               value={name}
               onChangeText={setName}
               placeholderTextColor="#7A8B7A"
+              placeholder="Enter plant name"
             />
             <Text style={styles.labelInside}>REMINDER NAME</Text>
           </View>
@@ -274,7 +382,72 @@ export default function AddReminderScreen({ route }) {
         </View>
         <TouchableOpacity 
           style={styles.saveButton}
-          onPress={() => navigation.navigate('Reminder')}
+          onPress={() => {
+            // Validasi data input
+            if (!name.trim()) {
+              alert('Nama reminder tidak boleh kosong!');
+              return;
+            }
+            
+            if (!category) {
+              alert('Silakan pilih kategori reminder!');
+              return;
+            }
+            
+            if (!repeater) {
+              alert('Silakan pilih frekuensi pengulangan!');
+              return;
+            }
+            
+            if (repeater === "DAILY" && selectedDays.length === 0) {
+              alert('Silakan pilih minimal satu hari untuk pengulangan harian!');
+              return;
+            }
+            
+            if (repeater === "WEEKLY" && selectedWeeks.length === 0) {
+              alert('Silakan pilih minimal satu minggu untuk pengulangan mingguan!');
+              return;
+            }
+            
+            if (repeater === "MONTHLY" && selectedDates.length === 0) {
+              alert('Silakan pilih minimal satu tanggal untuk pengulangan bulanan!');
+              return;
+            }
+            
+            // Prepare the updated reminder data
+            const updatedReminder = {
+              id: reminderId || new Date().getTime().toString(), // Use existing ID or generate new one
+              time: `${hour.toString().padStart(2, '0')}.${minute.toString().padStart(2, '0')}`,
+              title: name,
+              category: category ? category.charAt(0) + category.slice(1).toLowerCase() : "Watering", // Capitalize properly
+              active: isEditMode ? reminderData.active : true, // Keep existing active state or default to true
+              days: {}, // We'll populate this below
+              notes: notes // Simpan notes
+            };
+
+            // Convert selected days back to the format used in Reminder.js
+            const dayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+            
+            // Initialize all days to false
+            dayLetters.forEach(day => {
+              updatedReminder.days[day] = false;
+            });
+            
+            // Set selected days to true
+            selectedDays.forEach(selectedDayId => {
+              // Find the index of the selected day
+              const index = days.findIndex(day => day.id === selectedDayId);
+              if (index !== -1 && index < dayLetters.length) {
+                updatedReminder.days[dayLetters[index]] = true;
+              }
+            });
+            
+            // Pass the updated reminder back to the Reminder screen
+            navigation.navigate('Reminder', { 
+              updatedReminder: updatedReminder,
+              isNewReminder: false // Selalu false karena kita ingin mengupdate, bukan menambah baru
+            });
+          }}
         >
           <Text style={styles.saveButtonText}>Save Changes</Text>
         </TouchableOpacity>
