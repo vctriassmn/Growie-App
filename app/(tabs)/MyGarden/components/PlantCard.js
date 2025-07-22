@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
 
 const PlantCard = ({ plant }) => (
-  <Link href={`MyGarden/plant/${plant.id}`} asChild>
+  <Link href={`/plant/${plant.id}`} asChild>
     <TouchableOpacity style={styles.card}>
       <Text style={styles.name}>{plant.name}</Text>
       <Text>Age: {plant.age} days</Text>

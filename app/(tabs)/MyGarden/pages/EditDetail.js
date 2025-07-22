@@ -22,6 +22,9 @@ export default function EditPlant() {
   const [name, setName] = useState(plant.name);
   const [age, setAge] = useState(String(plant.age));
   const [notes, setNotes] = useState(plant.notes);
+  const [condition, setCondition] = useState(plant.condition);
+  const [waterLevel, setWaterLevel] = useState(String(plant.waterLevel));
+  const [waterFrequency, setWaterFrequency] = useState(String(plant.waterFrequency));
 
   const handleImagePick = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -48,6 +51,10 @@ export default function EditPlant() {
       age: parseInt(age),
       notes,
       image: imageSource.uri || plant.image, // simpan uri baru jika ada
+      condition,
+      waterLevel: parseInt(waterLevel),
+      waterFrequency: parseInt(waterFrequency),
+
     };
     console.log('Updated plant:', updatedPlant);
     router.replace(`/MyGarden/plant/${plant.id}`);
@@ -59,7 +66,7 @@ export default function EditPlant() {
       <ScrollView style={styles.container}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.push(`/MyGarden/plant/${id}`)}
+          onPress={() => router.push(`/plant/${id}`)}
         >
           <BackIcon width={40} height={40} />
         </TouchableOpacity>
@@ -67,42 +74,74 @@ export default function EditPlant() {
         <View style={styles.imageContainer}>
           <View style={styles.imageWrapper}>
             <Image
-              source={imageSource}
+              source={getImage(plant.image)}
               style={styles.image}
               resizeMode="cover"
             />
             <View style={styles.overlay} />
             <TouchableOpacity style={styles.editIconContainer} onPress={handleImagePick}>
-              <Edit1Icon width={32} height={32} />
+              <Edit1Icon width={40} height={40} />
             </TouchableOpacity>
           </View>
         </View>
 
-        <Text style={styles.label}>Edit Plant Details</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Plant Name"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Age (days)"
-          value={age}
-          keyboardType="numeric"
-          onChangeText={setAge}
-        />
-        <TextInput
-          style={[styles.input, { height: 100 }]}
-          placeholder="Notes"
-          value={notes}
-          multiline
-          onChangeText={setNotes}
-        />
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveText}>Save Changes</Text>
-        </TouchableOpacity>
+        <View style={styles.isi}>
+          <Text style={[styles.label, {alignSelf: 'center', fontSize: 20}]}>Edit Plant Details</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: 'transparent', borderBottomWidth: 1, borderColor: '#448461', color: '#448461', borderRadius: 0 }]}
+            placeholder="Plant Name"
+            value={name}
+            onChangeText={setName}
+          />
+          <Text style={styles.label}>Water Level</Text>
+          <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, alignItems: 'center' }}>
+            <TextInput
+              style={[styles.input, {backgroundColor: '#D7F6F4', color: '#316569'}]}
+              placeholder="Water Level"
+              value={waterLevel}
+              keyboardType="numeric"
+              onChangeText={setWaterLevel}
+            />
+            <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>%</Text>
+            <View style={{ height: '90%', backgroundColor: '#316569', width: 1.5, marginHorizontal: 12, alignSelf: 'center' }}/>
+            <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>Every</Text>
+            <TextInput
+              style={[styles.input, {backgroundColor: '#D7F6F4', color: '#316569'}]}
+              placeholder="Water Frequency (days)"
+              value={waterFrequency}
+              keyboardType="numeric"
+              onChangeText={setWaterFrequency}
+            />
+            <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>Days</Text>
+          </View>
+
+          <Text style={styles.label}>Age</Text>
+          <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, alignItems: 'center' }}>
+            <TextInput
+              style={[styles.input, {backgroundColor: '#FBF2D6', color: '#694231'}]}
+              placeholder="Age (days)"
+              value={age}
+              keyboardType="numeric"
+              onChangeText={setAge}
+            />
+            <Text style={[styles.input, { color: '#694231', backgroundColor: 'transparent', marginHorizontal: 0 }]}>Days</Text>
+          </View>
+
+          <Text style={styles.label}>Condition</Text>
+          <Text style={styles.label}>Notes</Text>
+          <TextInput
+            style={[styles.input, {backgroundColor: '#D3E6DB', color: '#448461', height: 100, fontSize: 14 }]}
+            placeholder="Notes"
+            value={notes}
+            multiline
+            onChangeText={setNotes}
+          />
+
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveText}>Save Changes</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -122,11 +161,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     zIndex: 999,
   },
+
+  // Image ==================================================================
   imageContainer: {
     width: '100%',
     marginBottom: 16,
     backgroundColor: '#D3E6DB',
-    alignItems: 'center',
   },
   imageWrapper: {
     width: screenWidth,
@@ -136,7 +176,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
   },
   overlay: {
     position: 'absolute',
@@ -145,33 +184,41 @@ const styles = StyleSheet.create({
     width: screenWidth,
     height: screenWidth * 7 / 9,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 12,
     zIndex: 2,
   },
+
+  // edit icon =========================================================
   editIconContainer: {
     position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    top: '50%',
+    transform: [ { translateY: -20 }],
+    alignSelf: 'center',
     padding: 6,
-    borderRadius: 20,
     zIndex: 3,
   },
+
+  // isi ==================================================================
+  isi: {
+        padding: 30,
+        paddingTop: 20,
+        backgroundColor: '#FAFFFB',
+    },
+
+  // input =========================================================
   label: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: 'semibold',
     marginBottom: 8,
-    color: '#333',
-    marginHorizontal: 16,
+    color: '#284E43',
   },
   input: {
     backgroundColor: '#F0F0F0',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
-    fontSize: 16,
-    marginHorizontal: 16,
+    fontSize: 20,
   },
+
+  // save =========================================================
   saveButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 14,
