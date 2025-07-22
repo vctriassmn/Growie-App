@@ -1,4 +1,4 @@
-// Lokasi file: app/Login.js (Nama file di sini harusnya StarterPage.js berdasarkan konteks)
+// Lokasi file: app/StarterPage.js (atau app/index.js jika ini halaman awal)
 
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, Dimensions } from 'react-native';
@@ -12,29 +12,21 @@ const pages = [
     image: require('../assets/images/Logo.png'),
     title: 'Growie',
     description: '',
-    showSkip: false,
-    showPrev: false,
   },
   {
     image: require('../assets/images/Start1.png'),
     title: 'Meet Growie,\nYour gentle plant care buddy',
     description: 'We help you care for your plants—one friendly reminder at a time.',
-    showSkip: true,
-    showPrev: false,
   },
   {
     image: require('../assets/images/Start2.png'),
     title: 'Stay on Track\nWatering, sunlight & more',
     description: 'Growie sends smart reminders tailored to your plant’s needs.',
-    showSkip: false,
-    showPrev: true,
   },
   {
     image: require('../assets/images/Start3.png'),
     title: 'Grow with Confidence\nSee your greens flourish',
     description: 'Your plants, your schedule. Growie keeps it simple and joyful.',
-    showSkip: false,
-    showPrev: true,
   },
 ];
 
@@ -58,18 +50,11 @@ export default function StarterPage() {
     }
   };
 
+  // --- PERBAIKAN DI SINI ---
+  // Arahkan 'Skip' ke halaman Login agar konsisten dengan akhir onboarding
   const skipOnboarding = () => {
-    router.replace('/(tabs)');
+    router.replace('/Login');
   };
-
-  // Fungsi goToRegister dan goToLogin tidak lagi diperlukan karena tombolnya dihapus
-  // const goToRegister = () => {
-  //   router.replace('/Register');
-  // };
-
-  // const goToLogin = () => {
-  //   router.replace('/Login');
-  // };
 
   return (
     <View style={styles.container}>
@@ -81,7 +66,6 @@ export default function StarterPage() {
       >
         {pages.map((page, index) => (
           <View key={index} style={styles.page}>
-            <Text style={styles.pageHeader}>Started Page {index + 1}</Text>
 
             <View style={styles.contentContainer}>
               <Image source={page.image} style={styles.image} />
@@ -102,29 +86,16 @@ export default function StarterPage() {
               ))}
             </View>
 
-            {/* Tombol Register dan Login dihapus dari sini */}
-            {/* {currentPage === pages.length - 1 && (
-              <View style={styles.authButtonsWrapper}>
-                <TouchableOpacity onPress={goToRegister} style={styles.registerButton}>
-                  <Text style={styles.authButtonText}>Register</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={goToLogin} style={styles.loginButton}>
-                  <Text style={styles.authButtonText}>Login</Text>
-                </TouchableOpacity>
-              </View>
-            )} */}
-
-            {/* Navigasi bawah: Skip, Prev, dan Next */}
             <View style={styles.bottomNavigation}>
               <View style={styles.leftButtonsWrapper}>
                 {/* Tombol Skip hanya muncul di halaman 2 */}
-                {index === 1 && ( // Menggunakan index untuk spesifik halaman kedua
+                {index === 1 && (
                   <TouchableOpacity onPress={skipOnboarding} style={styles.skipButton}>
                     <Text style={styles.navText}>Skip</Text>
                   </TouchableOpacity>
                 )}
                 {/* Tombol Prev muncul dari halaman 3 dan seterusnya */}
-                {index >= 2 && ( // Menggunakan index untuk spesifik halaman ketiga dan seterusnya
+                {index >= 2 && (
                   <TouchableOpacity onPress={goToPrevPage} style={styles.prevButton}>
                     <Text style={styles.navText}>Prev</Text>
                   </TouchableOpacity>
@@ -149,17 +120,9 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 50,
+    paddingTop: 150,
     paddingHorizontal: 20,
-    paddingBottom: 180, // Sesuaikan padding bawah jika diperlukan
-  },
-  pageHeader: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    paddingBottom: 200,
   },
   contentContainer: {
     flex: 1,
@@ -167,8 +130,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    width: 150,
-    height: 150,
+    width: 180,
+    height: 180,
     resizeMode: 'contain',
     marginBottom: 40,
   },
@@ -202,10 +165,9 @@ const styles = StyleSheet.create({
   inactiveDot: {
     backgroundColor: '#ccc',
   },
-  // authButtonsWrapper, registerButton, loginButton, authButtonText dihapus dari styles
   bottomNavigation: {
-    position: 'absolute', // Gunakan posisi absolut untuk menempatkan di bawah
-    bottom: 30, // Jarak dari bawah
+    position: 'absolute',
+    bottom: 30,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

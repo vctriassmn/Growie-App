@@ -1,5 +1,3 @@
-// File: app/(tabs)/Journal/IsiJournal.js (Kode Final yang Bersih)
-
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -9,12 +7,23 @@ export default function IsiJournalScreen() {
     const { folderTitle, entryId } = useLocalSearchParams();
     const { getJournalEntryById } = useJournalAndArticle();
     const journalEntry = getJournalEntryById(folderTitle, entryId);
+
+    // --- FUNGSI BARU UNTUK NAVIGASI KEMBALI ---
+    // Fungsi ini memastikan 'folderTitle' dikirim kembali ke ListJournal
+    const handleGoBackToList = () => {
+        router.push({
+            pathname: './ListJournal', // Navigasi ke ListJournal.js di direktori yang sama
+            params: { folderTitle: folderTitle } // Kirim parameter folderTitle kembali
+        });
+    };
+
     if (!journalEntry) {
         return (
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.container}>
                     <Text style={styles.errorText}>Entri Jurnal tidak ditemukan!</Text>
-                    <TouchableOpacity onPress={() => router.back()}>
+                    {/* --- UBAH INI: Gunakan fungsi handleGoBackToList --- */}
+                    <TouchableOpacity onPress={handleGoBackToList}>
                         <Text style={styles.backLink}>Kembali ke Daftar</Text>
                     </TouchableOpacity>
                 </View>
@@ -27,7 +36,8 @@ export default function IsiJournalScreen() {
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
+                    {/* --- UBAH INI: Gunakan fungsi handleGoBackToList --- */}
+                    <TouchableOpacity onPress={handleGoBackToList}>
                         <Ionicons name="chevron-back" size={30} color="#000000" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>{folderTitle}</Text>

@@ -134,8 +134,7 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
     paddingHorizontal: 30,
-    paddingTop: 50,
-    paddingBottom: 30,
+    paddingTop: 170,
     alignItems: 'center',
   },
   title: {
@@ -147,7 +146,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#757575',
-    marginBottom: 40,
+    marginBottom: 50,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -157,7 +156,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 55,
     paddingHorizontal: 15,
-    marginBottom: 20,
+    marginBottom: 25,
   },
   icon: {
     marginRight: 10,
@@ -179,7 +178,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 20,
   },
   LoginButtonText: {
     color: '#FFFFFF',
