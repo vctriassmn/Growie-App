@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,10 @@ import { Dimensions } from 'react-native';
 import EditIcon from '../../../../assets/icons/edit.svg';
 import BackIcon from '../../../../assets/icons/back.svg';
 
+export const options = {
+  tabBarStyle: { display: 'none' }, // untuk tab bawaan
+  tabBarVisible: false,             // untuk beberapa custom layout (non-standard)
+};
 
 export default function PlantDetail() {
     const { id } = useLocalSearchParams();
@@ -22,13 +26,15 @@ export default function PlantDetail() {
     const imageExists = !!imageSource; 
     const screenWidth = Dimensions.get('window').width;
     const router = useRouter();
+
+    
     
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#694B40' }}>
             <StatusBar style="light" backgroundColor="#694B40" />
             <ScrollView style={styles.container}>
                 {/* back button */}
-                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden/pages')}>
                     <BackIcon width={40} height={40} />
                 </TouchableOpacity>
 
@@ -52,8 +58,9 @@ export default function PlantDetail() {
                     <Text style={styles.name}>{plant.name}</Text>
                     <Text style={styles.notes}>{plant.notes}</Text>
 
-                    {/* Header Info */}
+                    {/* plant Info */}
                     <View style={styles.condition}>
+                        {/* water level */}
                         <View style={{ alignItems: 'center', flex: 1 }}>
                             <Text style={styles.title}>Water Level</Text>
 
@@ -62,6 +69,7 @@ export default function PlantDetail() {
                             </View>
                         </View>
                         
+                        {/* age */}
                         <View style={{ alignItems: 'center', flex: 1 }}>
                             <Text style={styles.title}>Age</Text>
 
@@ -71,12 +79,14 @@ export default function PlantDetail() {
                             </View>
                         </View>
 
+                        {/* condition */}
                         <View style={{ alignItems: 'center', flex: 1 }}>
                             <Text style={styles.title}>Condition</Text>
 
                             <View style={[styles.box, {backgroundColor: '#7BAB91'},]}>
+                                {/* ini masih error dikit karena belom diadain gambar conditionnya yaa */}
                                 <Image
-                                    source={getImage(plant.condition)}
+                                    source={require('../../../../assets/images/mygarden/placeholder.jpg')}
                                     style={{width: 50, height: 50, borderRadius: 25, marginBottom: 4}}
                                     resizeMode="cover"
                                 />
@@ -88,10 +98,13 @@ export default function PlantDetail() {
                 </View>
             </ScrollView>
 
+            {/* Edit Button */}
             <View style={[styles.container, {flex: 1}]}>
-                <TouchableOpacity style={styles.editButton} onPress={() => router.push('edit-plant')}>
-                    <EditIcon width={60} height={60} />
-                </TouchableOpacity>
+                <Link href={`/plant/${id}/edit`} asChild>
+                    <TouchableOpacity style={styles.editButton}>
+                        <EditIcon width={60} height={60} />
+                    </TouchableOpacity>
+                </Link>
             </View>
 
 
