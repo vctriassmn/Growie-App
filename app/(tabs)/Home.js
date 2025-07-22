@@ -1,4 +1,6 @@
-// Lokasi file: app/(tabs)/Home.js
+
+import { StyleSheet, Text, View, Button } from 'react-native';
+import { useRouter } from 'expo-router';
 
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
@@ -196,6 +198,13 @@ export default function HomePage() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  const router = useRouter();
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>Ini adalah Halaman Home</Text>
+      <Button title="Go to Profile" onPress={() => router.push('/Profile')} />
+    </View>
   );
 }
 
@@ -229,6 +238,11 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+  text: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#5c8d5c',
+    marginBottom: 20,
   },
   
   greetingText: { fontSize: 20, fontWeight: 'normal', color: '#333' },

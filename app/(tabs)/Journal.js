@@ -1,184 +1,258 @@
-import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  ImageBackground,
-  FlatList,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Menggunakan Ionicons dari Expo untuk ikon plus
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Dimensions, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
+import FolderCard from './Journal/FolderCard'; // Ingat, file ini juga perlu diubah
+import { useUser } from '../../context/UserContext';
 
-// Mengambil lebar layar untuk penyesuaian responsif
+const coverImage = require('../../assets/images/coverFolder.png');
+const addButtonImage = require('../../assets/images/add.png');
+
+const HORIZONTAL_SPACING = 25;
+const VERTICAL_SPACING = 35;
+
 const { width } = Dimensions.get('window');
-const SPACING = 15; // Spasi antar item
-const ITEM_WIDTH = (width - SPACING * 3) / 2; // Lebar item agar 2 kolom
+const ITEM_WIDTH = (width - (HORIZONTAL_SPACING * 2 + HORIZONTAL_SPACING)) / 2;
 
-// Data dummy untuk folder jurnal
-const journalFolders = [
-  {
-    id: '1',
-    title: 'My Baby Spinach',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Spinach', // Placeholder gambar
-  },
-  {
-    id: '2',
-    title: 'Nanem Jagung',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Jagung', // Placeholder gambar
-  },
-  {
-    id: '3',
-    title: 'Daily Progress',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Progress', // Placeholder gambar
-  },
-  {
-    id: '4',
-    title: 'Beginner Guide',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Guide', // Placeholder gambar
-  },
-  {
-    id: '5',
-    title: 'Sayuran Organik',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Organik', // Placeholder gambar
-  },
-  {
-    id: '6',
-    title: 'Bunga Hias',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Bunga', // Placeholder gambar
-  },
-  {
-    id: '7',
-    title: 'Tanaman Obat',
-    image: 'https://placehold.co/400x400/a8d8a8/5c8d5c?text=Obat', // Placeholder gambar
-  },
-];
+// Aktifkan LayoutAnimation di Android
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 
-export default function ListJournalPage({ navigation }) {
-  // Fungsi untuk merender setiap item folder jurnal
-  const renderJournalFolder = ({ item }) => (
-    <TouchableOpacity
-      style={styles.folderContainer}
-      onPress={() => {
-        // Navigasi ke halaman listJournal.js ketika folder diklik
-        // Pastikan 'ListJournalDetail' adalah nama rute yang benar di navigator Anda
-        // navigation.navigate('ListJournalDetail', { folderId: item.id, folderTitle: item.title });
-        console.log(`Folder ${item.title} diklik!`); // Placeholder untuk navigasi
-      }}
-    >
-      <ImageBackground source={{ uri: item.image }} style={styles.folderImage} imageStyle={styles.imageStyle}>
-        <View style={styles.overlay} />
-        <Text style={styles.folderTitle}>{item.title}</Text>
-      </ImageBackground>
-    </TouchableOpacity>
+export default function JournalPage() {
+  const { userName } = useUser();
+  const { getJournalFolders, addJournalFolder, deleteJournalFolders } = useJournalAndArticle();
+
+  const [journalFolders, setJournalFolders] = useState([]);
+  const [selectedMode, setSelectedMode] = useState(false);
+  const [selectedFolders, setSelectedFolders] = useState([]);
+  const flatListRef = useRef(null);
+  const untitledCounter = useRef(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      const folders = getJournalFolders();
+      setJournalFolders(folders);
+      setSelectedMode(false);
+      setSelectedFolders([]);
+    }, [getJournalFolders])
+  );
+
+  const handleAddFolder = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    const existingUntitledCount = journalFolders.filter(f => f.title.includes('Untitled')).length;
+    untitledCounter.current = existingUntitledCount + 1;
+    const newTitle = `Untitled ${untitledCounter.current}`;
+    const newFolder = { id: newTitle, title: newTitle };
+
+    addJournalFolder(newFolder);
+    const updatedFolders = getJournalFolders();
+    setJournalFolders(updatedFolders);
+
+    if (flatListRef.current) {
+      setTimeout(() => {
+        flatListRef.current.scrollToEnd({ animated: true });
+      }, 50);
+    }
+  };
+
+  const toggleFolderSelection = (folderId) => {
+    if (selectedFolders.includes(folderId)) {
+      setSelectedFolders(selectedFolders.filter((id) => id !== folderId));
+    } else {
+      setSelectedFolders([...selectedFolders, folderId]);
+    }
+  };
+
+  const handleDeleteFolders = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    deleteJournalFolders(selectedFolders);
+    const updatedFolders = getJournalFolders();
+    setJournalFolders(updatedFolders);
+    setSelectedMode(false);
+    setSelectedFolders([]);
+  };
+
+  const handleCancelSelection = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSelectedMode(false);
+    setSelectedFolders([]);
+  };
+
+  const renderJournalFolder = ({ item }) => {
+    const isSelected = selectedFolders.includes(item.id);
+  
+    return (
+      <TouchableOpacity
+        style={styles.folderContainer}
+        onPress={() => {
+          if (selectedMode) {
+            toggleFolderSelection(item.id);
+          } else {
+            router.push({
+              pathname: 'Journal/ListJournal',
+              params: { folderTitle: item.title }
+            });
+          }
+        }}
+        onLongPress={() => {
+          if (!selectedMode) {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setSelectedMode(true);
+            toggleFolderSelection(item.id);
+          }
+        }}
+      >
+        <FolderCard title={item.title} image={coverImage} />
+        {isSelected && (
+          <View style={styles.selectedOverlay} />
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderFooter = () => (
+    <View style={{ height: 100 }} />
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>This is Ann's</Text>
-        <Text style={styles.headerTextBold}>Journal</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          {selectedMode ? (
+            <>
+              <TouchableOpacity onPress={handleCancelSelection} style={styles.cancelButton}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerTextBold}>Selected ({selectedFolders.length})</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.headerText}>This is {userName}'s</Text>
+              <Text style={styles.headerTextBold}>Journal</Text>
+            </>
+          )}
+        </View>
+        <FlatList
+          ref={flatListRef}
+          style={styles.flatList}
+          data={journalFolders}
+          renderItem={renderJournalFolder}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.listContainer}
+          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={true}
+          ListFooterComponent={renderFooter}
+        />
+        {selectedMode ? (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={handleDeleteFolders}
+            disabled={selectedFolders.length === 0}
+          >
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={[styles.actionButton, styles.addButton]} onPress={handleAddFolder}>
+            <Image source={addButtonImage} style={styles.actionButtonImage} />
+          </TouchableOpacity>
+        )}
       </View>
-
-      {/* Daftar Folder Jurnal */}
-      <FlatList
-        data={journalFolders}
-        renderItem={renderJournalFolder}
-        keyExtractor={(item) => item.id}
-        numColumns={2} // Menampilkan 2 kolom
-        contentContainerStyle={styles.listContainer}
-        columnWrapperStyle={styles.columnWrapper}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Tombol Add Folder */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          // Navigasi ke halaman addFolder.js ketika tombol diklik
-          // Pastikan 'AddFolder' adalah nama rute yang benar di navigator Anda
-          // navigation.navigate('AddFolder');
-          console.log('Tombol Add Folder diklik!'); // Placeholder untuk navigasi
-        }}
-      >
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
+// --- BAGIAN STYLESHEET YANG DIPERBARUI ---
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FAFFFB',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#e0f2e0', // Warna latar belakang yang mirip gambar
-    paddingTop: 20, // Sedikit padding atas
+    backgroundColor: '#FAFFFB',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: 70,
   },
   headerText: {
-    fontSize: 20,
-    color: '#5c8d5c', // Warna teks yang mirip gambar
+    fontSize: 26,
+    color: '#448461',
+    fontFamily: 'Nunito-Regular',
   },
   headerTextBold: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#5c8d5c', // Warna teks yang mirip gambar
+    fontSize: 32,
+    color: '#448461',
+    fontFamily: 'Nunito-ExtraBold', 
+  },
+  flatList: {
+    flex: 1,
   },
   listContainer: {
-    paddingHorizontal: SPACING, // Padding horizontal untuk list
+    paddingHorizontal: HORIZONTAL_SPACING,
   },
   columnWrapper: {
-    justifyContent: 'space-between', // Meratakan item di antara kolom
-    marginBottom: SPACING, // Spasi antar baris
+    justifyContent: 'space-between',
+    marginBottom: VERTICAL_SPACING,
   },
   folderContainer: {
     width: ITEM_WIDTH,
-    height: ITEM_WIDTH, // Membuat kotak persegi
-    borderRadius: 15, // Sudut membulat
-    overflow: 'hidden', // Memastikan gambar dan overlay tidak keluar dari batas
-    elevation: 5, // Shadow untuk Android
-    shadowColor: '#000', // Shadow untuk iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  folderImage: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageStyle: {
-    borderRadius: 15, // Sudut membulat pada gambar
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject, // Mengisi seluruh area parent
-    backgroundColor: 'rgba(0,0,0,0.3)', // Overlay gelap transparan
+    height: ITEM_WIDTH,
     borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 10,
+    marginTop: 10,
+    position: 'relative',
   },
-  folderTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'center',
-    paddingHorizontal: 5, // Padding horizontal untuk judul
-  },
-  addButton: {
+  actionButton: {
     position: 'absolute',
-    bottom: 90, // Posisi dari bawah (menyesuaikan dengan perkiraan navbar)
-    right: 30, // Posisi dari kanan
-    backgroundColor: '#5c8d5c', // Warna tombol add
-    width: 60,
-    height: 60,
-    borderRadius: 30, // Membuat lingkaran
+    bottom: 120,
+    right: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8, // Shadow untuk Android
-    shadowColor: '#000', // Shadow untuk iOS
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
+  },
+  addButton: {
+    backgroundColor: '#5c8d5c',
+    borderRadius: 30,
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontFamily: 'Nunito-Bold',
+  },
+  actionButtonImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  cancelButton: {
+    position: 'absolute',
+    left: 20,
+    top: -30,
+  },
+  cancelText: {
+    fontSize: 18,
+    color: '#448461',
+    fontFamily: 'Nunito-SemiBold',
+  },
+  selectedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(68, 132, 97, 0.4)',
+    borderRadius: 15,
   },
 });
