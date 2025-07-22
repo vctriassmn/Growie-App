@@ -3,16 +3,14 @@ import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
+
 import BottomNavBar from '../../components/navbar';
-import { UserProvider } from '../../context/UserContext';
+// import { UserProvider } from '../../context/UserContext'; // Hapus impor ini jika sudah ada di app/_layout.js
 import { JournalAndArticleProvider } from '../../context/JournalAndArticleStore';
 
-// Mencegah splash screen hilang secara otomatis sebelum font selesai dimuat
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
-  // --- MULAI LOGIKA PEMUATAN FONT ---
-  // Muat semua variasi font yang Anda inginkan dari folder assets/fonts/
   const [fontsLoaded, fontError] = useFonts({
     'Nunito-Light': require('../../assets/fonts/Nunito-Light.ttf'),
     'Nunito-Regular': require('../../assets/fonts/Nunito-Regular.ttf'),
@@ -26,7 +24,6 @@ export default function TabLayout() {
   });
 
   useEffect(() => {
-    // Sembunyikan splash screen setelah font dimuat (atau jika ada error)
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
@@ -36,11 +33,7 @@ export default function TabLayout() {
   if (!fontsLoaded && !fontError) {
     return null;
   }
-  // --- AKHIR LOGIKA PEMUATAN FONT ---
-
-  // Setelah font dimuat, render seluruh aplikasi Anda seperti biasa
   return (
-    <UserProvider>
       <JournalAndArticleProvider>
         <Tabs
           screenOptions={{
@@ -99,9 +92,7 @@ export default function TabLayout() {
               title: 'Profile',
             }}
           />
-          {/* Tambahkan screen lain di bawah <Tabs> jika ada */}
         </Tabs>
       </JournalAndArticleProvider>
-    </UserProvider>
   );
 }

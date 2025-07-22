@@ -1,19 +1,17 @@
 // Lokasi file: app/register.js
 
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '../context/UserContext';
-
-// --- PERBAIKAN: Gunakan path yang benar (hanya satu '..') ---
-import UsernameIcon from '../assets/icons/username_icon.svg';
-import EmailIcon from '../assets/icons/email_icon.svg';
+// Menggunakan ikon yang relevan untuk Full Name dan Password
+import UsernameIcon from '../assets/icons/username_icon.svg'; // Bisa digunakan untuk Full Name
 import PasswordIcon from '../assets/icons/password_icon.svg';
 
+// Import kembali logo media sosial
 import FacebookLogo from '../assets/icons/logos_facebook.svg';
 import GoogleLogo from '../assets/icons/logos_google.svg';
 import XLogo from '../assets/icons/logos_x.svg';
-
 
 
 // Komponen InputWithIcon sekarang lebih sederhana karena hanya menangani SVG kustom
@@ -35,59 +33,23 @@ const InputWithIcon = ({ IconComponent, placeholder, value, onChangeText, secure
   );
 };
 
-export default function RegisterPage() {
-  const { setUserName } = useUser();
+export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+   const { setUserName } = useUser();
+  const [fullName, setFullName] = useState(''); // State untuk Full Name
+  const [password, setPassword] = useState(''); // State untuk Password
   const [errorMessage, setErrorMessage] = useState(''); // State untuk pesan error
 
-  const handleRegister = () => {
-    // Reset pesan error
+  const handleLogin = () => { // Nama fungsi ini masih handleRegister, tapi akan berfungsi sebagai handleLogin
+    // Validasi: Pastikan Full Name dan Password tidak kosong
+    if (!fullName.trim() || !password.trim()) {
+      setErrorMessage('Username and Password are required.'); // Pesan error disesuaikan
+      return; // Hentikan proses jika ada bidang yang kosong
+    }
+
+    // Jika validasi berhasil, bersihkan pesan error dan navigasi
     setErrorMessage('');
-
-    // Validasi semua bidang wajib diisi
-    if (!username.trim()) {
-      setErrorMessage('Username is required.');
-      return;
-    }
-    // Validasi panjang username minimal 3 karakter
-    if (username.trim().length < 3) {
-      setErrorMessage('Username must be at least 3 characters long.');
-      return;
-    }
-    if (!email.trim()) {
-      setErrorMessage('Email is required.');
-      return;
-    }
-    // Validasi format email sederhana
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
-    }
-    if (!password.trim()) {
-      setErrorMessage('Password is required.');
-      return;
-    }
-    if (password.length < 6) { // Contoh: minimal 6 karakter
-      setErrorMessage('Password must be at least 6 characters long.');
-      return;
-    }
-    if (!confirmPassword.trim()) {
-      setErrorMessage('Confirm Password is required.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
-      return;
-    }
-
-    setUserName(username);
-
-    // Jika semua validasi berhasil, navigasi ke homepage
+    setUserName(fullName);
     router.replace('/(tabs)/Home');
   };
 
@@ -102,25 +64,17 @@ export default function RegisterPage() {
             <View style={styles.topBar} />
 
             <View style={styles.formContainer}>
-              <Text style={styles.title}>Register</Text>
-              <Text style={styles.subtitle}>Create your new account</Text>
+              <Text style={styles.title}>Login</Text> {/* Judul diubah menjadi Login */}
+              <Text style={styles.subtitle}>Sign In to Your account</Text> {/* Subtitle disesuaikan */}
 
-              {/* Input Username */}
+              {/* Input untuk Full Name (digunakan sebagai Username) */}
               <InputWithIcon
                 IconComponent={UsernameIcon}
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
+                placeholder="Username" // Placeholder diubah menjadi Username
+                value={fullName}
+                onChangeText={setFullName}
               />
-              {/* Input Email */}
-              <InputWithIcon
-                IconComponent={EmailIcon}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address" // Mengatur keyboard untuk email
-              />
-              {/* Input Password */}
+              {/* Input untuk Password */}
               <InputWithIcon
                 IconComponent={PasswordIcon}
                 placeholder="Password"
@@ -128,29 +82,22 @@ export default function RegisterPage() {
                 onChangeText={setPassword}
                 secureTextEntry={true}
               />
-              {/* Input Confirm Password */}
-              <InputWithIcon
-                IconComponent={PasswordIcon}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={true}
-              />
 
               {/* Tampilkan pesan error jika ada */}
               {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
 
-              <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-                <Text style={styles.registerButtonText}>Register</Text>
+              <TouchableOpacity style={styles.LoginButton} onPress={handleLogin}>
+                <Text style={styles.LoginButtonText}>Login</Text> {/* Teks tombol diubah menjadi Login */}
               </TouchableOpacity>
 
+              {/* Bagian "Or Login with" */}
               <View style={styles.dividerContainer}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Or register with</Text>
+                <Text style={styles.dividerText}>Or Login with</Text> {/* Teks diubah menjadi Login */}
                 <View style={styles.dividerLine} />
               </View>
 
-              {/* Logo sosial */}
+              {/* Bagian logo sosial media */}
               <View style={styles.socialContainer}>
                 <TouchableOpacity style={styles.socialButton}>
                   <FacebookLogo width={40} height={40} />
@@ -163,12 +110,14 @@ export default function RegisterPage() {
                 </TouchableOpacity>
               </View>
 
+              {/* Bagian "Don't have an account? Register" */}
               <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/Login')}>
-                  <Text style={styles.loginLink}>Login</Text>
+                <Text style={styles.loginText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={() => router.push('/Register')}> {/* Navigasi ke halaman Register */}
+                  <Text style={styles.loginLink}>Register</Text>
                 </TouchableOpacity>
               </View>
+
             </View>
           </View>
         </ScrollView>
@@ -218,13 +167,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  errorMessage: { // Style untuk pesan error
-    color: '#FF0000', // Warna merah
+  errorMessage: {
+    color: '#FF0000',
     marginBottom: 15,
     fontSize: 14,
     textAlign: 'center',
   },
-  registerButton: {
+  LoginButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 30,
     width: '100%',
@@ -232,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  registerButtonText: {
+  LoginButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
