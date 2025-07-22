@@ -1,173 +1,81 @@
 // Lokasi file: app/register.js
-
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '../context/UserContext';
 
-// --- PERBAIKAN: Gunakan path yang benar (hanya satu '..') ---
 import UsernameIcon from '../assets/icons/username_icon.svg';
 import EmailIcon from '../assets/icons/email_icon.svg';
 import PasswordIcon from '../assets/icons/password_icon.svg';
-
 import FacebookLogo from '../assets/icons/logos_facebook.svg';
 import GoogleLogo from '../assets/icons/logos_google.svg';
 import XLogo from '../assets/icons/logos_x.svg';
 
-
-
-// Komponen InputWithIcon sekarang lebih sederhana karena hanya menangani SVG kustom
 const InputWithIcon = ({ IconComponent, placeholder, value, onChangeText, secureTextEntry = false }) => {
   return (
     <View style={styles.inputContainer}>
-      {/* Tampilkan komponen ikon yang dilewatkan sebagai prop */}
       <IconComponent width={20} height={20} style={styles.icon} />
-      <TextInput
-        style={styles.input}
-        placeholder={placeholder}
-        placeholderTextColor="#757575"
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        autoCapitalize="none"
-      />
+      <TextInput style={styles.input} placeholder={placeholder} placeholderTextColor="#757575" value={value} onChangeText={onChangeText} secureTextEntry={secureTextEntry} autoCapitalize="none" />
     </View>
   );
 };
 
 export default function RegisterPage() {
-  const { setUserName } = useUser();
+  const { setUserName, setUserHandle, setEmail, setProfilePicture, setPhoneNumber } = useUser();
   const router = useRouter();
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState(''); // State untuk pesan error
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleRegister = () => {
-    // Reset pesan error
     setErrorMessage('');
 
-    // Validasi semua bidang wajib diisi
-    if (!username.trim()) {
-      setErrorMessage('Username is required.');
-      return;
-    }
-    // Validasi panjang username minimal 3 karakter
-    if (username.trim().length < 3) {
-      setErrorMessage('Username must be at least 3 characters long.');
-      return;
-    }
-    if (!email.trim()) {
-      setErrorMessage('Email is required.');
-      return;
-    }
-    // Validasi format email sederhana
+    if (!username.trim() || !emailInput.trim() || !password.trim() || !confirmPassword.trim()) { setErrorMessage('All fields are required.'); return; }
+    if (username.trim().length < 3) { setErrorMessage('Username must be at least 3 characters long.'); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
-    }
-    if (!password.trim()) {
-      setErrorMessage('Password is required.');
-      return;
-    }
-    if (password.length < 6) { // Contoh: minimal 6 karakter
-      setErrorMessage('Password must be at least 6 characters long.');
-      return;
-    }
-    if (!confirmPassword.trim()) {
-      setErrorMessage('Confirm Password is required.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
-      return;
-    }
+    if (!emailRegex.test(emailInput)) { setErrorMessage('Please enter a valid email address.'); return; }
+    if (password.length < 6) { setErrorMessage('Password must be at least 6 characters long.'); return; }
+    if (password !== confirmPassword) { setErrorMessage('Passwords do not match.'); return; }
 
-    setUserName(username);
+    const finalUsername = username.trim();
+    const finalEmail = emailInput.trim();
 
-    // Jika semua validasi berhasil, navigasi ke homepage
+    setProfilePicture(require('../assets/images/avatar.png'));
+    setUserName(finalUsername);
+    setUserHandle(`@${finalUsername.toLowerCase().replace(/\s/g, '')}`);
+    setEmail(finalEmail);
+    // --- UBAH INI: Atur nomor telepon menjadi '-' untuk pengguna baru ---
+    setPhoneNumber('-');
+
     router.replace('/(tabs)/Home');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.container}>
             <View style={styles.topBar} />
-
             <View style={styles.formContainer}>
               <Text style={styles.title}>Register</Text>
               <Text style={styles.subtitle}>Create your new account</Text>
-
-              {/* Input Username */}
-              <InputWithIcon
-                IconComponent={UsernameIcon}
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
-              />
-              {/* Input Email */}
-              <InputWithIcon
-                IconComponent={EmailIcon}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address" // Mengatur keyboard untuk email
-              />
-              {/* Input Password */}
-              <InputWithIcon
-                IconComponent={PasswordIcon}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={true}
-              />
-              {/* Input Confirm Password */}
-              <InputWithIcon
-                IconComponent={PasswordIcon}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={true}
-              />
-
-              {/* Tampilkan pesan error jika ada */}
+              <InputWithIcon IconComponent={UsernameIcon} placeholder="Username" value={username} onChangeText={setUsername} />
+              <InputWithIcon IconComponent={EmailIcon} placeholder="Email" value={emailInput} onChangeText={setEmailInput} keyboardType="email-address" />
+              <InputWithIcon IconComponent={PasswordIcon} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry={true} />
+              <InputWithIcon IconComponent={PasswordIcon} placeholder="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={true} />
               {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
-
-              <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-                <Text style={styles.registerButtonText}>Register</Text>
-              </TouchableOpacity>
-
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Or register with</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Logo sosial */}
+              <TouchableOpacity style={styles.registerButton} onPress={handleRegister}><Text style={styles.registerButtonText}>Register</Text></TouchableOpacity>
+              <View style={styles.dividerContainer}><View style={styles.dividerLine} /><Text style={styles.dividerText}>Or register with</Text><View style={styles.dividerLine} /></View>
               <View style={styles.socialContainer}>
-                <TouchableOpacity style={styles.socialButton}>
-                  <FacebookLogo width={40} height={40} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <GoogleLogo width={40} height={40} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <XLogo width={40} height={40} />
-                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}><FacebookLogo width={40} height={40} /></TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}><GoogleLogo width={40} height={40} /></TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}><XLogo width={40} height={40} /></TouchableOpacity>
               </View>
-
               <View style={styles.loginContainer}>
                 <Text style={styles.loginText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/Login')}>
-                  <Text style={styles.loginLink}>Login</Text>
-                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/Login')}><Text style={styles.loginLink}>Login</Text></TouchableOpacity>
               </View>
             </View>
           </View>
@@ -178,14 +86,26 @@ export default function RegisterPage() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#282828' },
-  scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  topBar: { height: 35, backgroundColor: '#D9D9D9' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#282828',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  topBar: {
+    height: 35,
+    backgroundColor: '#D9D9D9',
+  },
   formContainer: {
     flex: 1,
     paddingHorizontal: 30,
-    paddingTop: 50,
+    paddingTop: 70,
     paddingBottom: 30,
     alignItems: 'center',
   },
@@ -218,8 +138,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  errorMessage: { // Style untuk pesan error
-    color: '#FF0000', // Warna merah
+  errorMessage: {
+    color: '#FF0000',
     marginBottom: 15,
     fontSize: 14,
     textAlign: 'center',
