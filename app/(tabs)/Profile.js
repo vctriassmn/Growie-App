@@ -97,8 +97,10 @@ export default function ProfilePage() {
         </View>
 
         <View style={styles.profileImageWrapper}>
-          {/* Tampilkan gambar profil dari context */}
-          <Image source={{ uri: profilePicture }} style={styles.profileImage} />
+          <Image 
+            source={typeof tempProfilePicture === 'string' ? { uri: tempProfilePicture } : tempProfilePicture} 
+            style={styles.profileImage} 
+          />
         </View>
 
         {isEditing ? (

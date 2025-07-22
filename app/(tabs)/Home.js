@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from '../../context/UserContext';
 
 // Data dummy
 const latestArticlesData = [
@@ -26,7 +27,7 @@ const remindersData = [
 // Impor Aset
 import BellIcon from '../../assets/images/bell.svg'; 
 import ProfileBorderSVG from '../../assets/icons/profile.svg';
-const profilePic = require('../../assets/images/profile-image.png');
+// const profilePic = require('../../assets/images/profile-image.png');
 const heartIconActive = require('../../assets/images/like_active.png');
 const heartIconInactive = require('../../assets/images/like_inactive.png');
 
@@ -64,6 +65,7 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
 // Komponen Utama HomePage
 export default function HomePage() {
   const router = useRouter(); 
+  const { userName, profilePicture } = useUser(); 
   const [articles, setArticles] = useState(latestArticlesData);
 
   const handleLikeToggle = (articleId) => {
@@ -112,14 +114,23 @@ export default function HomePage() {
         showsVerticalScrollIndicator={!isPanelUp}
       >
         <View style={styles.paddedContent}>
-            {/* Header dengan Profil SVG */}
-            <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.header}
+              onPress={() => router.push('/Profile')}
+              activeOpacity={0.8}
+            >
               <View style={styles.profileContainer}>
                 <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
-                <Image source={profilePic} style={styles.profileImage} />
+                
+                {/* 2. Gunakan gambar dinamis dari context */}
+                <Image 
+                  source={typeof profilePicture === 'string' ? { uri: profilePicture } : profilePicture}
+                  style={styles.profileImage} 
+                />
+
               </View>
-              <Text style={styles.greetingText}>Hello! akusaygkamu</Text>
-            </View>
+              <Text style={styles.greetingText}>Hello! {userName}</Text>
+            </TouchableOpacity>
             
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeTitle}>Welcome to Homepage!</Text>
