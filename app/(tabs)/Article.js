@@ -602,7 +602,7 @@ export default ArticleScreen;
 
 const styles = StyleSheet.create({
     // Styles from original article.js
-    container: { flex: 1, backgroundColor: '#fff', width: '100%' },
+    container: { flex: 1, backgroundColor: '#fff' },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
     headerText: {
-        fontFamily: 'Nunito-ExtraBold',
+        fontFamily: 'Nunito_700Bold',
         fontSize: 20,
         color: '#448461',
         position: 'absolute',
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
         zIndex: 0,
     },
     headerButtonHapus: {
-        fontFamily: 'Nunito_700Bold',
+        fontFamily: 'Nunito_400Regular',
         position: 'absolute',
         right: 20,
         backgroundColor: '#448461',
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     },
     search: {
         flexDirection: 'row',
-        width: '92%',
+        width: 360,
         height: 40,
         backgroundColor: '#FBF2D6',
         alignItems: 'center',
@@ -671,7 +671,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         paddingHorizontal: 10,
     },
-    filterContainer: { flexDirection: 'row', marginTop: 5, marginLeft: 15, marginRight: 15 },
+    filterContainer: { flexDirection: 'row', marginTop: 5, marginLeft: 30 },
     filterContainergeser: { paddingVertical: 5, paddingRight: 20 },
     tabButton: { borderWidth: 1, borderColor: '#448461', borderRadius: 15, paddingVertical: 8, paddingHorizontal: 16, marginHorizontal: 5 },
     activeTab: { backgroundColor: '#448461' },
@@ -715,10 +715,9 @@ const styles = StyleSheet.create({
     plantCardWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 25,
-        width: '90%',
+        marginBottom: 20,
+        width: 330,
         alignSelf: 'center',
-        marginLeft: 4,
     },
     plantCardCheckboxContainer: {
         width: 30,
@@ -746,9 +745,9 @@ const styles = StyleSheet.create({
         width: 400,
     },
     plantCardTopSection: { flexDirection: 'row' },
-    plantCardImage: { width: '75%', height: '100%', resizeMode: 'cover' },
-    plantCardRightInfo: { backgroundColor: '#DCF0E4', width: '25%', paddingVertical: 10 },
-    plantCardAvatar: { width: 60, height: 60, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20, alignSelf: 'center', justifyContent: 'center' },
+    plantCardImage: { width: 230, height: 150, resizeMode: 'cover' },
+    plantCardRightInfo: { backgroundColor: '#DCF0E4', width: 100, paddingVertical: 10 },
+    plantCardAvatar: { width: 50, height: 50, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20, alignSelf: 'center', justifyContent: 'center' },
     plantCardUsername: { fontSize: 14, color: '#448461', marginBottom: 10, justifyContent: 'center', alignSelf: 'center' },
     plantCardHeartButton: { width: 24, height: 24, alignSelf: 'flex-end', marginRight: 10 },
     plantCardBottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
@@ -756,7 +755,7 @@ const styles = StyleSheet.create({
     plantCardDescription: {
         fontSize: 13,
         color: '#666',
-        numberOfLines: 6, 
+        numberOfLines: 4, // Limit to 4 lines for preview
     },
 
     // Styles from detail.js (prefixed with 'detail')
