@@ -62,7 +62,7 @@ export default function EditPlant() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#694B40' }}>
-      <StatusBar style="light" backgroundColor="#694B40" />
+      <StatusBar style="light"/>
       <ScrollView style={styles.container}>
         <TouchableOpacity
           style={styles.backButton}
