@@ -21,7 +21,7 @@ export const plants = [
     },
     {
         id: 3,
-        name: "Three Musketeers",
+        name: "Three Musketeers and a Half",
         age: 120,
         waterLevel: 80,
         waterFrequency: 2,

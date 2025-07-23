@@ -29,7 +29,7 @@ export default function PlantDetail() {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#694B40' }}>
-            <StatusBar style="light" backgroundColor="#694B40" />
+            <StatusBar style="light"/>
             <ScrollView style={styles.container}>
                 {/* back button */}
                 <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden/pages')}>
@@ -91,7 +91,9 @@ export default function PlantDetail() {
                                 <Text style={[styles.info, { color: 'white'}]}>{plant.condition}</Text>
                             </View>
                         </View>
+
                     </View>
+                    <View style={{ height: 150, width: screenWidth, backgroundColor: 'transparent'}}/>
 
                 </View>
             </ScrollView>
@@ -222,7 +224,7 @@ const styles = StyleSheet.create({
     // button
     editButton: {
         position: 'absolute',
-        bottom: 120,
+        bottom: 100,
         right: 30,
         justifyContent: 'center',
         alignItems: 'center',
