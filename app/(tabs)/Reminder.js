@@ -17,67 +17,92 @@ export default function Reminder() {
   const [reminders, setReminders] = useState([
     { 
       id: '1', 
-      time: '07.30', 
+      hour: '07',
+      minute:'30',
       title: 'Baby Spinach', 
       category: 'Watering',
-      active: true, 
-      days: {M: true, T: true, W: true, T: true, F: true, S: false, S: false} 
+      active: true,
+      days: {Mo: true, Tu: true, W: true, Th: true, F: true, Sa: false, Su: false},
+      frequency: 'Daily',
+      note:'Kasian bayinya'
     },
     { 
       id: '2', 
-      time: '08.00', 
+      hour: '08',
+      minute:'00',
       title: 'Peace Lily', 
       category: 'Watering',
       active: false, 
-      days: {M: true, T: true, W: true, T: true, F: true, S: false, S: false} 
+      days: {Mo: true, Tu: true, W: true, Th: true, F: true, Sa: false, Su: false},
+      frequency: 'Daily',
+      note:'Lily, Lily... Yess papa~~'
     },
     { 
       id: '3', 
-      time: '09.15', 
+      hour: '09',
+      minute:'15',
       title: 'Snake Plant', 
       category: 'Fertilizing',
       active: true, 
-      days: {M: false, T: false, W: false, T: false, F: true, S: true, S: true} 
+      days: {Mo: false, Tu: false, W: false, Th: false, F: true, Sa: true, Su: true},
+      frequency: 'Daily',
+      note:'Aduh abang bukan maksudku begituuu~~~'
     },
     { 
       id: '4', 
-      time: '12.45', 
+      hour: '12',
+      minute:'45',
       title: 'Monstera', 
       category: 'Pruning',
       active: false, 
-      days: {M: true, T: false, W: true, T: false, F: true, S: false, S: false} 
+      days: {Mo: true, Tu: false, W: true, Th: false, F: true, Sa: false, Su: false},
+      frequency: 'Daily',
+      note:'Omooo, ada monster gesss :O'
     },
     { 
       id: '5', 
-      time: '14.30', 
+      hour: '14',
+      minute:'30',
       title: 'Fiddle Leaf Fig', 
       category: 'Watering',
       active: true, 
-      days: {M: true, T: false, W: true, T: false, F: true, S: false, S: false} 
+      days: {Mo: true, Tu: false, W: true, Th: false, F: true, Sa: false, Su: false},
+      frequency: 'Daily',
+      note:'Figma kali ya maksudnya???'
     },
     { 
       id: '6', 
-      time: '15.45', 
+      time: '15.45',
+      hour: '15',
+      minute:'45',
       title: 'Pothos', 
       category: 'Fertilizing',
       active: false, 
-      days: {M: false, T: true, W: false, T: true, F: false, S: true, S: false} 
+      days: {Mo: false, Tu: true, W: false, Th: true, F: false, Sa: true, Su: false},
+      frequency: 'Daily',
+      note:'Ayo bangun pagi dan berfotosintesis!!'
     },
     { 
       id: '7', 
-      time: '17.00', 
+      hour: '17',
+      minute:'00',
       title: 'Orchid', 
       category: 'Watering',
       active: true, 
-      days: {M: true, T: true, W: true, T: true, F: true, S: true, S: true} 
+      days: {Mo: true, Tu: true, W: true, Th: true, F: true, Sa: true, Su: true},
+      frequency: 'Daily',
+      note:'Nama jalan sih ini kataku'
     },
     { 
       id: '8', 
-      time: '19.15', 
+      hour: '19',
+      minute:'15', 
       title: 'Rubber Plant', 
       category: 'Pruning',
       active: false, 
-      days: {M: false, T: false, W: false, T: false, F: false, S: true, S: true} 
+      days: {Mo: false, Tu: false, W: false, Th: false, F: false, Sa: true, Su: true},
+      frequency: 'Daily',
+      note:'Berarti ini tanaman penghapus karena rubber?'
     }
   ]);
 
@@ -89,18 +114,25 @@ export default function Reminder() {
   useEffect(() => {
     // Check if we have a returned reminder from the addReminder screen
     if (isFocused && navigation.isFocused()) {
+      console.log("Route params in Reminder.js:", route?.params);
       const updatedReminder = route?.params?.updatedReminder;
       const isNewReminder = route?.params?.isNewReminder;
+      
+      console.log("Updated Reminder:", updatedReminder);
+      console.log("Is New Reminder:", isNewReminder);
 
       if (updatedReminder) {
         // Cek apakah reminder ini sudah ada dalam array
         const reminderExists = reminders.some(r => r.id === updatedReminder.id);
+        console.log("Reminder exists:", reminderExists);
         
         if (isNewReminder && !reminderExists) {
           // Add the new reminder to the list
+          console.log("Adding new reminder");
           setReminders(prev => [updatedReminder, ...prev]);
         } else if (reminderExists) {
           // Update the existing reminder
+          console.log("Updating existing reminder");
           setReminders(prev => 
             prev.map(reminder => 
               reminder.id === updatedReminder.id ? updatedReminder : reminder
@@ -180,16 +212,29 @@ export default function Reminder() {
   };
 
   const handleDayPress = (day) => {
-    // Navigate to addReminder with the selected day
-    navigation.navigate('addReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
+    // Navigate to AddReminder with the selected day
+    navigation.navigate('AddReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
   };
 
   const handleEditReminder = (reminder) => {
-    // Navigate to addReminder with the reminder data for editing
-    navigation.navigate('addReminder', { 
+    console.log("Editing reminder:", reminder);
+    console.log("Reminder ID:", reminder.id);
+    console.log("Reminder Title:", reminder.title);
+    
+    // Buat salinan reminder untuk mencegah referensi objek yang sama
+    const reminderToEdit = {...reminder};
+    
+    // Navigate to EditReminder with the reminder data for editing
+    const params = { 
       title: 'Edit Reminder',
-      reminderData: reminder 
-    });
+      reminderData: reminderToEdit 
+    };
+    
+    console.log("Navigation params:", params);
+    // Gunakan timeout kecil untuk memastikan navigasi bekerja dengan benar
+    setTimeout(() => {
+      navigation.navigate('EditReminder', params);
+    }, 50);
   };
 
   return (
@@ -305,7 +350,7 @@ export default function Reminder() {
                         styles.reminderTime,
                         item.active ? styles.activeText : styles.inactiveText
                       ]}>
-                        {item.time}
+                        {item.hour}.{item.minute}
                       </Text>
                       <Text style={[
                         styles.reminderTitle,
@@ -318,10 +363,24 @@ export default function Reminder() {
                     <View style={styles.daysSwitchContainer}>
                       {/* Weekday indicators */}
                       <View style={styles.daysContainer}>
-                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => {
-                          // Get the corresponding day key 
-                          const dayKey = Object.keys(item.days)[index];
-                          const isActive = item.days[dayKey];
+                        {[
+                          {key: 'Mo', display: 'M'}, // Monday
+                          {key: 'Tu', display: 'T'}, // Tuesday
+                          {key: 'W', display: 'W'}, // Wednesday
+                          {key: 'Th', display: 'T'}, // Thursday
+                          {key: 'F', display: 'F'}, // Friday
+                          {key: 'Sa', display: 'S'}, // Saturday
+                          {key: 'Su', display: 'S'}  // Sunday
+                        ].map((dayObj, index) => {
+                          // Untuk hari Kamis (Thursday) dan Minggu (Sunday) yang memiliki key duplikat
+                          // Kita akan menggunakan pendekatan berbasis index untuk mengambil nilai yang tepat
+                          let isActive;
+                          
+                          // Definisikan array untuk menentukan urutan properti dalam object item.days
+                          const dayKeys = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+                          // Gunakan index untuk mengakses nilai yang tepat
+                          isActive = item.days[dayKeys[index]];
+                          
                           return (
                             <Text 
                               key={index} 
@@ -331,7 +390,7 @@ export default function Reminder() {
                                 !item.active && isActive && styles.inactiveDayIndicator
                               ]}
                             >
-                              {day}
+                              {dayObj.display}
                             </Text>
                           );
                         })}
@@ -368,7 +427,7 @@ export default function Reminder() {
       {/* Add button */}
       <TouchableOpacity 
         style={styles.fab}
-        onPress={() => navigation.navigate('addReminder', { title: 'Add Reminder' })}
+        onPress={() => navigation.navigate('AddReminder', { title: 'Add Reminder' })}
       >
         <Image
           source={require('../../assets/images/add.png')}
