@@ -66,6 +66,7 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
 // Komponen Utama HomePage (tidak ada perubahan di logika)
 export default function HomePage() {
   const router = useRouter(); 
+  const { profilePicture } = useUser(); // Destructure profilePicture from UserContext
   const [articles, setArticles] = useState(latestArticlesData);
 
   const handleLikeToggle = (articleId) => {
