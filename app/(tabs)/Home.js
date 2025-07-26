@@ -7,7 +7,7 @@ import { StyleSheet, Text, View, Button, SafeAreaView, ScrollView, Image, Toucha
 import { useRouter } from 'expo-router';
 import { useUser } from '../../context/UserContext';
 
-// Data dummy
+// Data dummy (tidak ada perubahan)
 const latestArticlesData = [
   { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide...', image: require('../../assets/images/caramenyiram.png'), avatar: require('../../assets/images/Logo.png'), username: 'Growie', liked: false, },
   { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree...', image: require('../../assets/images/plant.png'), avatar: require('../../assets/images/pp.jpg'), username: 'User123', liked: true, },
@@ -26,15 +26,13 @@ const remindersData = [
   { id: 'r3', time: '16.00', task: 'Water Lily | Pruning' },
 ];
 
-// Impor Aset
+// Impor Aset (tidak ada perubahan)
 import BellIcon from '../../assets/images/bell.svg'; 
-import ProfileBorderSVG from '../../assets/icons/profile.svg'; // SVG untuk bingkai
-const profilePic = require('../../assets/images/profile-image.png'); // Gambar profil PNG
+import ProfileBorderSVG from '../../assets/icons/profile.svg';
 const heartIconActive = require('../../assets/images/like_active.png');
 const heartIconInactive = require('../../assets/images/like_inactive.png');
 
-
-// Komponen ArticleCard
+// Komponen ArticleCard (tidak ada perubahan di logika)
 const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
   return (
     <TouchableOpacity 
@@ -65,8 +63,7 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
   );
 };
 
-
-// Komponen Utama HomePage
+// Komponen Utama HomePage (tidak ada perubahan di logika)
 export default function HomePage() {
   const router = useRouter(); 
   const [articles, setArticles] = useState(latestArticlesData);
@@ -78,7 +75,7 @@ export default function HomePage() {
     setArticles(updatedArticles);
   };
 
-  // Logika PanResponder & Scroll
+  // Logika PanResponder & Scroll (tidak ada perubahan)
   const scrollViewRef = useRef(null);
   const articleSectionY = useRef(0);
   const [isPanelUp, setIsPanelUp] = useState(false);
@@ -121,8 +118,10 @@ export default function HomePage() {
               <View style={styles.profileContainer}>
                 {/* Layer Bawah: Bingkai SVG */}
                 <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
-                {/* Layer Atas: Gambar Profil PNG */}
-                <Image source={profilePic} style={styles.profileImage} />
+                <Image 
+                  source={typeof profilePicture === 'string' ? { uri: profilePicture } : profilePicture}
+                  style={styles.profileImage} 
+                />
               </View>
               <Text style={styles.greetingText}>Hello! akusaygkamu</Text>
             </View>
@@ -210,7 +209,7 @@ export default function HomePage() {
 
 // const router = useRouter();
 
-// Objek Shadow
+// Objek Shadow (tidak ada perubahan)
 const shadowStyle = {
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
@@ -219,47 +218,32 @@ const shadowStyle = {
   elevation: 5,
 };
 
-// Stylesheet Lengkap
+
+// --- PERUBAHAN UTAMA UNTUK FONT ADA DI SINI ---
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F0FBF0' },
   topBar: { height: 30, backgroundColor: '#5D4037' },
   scrollContainer: { paddingBottom: 30, },
   paddedContent: { paddingHorizontal: 20, },
   header: { backgroundColor: '#FBF2D6', padding: 15, borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginTop: 10, ...shadowStyle, },
+  profileContainer: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center', marginRight: 15, },
+  profileImage: { width: 50, height: 50, borderRadius: 25, },
   
-  // Style untuk Profil dengan SVG
-  profileContainer: {
-    width: 60,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#5c8d5c',
-    marginBottom: 20,
-  },
-  
-  greetingText: { fontSize: 20, fontWeight: 'normal', color: '#333' },
+  // Font diterapkan di sini
+  greetingText: { fontSize: 20, color: '#333', fontFamily: 'Nunito-SemiBold' },
   welcomeSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20, },
-  welcomeTitle: { fontSize: 22, fontWeight: 'bold', color: '#333' },
+  welcomeTitle: { fontSize: 22, color: '#333', fontFamily: 'Nunito-ExtraBold' },
   bellContainer: { width: 35, height: 35, borderRadius: 22, backgroundColor: '#FBF2D6', justifyContent: 'center', alignItems: 'center', marginRight: 5, ...shadowStyle, },
   section: { backgroundColor: '#D9ECE1', borderRadius: 20, paddingTop: 15, paddingBottom: 15, paddingHorizontal: 15, marginBottom: 35, ...shadowStyle, },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  seeMore: { fontSize: 14, color: '#555' },
+  sectionTitle: { fontSize: 18, color: '#333', fontFamily: 'Nunito-SemiBold' },
+  seeMore: { fontSize: 14, color: '#555', fontFamily: 'Nunito-Regular' },
   gardenCard: { backgroundColor: '#FAFFFB', borderRadius: 15, width: 150, height: 180, marginHorizontal: 5, ...shadowStyle, },
   gardenImage: { width: '100%', height: 150, borderTopLeftRadius: 15, borderTopRightRadius: 15 },
-  gardenLabel: { marginTop: 5, fontSize: 13, fontWeight: 'bold', color: '#7BAB91', textAlign: 'center'},
+  gardenLabel: { marginTop: 5, fontSize: 13, color: '#7BAB91', textAlign: 'center', fontFamily: 'Nunito-SemiBold'},
   reminderItem: { backgroundColor: '#7BAB91', borderRadius: 15, paddingVertical: 15, paddingHorizontal: 20, marginBottom: 10, borderLeftWidth: 5, borderLeftColor: '#284E43', ...shadowStyle, },
-  reminderTime: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
-  reminderText: { fontSize: 14, color: '#fff' },
+  reminderTime: { fontSize: 18, color: '#fff', fontFamily: 'Nunito-SemiBold' },
+  reminderText: { fontSize: 14, color: '#fff', fontFamily: 'Nunito-Regular' },
   articlesSection: { backgroundColor: '#fff', borderTopLeftRadius: 45, borderTopRightRadius: 45, marginTop: 5, flex: 1, shadowColor: "#000", shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 20, },
   articleHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 20, marginBottom: 5, marginTop: 15},
   articleCardWrapper: { marginBottom: 20, paddingHorizontal: 20, },
@@ -268,10 +252,10 @@ const styles = StyleSheet.create({
   articleImage: { width: '65%', height: 150, resizeMode: 'cover' },
   articleRightInfo: { backgroundColor: '#DCF0E4', width: '35%', alignItems: 'center', justifyContent: 'center', padding: 10, position: 'relative', },
   articleAvatar: { width: 50, height: 50, borderRadius: 25, borderColor: '#448461', borderWidth: 1, marginBottom: 8, },
-  articleUsername: { fontSize: 14, color: '#448461', fontWeight: '600', },
+  articleUsername: { fontSize: 14, color: '#448461', fontFamily: 'Nunito-SemiBold' },
   articleBottomSection: { paddingVertical: 15, paddingHorizontal: 20, },
-  articleName: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 4, },
-  articleDescription: { fontSize: 13, color: '#666', fontFamily: 'Nunito_400Regular' },
+  articleName: { fontSize: 16, color: '#333', marginBottom: 4, fontFamily: 'Nunito-SemiBold' },
+  articleDescription: { fontSize: 13, color: '#666', fontFamily: 'Nunito-Regular' },
   articleLikeButton: { position: 'absolute', top: 10, right: 10, padding: 5, },
   articleLikeIcon: { width: 24, height: 24, },
-}});
+});

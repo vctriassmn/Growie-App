@@ -15,8 +15,8 @@ import EditIcon from '../../../../assets/icons/edit.svg';
 import BackIcon from '../../../../assets/icons/back.svg';
 
 export const options = {
-  tabBarStyle: { display: 'none' }, // untuk tab bawaan
-  tabBarVisible: false,             // untuk beberapa custom layout (non-standard)
+  tabBarStyle: { display: 'none' }, 
+  tabBarVisible: false,             
 };
 
 export default function PlantDetail() {
@@ -27,11 +27,9 @@ export default function PlantDetail() {
     const screenWidth = Dimensions.get('window').width;
     const router = useRouter();
 
-    
-    
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#694B40' }}>
-            <StatusBar style="light" backgroundColor="#694B40" />
+            <StatusBar style="light"/>
             <ScrollView style={styles.container}>
                 {/* back button */}
                 <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden/pages')}>
@@ -93,7 +91,9 @@ export default function PlantDetail() {
                                 <Text style={[styles.info, { color: 'white'}]}>{plant.condition}</Text>
                             </View>
                         </View>
+
                     </View>
+                    <View style={{ height: 150, width: screenWidth, backgroundColor: 'transparent'}}/>
 
                 </View>
             </ScrollView>
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     // button
     editButton: {
         position: 'absolute',
-        bottom: 120,
+        bottom: 100,
         right: 30,
         justifyContent: 'center',
         alignItems: 'center',

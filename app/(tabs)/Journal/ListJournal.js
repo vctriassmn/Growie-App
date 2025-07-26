@@ -25,9 +25,8 @@ export default function ListJournalScreen() {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [tempTitle, setTempTitle] = useState(folderTitle);
     
-    // --- PERUBAHAN 1: Tambahkan state dan ref untuk posisi menu ---
     const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
-    const optionsIconRef = useRef(null); // Ref untuk ikon ellipsis
+    const optionsIconRef = useRef(null);
     
     const flatListRef = useRef(null);
     const titleInputRef = useRef(null);
@@ -64,12 +63,13 @@ export default function ListJournalScreen() {
         setIsEditingTitle(false);
     };
 
+    // --- PERUBAHAN 1: Buat entri baru dengan format { title, content } ---
     const handleAddJournal = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         const newEntry = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            day: 'New Entry',
-            content: 'Write something here...'
+            title: 'New Entry', 
+            content: 'Write your journal here...', 
         };
         addJournalEntry(folderTitle, newEntry);
         
@@ -89,14 +89,11 @@ export default function ListJournalScreen() {
         }
     };
     
-    // --- PERUBAHAN 2: Fungsi handleMoreOptions sekarang mengukur posisi ikon ---
     const handleMoreOptions = () => {
         optionsIconRef.current.measure((x, y, width, height, pageX, pageY) => {
-            // pageY adalah jarak dari atas layar ke ikon
-            // height adalah tinggi ikon itu sendiri
             setMenuPosition({
-                top: pageY + height, // Posisikan menu tepat di bawah ikon
-                right: Dimensions.get('window').width - pageX - width, // Posisikan di kanan
+                top: pageY + height,
+                right: Dimensions.get('window').width - pageX - width,
             });
             setIsMenuVisible(true);
         });
@@ -150,18 +147,24 @@ export default function ListJournalScreen() {
 
     const renderJournalEntry = ({ item }) => {
         const handlePress = () => {
-        if (selectionMode) {
-            toggleSelection(item.id);
-        } else {
-            router.push({
-                pathname: 'Journal/IsiJournal',
-                params: { 
-                    entryId: item.id,
-                    folderTitle: folderTitle 
-                }
-            });
-        }
-    };
+            if (selectionMode) {
+                toggleSelection(item.id);
+            } else {
+                router.push({
+                    pathname: 'Journal/IsiJournal',
+                    params: { 
+                        entryId: item.id,
+                        folderTitle: folderTitle 
+                    }
+                });
+            }
+        };
+
+        // Fungsi untuk membersihkan HTML dari string untuk pratinjau
+        const cleanContentPreview = (htmlContent) => {
+            if (!htmlContent) return '';
+            return htmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        };
 
         return (
             <TouchableOpacity onPress={handlePress}>
@@ -178,8 +181,11 @@ export default function ListJournalScreen() {
                     )}
                     <View style={styles.entryCard}>
                         <View style={styles.textContainer}>
-                            <Text style={styles.entryDay}>{item.day}</Text>
-                            <Text style={styles.entryContent} numberOfLines={1}>{item.content}</Text>
+                            {/* Menampilkan item.title sebagai judul */}
+                            <Text style={styles.entryDay} numberOfLines={1}>{item.title}</Text>
+                            <Text style={styles.entryContent} numberOfLines={2}>
+                                {cleanContentPreview(item.content)}
+                            </Text>
                         </View>
                     </View>
                 </View>
@@ -220,7 +226,6 @@ export default function ListJournalScreen() {
                                 <Text style={styles.cancelText}>Cancel</Text>
                             </TouchableOpacity>
                         ) : (
-                            // --- PERUBAHAN 3: Tambahkan ref ke TouchableOpacity ---
                             <TouchableOpacity ref={optionsIconRef} onPress={handleMoreOptions}>
                                 <Ionicons name="ellipsis-vertical" size={30} color="#694B40" />
                             </TouchableOpacity>
@@ -233,7 +238,6 @@ export default function ListJournalScreen() {
                         <TouchableWithoutFeedback onPress={() => setIsMenuVisible(false)}>
                             <View style={styles.overlay} />
                         </TouchableWithoutFeedback>
-                        {/* --- PERUBAHAN 4: Gunakan posisi dinamis dari state --- */}
                         <View style={[styles.flyoutMenu, { top: menuPosition.top, right: menuPosition.right }]}>
                             <TouchableOpacity style={styles.menuItem} onPress={() => handleSelectAction('publish')}>
                                 <Text style={styles.menuItemText}>Publish</Text>
@@ -277,7 +281,8 @@ export default function ListJournalScreen() {
     );
 }
 
-// --- PERUBAHAN 5: Stylesheet diperbarui dengan font Nunito ---
+// Stylesheet tetap sama, tidak perlu diubah.
+// Nama style 'entryDay' tetap digunakan untuk konsistensi, meskipun sekarang menampilkan judul.
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -335,8 +340,8 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#D9ECE1',
         borderRadius: 15,
-        paddingRight: 25,
-        paddingLeft: 25,
+        paddingRight: 15,
+        paddingLeft: 15,
         paddingBottom: 15,
         paddingTop: 15,
         elevation: 3,
@@ -348,13 +353,13 @@ const styles = StyleSheet.create({
     textContainer: {
         flex: 1,
     },
-    entryDay: {
-        fontSize: 20,
+    entryDay: { // Nama style ini tetap, tapi sekarang menampilkan judul
+        fontSize: 18,
         color: '#448461',
-        fontFamily: 'Nunito-Bold',
+        fontFamily: 'Nunito-ExtraBold',
     },
     entryContent: {
-        fontSize: 12,
+        fontSize: 14,
         color: '#448461',
         lineHeight: 20,
         marginTop: 10,
