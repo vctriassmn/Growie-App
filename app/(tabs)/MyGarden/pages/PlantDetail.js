@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 
@@ -9,6 +9,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
+import ArticleSection from '../components/ArticleSection'; // sesuaikan path-nya
 import { usePlant } from '../../../../context/PlantContext';
 import { getImage } from '../getImage';
 import WaterStatus from '../components/WaterStatus';
@@ -38,6 +39,13 @@ export default function PlantDetail() {
         ? { uri: plant.image }
         : getImage(plant.image)
       : getImage('placeholder');
+
+
+    const [articles, setArticles] = useState( [
+        { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide...', image: require('../../../../assets/images/caramenyiram.png'), avatar: require('../../../../assets/images/Logo.png'), username: 'Growie', liked: false, },
+        { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree...', image: require('../../../../assets/images/plant.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'User123', liked: true, },
+        { id: '3', name: 'Snake Plant', description: 'Extremely hardy and low-maintenance...', image: require('../../../../assets/images/peacelily.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'GreenThumb', liked: false, },
+    ]);
 
     return (
         <SafeAreaProvider>
@@ -122,6 +130,9 @@ export default function PlantDetail() {
                 </Link>
             </View>
 
+            <View style={{ position: 'relative' }}>
+                <ArticleSection articles={articles} />
+            </View>
 
         </SafeAreaProvider>
 
