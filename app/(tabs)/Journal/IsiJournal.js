@@ -211,14 +211,13 @@ const styles = StyleSheet.create({
         minHeight: 1000,
         flex: 1,
     },
-    // --- PERBAIKAN RATA KANAN-KIRI ---
     editorContentStyle: {
         backgroundColor: 'transparent',
         color: '#448461',
         fontFamily: 'Nunito-Regular',
         fontSize: 16,
         lineHeight: 24,
-        textAlign: 'justify', // Menambahkan rata kanan-kiri
+        textAlign: 'justify', 
     },
     editToolbarWrapper: {
         position: 'absolute',
