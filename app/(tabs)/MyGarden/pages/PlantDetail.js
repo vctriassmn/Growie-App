@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
-import { plants } from '../data';
+import ArticleSection from '../components/ArticleSection'; // sesuaikan path-nya
+import { usePlant } from '../../../../context/PlantContext';
 import { getImage } from '../getImage';
 import WaterStatus from '../components/WaterStatus';
 
@@ -20,16 +25,39 @@ export const options = {
 };
 
 export default function PlantDetail() {
+    const insets = useSafeAreaInsets();
+    
     const { id } = useLocalSearchParams();
+    const { plants, editPlant } = usePlant();
     const plant = plants.find(p => p.id === parseInt(id));
-    const imageSource = getImage(plant.image);
-    const imageExists = !!imageSource; 
     const screenWidth = Dimensions.get('window').width;
     const router = useRouter();
 
+    const imageSource =
+    typeof plant.image === 'string'
+      ? plant.image.startsWith('file')
+        ? { uri: plant.image }
+        : getImage(plant.image)
+      : getImage('placeholder');
+
+
+    const [articles, setArticles] = useState( [
+        { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide...', image: require('../../../../assets/images/caramenyiram.png'), avatar: require('../../../../assets/images/Logo.png'), username: 'Growie', liked: false, },
+        { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree...', image: require('../../../../assets/images/plant.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'User123', liked: true, },
+        { id: '3', name: 'Snake Plant', description: 'Extremely hardy and low-maintenance...', image: require('../../../../assets/images/peacelily.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'GreenThumb', liked: false, },
+    ]);
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#694B40' }}>
-            <StatusBar style="light"/>
+        <SafeAreaProvider>
+            <View
+                style={{
+                    paddingTop: insets.top,
+                    backgroundColor: '#694B40',
+                }}
+            >
+                <StatusBar barStyle="light-content" />
+            </View>
+
             <ScrollView style={styles.container}>
                 {/* back button */}
                 <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden/pages')}>
@@ -38,18 +66,13 @@ export default function PlantDetail() {
 
                 {/* Image Container */}
                 <View style={styles.imageContainer}>
-                    {imageExists ? (
-                        <Image
-                            source={getImage(plant.image)}
-                            style={{ width: screenWidth, height: screenWidth * 7 / 9 }}
-                            resizeMode="cover"
-                        />
-                    ) : (
-                        <View style={styles.placeholder}>
-                            <Text style={styles.placeholderText}>🪴 No image available</Text>
-                        </View>
-                    )}
+                    <Image
+                        source={imageSource}
+                        style={{ width: screenWidth, height: screenWidth * 7 / 9 }}
+                        resizeMode="cover"
+                    />
                 </View>
+
 
                 <View style={styles.isi}>
                     {/* Header */}
@@ -107,8 +130,11 @@ export default function PlantDetail() {
                 </Link>
             </View>
 
+            <View style={{ position: 'relative' }}>
+                <ArticleSection articles={articles} />
+            </View>
 
-        </SafeAreaView>
+        </SafeAreaProvider>
 
     );
 }
