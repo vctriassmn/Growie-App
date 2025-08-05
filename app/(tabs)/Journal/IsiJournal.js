@@ -1,13 +1,27 @@
-
 // File: app/(tabs)/Journal/IsiJournal.js
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState, useRef, useEffect } from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, KeyboardAvoidingView, Platform, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { 
+    Image, 
+    SafeAreaView, 
+    ScrollView, 
+    StyleSheet, 
+    Text, 
+    TouchableOpacity, 
+    View, 
+    KeyboardAvoidingView, 
+    Platform, 
+    Alert, 
+    TextInput, 
+    ActivityIndicator 
+} from 'react-native';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
+import { WebView } from 'react-native-webview'; // Import WebView untuk mode baca
 import * as ImagePicker from 'expo-image-picker';
 import { useJournalAndArticle } from '../../../context/JournalAndArticleStore';
 
+// Aset gambar
 const iconFont = require('../../../assets/icons/tool-font.png');
 const iconCheckbox = require('../../../assets/icons/tool-checkbox.png');
 const iconImage = require('../../../assets/icons/tool-images.png');
@@ -19,32 +33,34 @@ export default function IsiJournalScreen() {
     const { folderTitle, entryId } = useLocalSearchParams();
     const { getJournalEntryById, updateJournalEntry } = useJournalAndArticle(); 
     
-    // Data asli dari context, ini adalah "source of truth"
+    // Data jurnal asli dari context
     const journalEntry = getJournalEntryById(folderTitle, entryId);
     
+    // useRef untuk mengakses metode RichEditor
     const richText = useRef(null); 
+    
+    // State untuk mengontrol mode edit dan toolbar
     const [isEditing, setIsEditing] = useState(false);
     const [showFontTools, setShowFontTools] = useState(false);
     
-    // --- PERBAIKAN KUNCI 1: State terpisah untuk mode edit ---
-    // Ini mencegah state saling menimpa.
+    // State terpisah untuk menyimpan perubahan selama mode edit
     const [editedTitle, setEditedTitle] = useState('');
     const [editedContent, setEditedContent] = useState('');
 
     useEffect(() => {
-        // Setiap kali data dari context berubah (misalnya setelah menyimpan),
-        // perbarui state untuk edit agar selalu sinkron.
         if (journalEntry) {
+            // Sinkronkan state lokal dengan data dari context
             setEditedTitle(journalEntry.title);
             setEditedContent(journalEntry.content);
         }
-    }, [journalEntry]); // Hanya berjalan saat `journalEntry` berubah
+    }, [journalEntry]); 
 
+    // Fungsi untuk kembali ke daftar jurnal
     const handleGoBackToList = () => {
         router.push({ pathname: './ListJournal', params: { folderTitle } });
     };
 
-    // --- PERBAIKAN KUNCI 2: Fungsi simpan mengambil dari state edit ---
+    // Fungsi untuk menyimpan perubahan
     const handleSaveChanges = () => {
         if (journalEntry) {
             updateJournalEntry(folderTitle, entryId, { 
@@ -57,21 +73,23 @@ export default function IsiJournalScreen() {
         Alert.alert("Tersimpan!", "Perubahan jurnal Anda telah disimpan.");
     };
     
-    // --- PERBAIKAN KUNCI 3: Fungsi untuk mengaktifkan/menonaktifkan mode edit ---
+    // Fungsi untuk mengaktifkan/menonaktifkan mode edit
     const toggleEditMode = () => {
+        // Jika sedang mengedit (aksi "Batal"), kembalikan ke data asli
         if (isEditing) {
-            // Jika sedang mengedit (aksi "Cancel"), reset perubahan ke data asli
             setEditedTitle(journalEntry.title);
             setEditedContent(journalEntry.content);
+            // Kunci perbaikan: Reset konten RichEditor ke data asli
+            richText.current?.setContentHTML(journalEntry.content);
         }
-        // Toggle status edit dan sembunyikan toolbar font
+        // Ubah status mode edit
         setIsEditing(!isEditing);
         setShowFontTools(false);
     };
 
+    // Fungsi untuk aksi RichEditor
     const handleFormatAction = (action) => richText.current?.sendAction(action);
-    const handleInsertCheckbox = () => richText.current?.insertHTML(`<div style="margin-top: 5px; margin-bottom: 5px;"><input type="checkbox" /> </div>`);
-
+    const handleInsertCheckbox = () => richText.current?.insertHTML(`<div style="margin-top: 5px; margin-bottom: 5px;"><input type="checkbox" />&nbsp;</div>`);
     const handleInsertImage = async () => {
         richText.current?.focusContentEditor();
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -90,6 +108,7 @@ export default function IsiJournalScreen() {
         }
     };
     
+    // Tampilkan loading jika data belum tersedia
     if (!journalEntry) {
         return (
             <SafeAreaView style={styles.safeArea}>
@@ -100,9 +119,9 @@ export default function IsiJournalScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 <View style={styles.container}>
+                    {/* Header */}
                     <View style={styles.header}>
                         <TouchableOpacity onPress={isEditing ? handleSaveChanges : handleGoBackToList}>
                             <Ionicons name={isEditing ? "checkmark-sharp" : "chevron-back"} size={30} color="#000000" />
@@ -112,37 +131,112 @@ export default function IsiJournalScreen() {
                         </TouchableOpacity>
                     </View>
 
+                    {/* Konten yang bisa digulir */}
                     <ScrollView 
                         contentContainerStyle={styles.scrollContainer} 
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                     >
+                        {/* Judul (berubah menjadi TextInput saat mode edit) */}
                         {isEditing ? (
                             <TextInput
                                 style={styles.titleInput}
-                                // --- PERBAIKAN KUNCI 4: Gunakan state `editedTitle` ---
                                 value={editedTitle}
                                 onChangeText={setEditedTitle}
                                 placeholder="Tulis Judul di Sini"
                                 placeholderTextColor="#999"
                             />
                         ) : (
-                            // Tampilkan judul dari data asli jika tidak sedang mengedit
                             <Text style={styles.titleText}>{journalEntry.title}</Text>
                         )}
 
-                        <RichEditor
-                            ref={richText}
-                            disabled={!isEditing}
-                            initialContentHTML={isEditing ? editedContent : journalEntry.content}
-                            onChange={setEditedContent} 
-                            placeholder="Tulis ceritamu di sini..."
-                            style={styles.richEditor}
-                            editorStyle={styles.editorContentStyle}
-                            useContainer={false}
-                        />
+                        {/* Konten (berubah menjadi RichEditor saat mode edit) */}
+                        {isEditing ? (
+                            <RichEditor
+                                ref={richText}
+                                initialContentHTML={editedContent}
+                                onChange={setEditedContent} 
+                                placeholder="Tulis ceritamu di sini..."
+                                style={styles.richEditor}
+                                editorStyle={styles.editorContentStyle}
+                                useContainer={false}
+                            />
+                        ) : (
+                            // Tampilkan WebView untuk konten yang tidak bisa diedit
+                            <WebView
+                                originWhitelist={['*']}
+                                source={{ html: `
+                                    <html>
+                                        <head>
+                                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                                            <style>
+                                                @font-face {
+                                                    font-family: 'Nunito-Regular';
+                                                    src: url('path/to/Nunito-Regular.ttf'); // Catatan: font lokal tidak didukung langsung di WebView, ini hanya contoh
+                                                }
+                                                body {
+                                                    font-family: 'Nunito-Regular', sans-serif;
+                                                    color: #448461;
+                                                    font-size: 16px;
+                                                    line-height: 24px;
+                                                    text-align: justify;
+                                                    margin: 0;
+                                                    padding: 0;
+                                                }
+                                                img {
+                                                    max-width: 100%;
+                                                    height: auto;
+                                                    border-radius: 15px;
+                                                }
+                                                b, strong {
+                                                    font-family: 'Nunito-Bold', sans-serif;
+                                                }
+                                                i, em {
+                                                    font-style: italic;
+                                                }
+                                                u {
+                                                    text-decoration: underline;
+                                                }
+                                                /* Style untuk checkbox */
+                                                input[type="checkbox"] {
+                                                    -webkit-appearance: none;
+                                                    -moz-appearance: none;
+                                                    appearance: none;
+                                                    width: 18px;
+                                                    height: 18px;
+                                                    border: 2px solid #694B40;
+                                                    border-radius: 4px;
+                                                    vertical-align: middle;
+                                                    margin-right: 8px;
+                                                    position: relative;
+                                                    top: -1px;
+                                                }
+                                                input[type="checkbox"]:checked {
+                                                    background-color: #694B40;
+                                                    border-color: #694B40;
+                                                }
+                                                input[type="checkbox"]:checked::after {
+                                                    content: '✓';
+                                                    font-size: 14px;
+                                                    color: white;
+                                                    position: absolute;
+                                                    top: 0px;
+                                                    left: 2px;
+                                                }
+                                            </style>
+                                        </head>
+                                        <body>
+                                            ${journalEntry.content}
+                                        </body>
+                                    </html>
+                                `}}
+                                style={styles.readOnlyWebView}
+                                scrollEnabled={false}
+                            />
+                        )}
                     </ScrollView>
 
+                    {/* Toolbar edit (hanya muncul saat mode edit aktif) */}
                     {isEditing && (
                         <View style={styles.editToolbarWrapper}>
                             {showFontTools && (
@@ -177,7 +271,7 @@ export default function IsiJournalScreen() {
     );
 }
 
-// Stylesheet Anda tetap sama, hanya menambahkan rata kanan-kiri
+// Stylesheet
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#FAFFFB' },
     container: { flex: 1, backgroundColor: '#FAFFFB', paddingHorizontal: 20 },
@@ -211,13 +305,19 @@ const styles = StyleSheet.create({
         minHeight: 1000,
         flex: 1,
     },
+    // Kunci perbaikan: WebView untuk mode baca
+    readOnlyWebView: {
+        height: 1000, // Menyesuaikan tinggi
+        flex: 1,
+        backgroundColor: 'transparent'
+    },
     editorContentStyle: {
         backgroundColor: 'transparent',
         color: '#448461',
         fontFamily: 'Nunito-Regular',
         fontSize: 16,
         lineHeight: 24,
-        textAlign: 'justify', 
+        textAlign: 'justify',
     },
     editToolbarWrapper: {
         position: 'absolute',
