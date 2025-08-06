@@ -130,7 +130,7 @@ export default function AddPlant() {
           </View>
 
           <View style={styles.isi}>
-            <Text style={[styles.label, { alignSelf: 'center', fontSize: 20 }]}>Add New Plant</Text>
+            <Text style={[styles.label, { alignSelf: 'center', fontSize: 20, fontFamily: 'Nunito-ExtraBold' }]}>Add New Plant</Text>
 
             <TextInput
               style={[styles.input, { padding: 5, backgroundColor: 'transparent', borderBottomWidth: 1, borderColor: '#448461', color: '#448461', borderRadius: 0, marginBottom: 16}]}
@@ -141,24 +141,48 @@ export default function AddPlant() {
 
             <Text style={styles.label}>Water Level</Text>
             <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 16, alignItems: 'center' }}>
-              <TextInput
-                style={[styles.input, { backgroundColor: '#D7F6F4', color: '#316569' }]}
-                placeholder="0"
-                value={waterLevel}
-                keyboardType="numeric"
-                onChangeText={setWaterLevel}
-              />
-              <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>%</Text>
-              <View style={{ height: '90%', backgroundColor: '#316569', width: 1.5, marginHorizontal: 12, alignSelf: 'center' }} />
-              <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>Every</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: '#D7F6F4', color: '#316569' }]}
-                placeholder="0"
-                value={waterFrequency}
-                keyboardType="numeric"
-                onChangeText={setWaterFrequency}
-              />
-              <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>Days</Text>
+              <View style={{ flexDirection: 'col', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: '#D7F6F4', color: '#316569' }]}
+                    placeholder="0"
+                    value={waterLevel}
+                    keyboardType="numeric"
+                    onChangeText={(text) => {
+                      const num = parseInt(text, 10);
+                      if (text === '' || (!isNaN(num) && num <= 100)) {
+                        setWaterLevel(text);
+                      }
+                    }}
+                  />
+                  <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>%</Text>
+                </View>
+
+                <Text style={[styles.label, { justifyContent: 'center' }]}>Maximum 100</Text>
+              </View>
+
+              <View style={{ height: '90%', backgroundColor: '#316569', width: 1.5, marginHorizontal: 12, alignSelf: 'top' }} />
+
+              <View style={{ flexDirection: 'col', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>Every</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: '#D7F6F4', color: '#316569' }]}
+                    placeholder="0"
+                    value={waterFrequency}
+                    keyboardType="numeric"
+                    onChangeText={(text) => {
+                      const num = parseInt(text, 10);
+                      if (text === '' || (!isNaN(num) && num <= 30)) {
+                        setWaterFrequency(text);
+                      }
+                    }}
+                  />
+                  <Text style={[styles.input, { color: '#316569', backgroundColor: 'transparent', marginHorizontal: 0 }]}>Days</Text>
+                </View>
+
+                <Text style={[styles.label, { justifyContent: 'center' }]}>Maximum 30</Text>
+              </View>
             </View>
 
             <Text style={styles.label}>Age</Text>
@@ -266,7 +290,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontWeight: 'semibold',
+    fontFamily: 'Nunito-SemiBold',
     marginBottom: 8,
     color: '#284E43',
   },
@@ -274,6 +298,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     padding: 12,
     borderRadius: 8,
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 20,
   },
   saveButton: {
@@ -288,15 +313,15 @@ const styles = StyleSheet.create({
   saveText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Nunito-ExtraBold',
   },
 
   conditionBox: {
-  backgroundColor: '#7BAB91',
-  padding: 10,
-  borderRadius: 12,
-  alignItems: 'center',
-  width: screenWidth / 4,
+    backgroundColor: '#7BAB91',
+    padding: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: screenWidth / 4,
   },
   selectedConditionBox: {
     opacity: 1, // full terang
@@ -316,7 +341,7 @@ const styles = StyleSheet.create({
   },
   conditionLabel: {
     color: 'white',
-    fontWeight: '600',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 12,
   },
 });

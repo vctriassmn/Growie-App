@@ -19,6 +19,10 @@ import { Dimensions } from 'react-native';
 import EditIcon from '../../../../assets/icons/edit.svg';
 import BackIcon from '../../../../assets/icons/back.svg';
 
+import { initialData } from '../../Article';
+
+const topArticles = initialData.slice(0, 3);
+
 export const options = {
   tabBarStyle: { display: 'none' }, 
   tabBarVisible: false,             
@@ -60,7 +64,7 @@ export default function PlantDetail() {
 
             <ScrollView style={styles.container}>
                 {/* back button */}
-                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden/pages')}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden')}>
                     <BackIcon width={40} height={40} />
                 </TouchableOpacity>
 
@@ -130,6 +134,7 @@ export default function PlantDetail() {
                 </Link>
             </View>
 
+            {/* article section */}
             <View style={{ position: 'relative' }}>
                 <ArticleSection articles={articles} />
             </View>
@@ -171,10 +176,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    placeholderText: {
-        fontSize: 16,
-        color: '#666',
-    },
     // =======================================================================================
     
     // keterangan / info taneman
@@ -188,17 +189,18 @@ const styles = StyleSheet.create({
     // nama + notes
     name: {
         fontSize: 26,
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-ExtraBold',
         color: '#448461',
         marginBottom: 8,
     },
 
     notes: {
         fontSize: 14,
+        fontFamily: 'Nunito-Regular',
         marginBottom: 4,
         color: '#448461',
         textAlign: 'justify',
-        lineHeight: 22,
+        // lineHeight: 18,
 
     },
     // --------------------------------------------------------
@@ -228,20 +230,21 @@ const styles = StyleSheet.create({
     
     title: {
         fontSize: 14,
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-SemiBold',
         color: 'black',
         marginBottom: 4,
     },
 
     main: {
         fontSize: 28,
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-SemiBold',
         color: '#448461',
         marginBottom: 4,
     },
 
     info: {
         fontSize: 14,
+        fontFamily: 'Nunito-SemiBold',
         color: '#448461',
         marginBottom: 4,
     },
@@ -250,7 +253,7 @@ const styles = StyleSheet.create({
     // button
     editButton: {
         position: 'absolute',
-        bottom: 100,
+        bottom: 110,
         right: 30,
         justifyContent: 'center',
         alignItems: 'center',
@@ -270,10 +273,5 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         zIndex: 999,
     },
-    backText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    }
 
 });

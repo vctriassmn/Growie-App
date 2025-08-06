@@ -30,7 +30,7 @@ import ArticleDetail from './ArticleComponents/ArticleDetail'; // Adjusted path 
 
 // Initial static data for other categories (not 'publish')
 // Image paths adjusted relative to this file's new location.
-const initialData = [
+export const initialData = [
     {
         id: '1',
         name: 'How to Plant a New Houseplant',
