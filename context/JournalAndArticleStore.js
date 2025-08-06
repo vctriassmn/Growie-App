@@ -1,4 +1,4 @@
-// File: context/JournalAndArticleStore.js
+// Lokasi File: context/JournalAndArticleStore.js
 
 import React, { createContext, useState, useContext } from 'react';
 import { Image } from 'react-native';
@@ -13,8 +13,7 @@ const customPlantUri = Image.resolveAssetSource(require('../assets/images/custom
 const logoUri = Image.resolveAssetSource(require('../assets/images/Logo.png')).uri;
 const ppUri = Image.resolveAssetSource(require('../assets/images/pp.jpg')).uri;
 const alatGardeningUri = Image.resolveAssetSource(require('../assets/images/alatgardening.png')).uri;
-// Menambahkan beberapa gambar lagi untuk variasi
-const sukulenUri = Image.resolveAssetSource(require('../assets/images/babyspinach.png')).uri; 
+const sukulenUri = Image.resolveAssetSource(require('../assets/images/babyspinach.png')).uri;
 const anggrekUri = Image.resolveAssetSource(require('../assets/images/babyspinach.png')).uri;
 
 // --- DATA DUMMY JURNAL YANG DIPERBANYAK ---
@@ -116,7 +115,6 @@ const initialJournalOrder = [
     'Taman Herbal Mini',
 ];
 
-// --- DATA DUMMY ARTIKEL YANG DIPERBANYAK ---
 const initialArticleData = [
     { id: '1', name: 'Cara Tepat Menanam Tanaman Hias Baru', description: 'Panduan ramah pemula untuk memastikan tanaman Anda tumbuh subur sejak hari pertama...', image: caramenyiramUri, avatar: logoUri, username: 'Growie', category: 'growie', date: 'July 1, 2025', photoOfTheDayImage: alatGardeningUri, quote: '"Setiap tanaman yang subur dimulai dari kebiasaan menanam yang baik."', fullArticle: `<h1>Langkah Awal Menuju Rumah yang Lebih Hijau</h1><p>Menanam tanaman hias baru adalah langkah pertama yang menyenangkan menuju rumah yang lebih hijau dan segar. Namun, proses ini lebih dari sekadar memindahkan tanaman dari pot plastik ke pot baru. Untuk memastikan teman hijau baru Anda beradaptasi dan tumbuh subur, ikuti panduan lengkap ini.</p><h2>1. Pilih Pot yang Tepat</h2><p>Ukuran adalah kunci. Pilih pot yang hanya 2-4 cm lebih besar diameternya dari pot aslinya. Pot yang terlalu besar dapat menahan terlalu banyak air dan menyebabkan akar busuk. Pastikan pot memiliki lubang drainase yang cukup.</p><h2>2. Siapkan Media Tanam Berkualitas</h2><p>Jangan gunakan tanah dari kebun Anda. Beli media tanam khusus tanaman hias (potting mix) yang steril dan memiliki campuran seimbang antara tanah, kompos, dan bahan lain seperti perlite atau vermiculite untuk aerasi.</p><h2>3. Proses Pemindahan (Repotting)</h2><p>Siram tanaman di pot aslinya beberapa jam sebelum dipindahkan. Ini akan membantu mengurangi stres pada akar. Keluarkan tanaman dengan hati-hati, jangan menarik batangnya. Longgarkan akar yang melingkar di bagian bawah dengan lembut menggunakan jari Anda. Letakkan lapisan media tanam di dasar pot baru, posisikan tanaman di tengah, dan isi sisa ruang dengan media tanam hingga beberapa sentimeter di bawah bibir pot. Padatkan dengan lembut dan siram hingga air keluar dari lubang drainase.</p><h2>4. Perawatan Pasca-Tanam</h2><p>Letakkan tanaman di lokasi dengan cahaya yang sesuai kebutuhannya, tetapi hindari sinar matahari langsung yang terik selama beberapa minggu pertama. Jaga kelembaban tanah tetapi jangan biarkan tergenang. Tunda pemupukan setidaknya selama satu bulan untuk memberi waktu bagi tanaman untuk pulih dan beradaptasi dengan rumah barunya.</p>` },
     { id: '2', name: 'Perjuangan Merawat Fiddle Leaf Fig', description: 'Kisah jujur tentang jatuh bangun merawat si cantik yang dramatis ini...', image: plantUri, avatar: ppUri, username: 'User123', category: 'latest', date: 'June 28, 2025', photoOfTheDayImage: plantUri, quote: '"Berdiri tegak dan membawa sukacita... setelah banyak drama."', fullArticle: `<h1>Hubungan Benci dan Cinta dengan Fiddle Leaf Fig</h1><p>Fiddle Leaf Fig (Ficus lyrata) saya akhirnya tumbuh subur! Setelah perjuangan panjang yang melibatkan daun rontok, bercak coklat, dan banyak keputusasaan, saya akhirnya menemukan ritme yang tepat. Ini adalah tanaman yang indah, tetapi jelas bukan untuk orang yang lemah hati.</p><h2>Kesalahan Saya</h2><p>Awalnya, saya terlalu sering menyiramnya. Saya juga menempatkannya terlalu dekat dengan jendela yang terkena angin. Tanaman ini membenci dua hal itu. Daun-daun bagian bawah mulai rontok satu per satu, dan saya hampir menyerah.</p><h2>Titik Balik</h2><p>Saya memutuskan untuk belajar serius. Saya hanya menyiram ketika 2-3 inci bagian atas tanah benar-benar kering. Saya memindahkannya ke sudut yang mendapat cahaya pagi yang terang tetapi tidak langsung. Saya juga mulai membersihkan daunnya yang besar dengan kain lembab setiap minggu untuk membantunya berfotosintesis dengan maksimal. Hasilnya? Daun baru yang sehat mulai bermunculan di puncak. Perasaan suksesnya tak ternilai!</p>` },
@@ -127,108 +125,60 @@ const initialArticleData = [
 ];
 
 
-// --- BAGIAN LOGIKA CONTEXT (TIDAK PERLU DIUBAH) ---
-
 const JournalAndArticleContext = createContext();
 
 export const useJournalAndArticle = () => useContext(JournalAndArticleContext);
 
 export const JournalAndArticleProvider = ({ children }) => {
+    // State untuk data pengguna saat ini
+    const [currentUser, setCurrentUser] = useState({
+        username: 'My Name', // <-- Anda bisa mengubah nama ini
+        avatar: ppUri       // URI untuk avatar pengguna
+    });
+    
     const [journals, setJournals] = useState(initialJournalData);
     const [journalOrder, setJournalOrder] = useState(initialJournalOrder);
-    
     const [publishedArticles, setPublishedArticles] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
 
+    // ... (Fungsi-fungsi manajemen jurnal lain tidak berubah)
     const getJournalFolders = () => journalOrder.map(title => ({ id: title, title: title }));
-
-    const addJournalFolder = (newFolder) => {
-        if (!journals[newFolder.title]) {
-            setJournals(prevJournals => ({ ...prevJournals, [newFolder.title]: [] }));
-            setJournalOrder(prevOrder => [...prevOrder, newFolder.title]);
-        }
-    };
-    
-    const deleteJournalFolders = (folderTitlesToDelete) => {
-        setJournals(prevJournals => {
-            const newJournals = { ...prevJournals };
-            folderTitlesToDelete.forEach(title => { delete newJournals[title]; });
-            return newJournals;
-        });
-        setJournalOrder(prevOrder => prevOrder.filter(title => !folderTitlesToDelete.includes(title)));
-    };
-
-    const addJournalEntry = (folderTitle, newEntry) => {
-        setJournals(prevJournals => {
-            const newJournals = { ...prevJournals };
-            if (!newJournals[folderTitle]) { newJournals[folderTitle] = []; }
-            newJournals[folderTitle].push(newEntry);
-            return newJournals;
-        });
-    };
-
-    const deleteJournalEntries = (folderTitle, entryIds) => {
-        setJournals(prevJournals => {
-            const newJournals = { ...prevJournals };
-            newJournals[folderTitle] = newJournals[folderTitle].filter(entry => !entryIds.includes(entry.id));
-            return newJournals;
-        });
-    };
-
-    const renameJournalFolder = (oldTitle, newTitle) => {
-        if (!newTitle || newTitle === oldTitle) return;
-        setJournals(currentJournals => {
-            const updatedJournals = { ...currentJournals };
-            const entriesToMove = updatedJournals[oldTitle];
-            if (entriesToMove) {
-                updatedJournals[newTitle] = entriesToMove;
-                delete updatedJournals[oldTitle];
-            }
-            return updatedJournals;
-        });
-        setJournalOrder(currentOrder => {
-            const index = currentOrder.indexOf(oldTitle);
-            const newOrder = [...currentOrder];
-            if (index > -1) { newOrder[index] = newTitle; }
-            return newOrder;
-        });
-    };
-    
+    const addJournalFolder = (newFolder) => { if (!journals[newFolder.title]) { setJournals(prev => ({ ...prev, [newFolder.title]: [] })); setJournalOrder(prev => [...prev, newFolder.title]); } };
+    const deleteJournalFolders = (folderTitlesToDelete) => { setJournals(prev => { const newJournals = { ...prev }; folderTitlesToDelete.forEach(title => delete newJournals[title]); return newJournals; }); setJournalOrder(prev => prev.filter(title => !folderTitlesToDelete.includes(title))); };
+    const addJournalEntry = (folderTitle, newEntry) => { setJournals(prev => { const newJournals = { ...prev }; if (!newJournals[folderTitle]) { newJournals[folderTitle] = []; } newJournals[folderTitle].push(newEntry); return newJournals; }); };
+    const deleteJournalEntries = (folderTitle, entryIds) => { setJournals(prev => { const newJournals = { ...prev }; newJournals[folderTitle] = newJournals[folderTitle].filter(entry => !entryIds.includes(entry.id)); return newJournals; }); };
+    const renameJournalFolder = (oldTitle, newTitle) => { if (!newTitle || newTitle === oldTitle) return; setJournals(curr => { const upd = { ...curr }; const entries = upd[oldTitle]; if (entries) { upd[newTitle] = entries; delete upd[oldTitle]; } return upd; }); setJournalOrder(curr => { const idx = curr.indexOf(oldTitle); const newO = [...curr]; if (idx > -1) newO[idx] = newTitle; return newO; }); };
     const getJournalEntriesByTitle = (title) => journals[title] || [];
     const getJournalEntryById = (folderTitle, entryId) => (journals[folderTitle] || []).find(entry => entry.id === entryId);
-    
-    const updateJournalEntry = (folderTitle, entryId, updates) => {
-        setJournals(prevJournals => {
-            const newJournals = { ...prevJournals };
-            const folderEntries = newJournals[folderTitle] ? [...newJournals[folderTitle]] : [];
-            const entryIndex = folderEntries.findIndex(entry => entry.id === entryId);
+    const updateJournalEntry = (folderTitle, entryId, updates) => { setJournals(prev => { const newJ = { ...prev }; const entries = newJ[folderTitle] ? [...newJ[folderTitle]] : []; const idx = entries.findIndex(e => e.id === entryId); if (idx !== -1) { entries[idx] = { ...entries[idx], ...updates }; newJ[folderTitle] = entries; } return newJ; }); };
 
-            if (entryIndex !== -1) {
-                folderEntries[entryIndex] = { ...folderEntries[entryIndex], ...updates };
-                newJournals[folderTitle] = folderEntries;
-            }
-            
-            return newJournals;
-        });
-    };
-
+    // --- FUNGSI PUBLIKASI YANG TELAH DIPERBAIKI ---
     const publishJournalEntries = (folderTitle, entriesToPublish) => {
-        const newArticles = entriesToPublish.map(entry => ({
-            id: `pub-${entry.id}`,
-            name: entry.title,
-            description: entry.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 50) + '...',
-            image: customPlantUri,
-            avatar: ppUri,
-            username: 'MySelf',
-            category: 'publish',
-            date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: '2025' }),
-            photoOfTheDayImage: plantUri,
-            quote: `"${entry.title}"`,
-            fullArticle: entry.content,
-        }));
+        const newArticles = entriesToPublish.map(entry => {
+            
+           // --- INTI PERUBAHAN ---
+            const imageMatch = entry.content.match(/<img[^>]+src="([^">]+)"/);
+            // Jika ditemukan, gunakan gambar itu. Jika tidak, set nilainya ke null.
+            const mainCoverImage = imageMatch ? imageMatch[1] : null; 
+
+            return {
+                id: `pub-${entry.id}`,
+                name: entry.title,
+                description: entry.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80) + '...',
+                
+                image: mainCoverImage,
+                
+                avatar: currentUser.avatar,
+                username: currentUser.username,
+                category: 'publish',
+                date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                photoOfTheDayImage: alatGardeningUri, 
+                quote: `"${entry.title}"`,
+                fullArticle: entry.content,
+            };
+        });
         
         setPublishedArticles(prev => [...prev, ...newArticles]);
-        console.log('Published:', newArticles);
     };
 
     const value = {
@@ -248,6 +198,7 @@ export const JournalAndArticleProvider = ({ children }) => {
         publishedArticles,
         activeTab,
         setActiveTab,
+        currentUser,
     };
 
     return (

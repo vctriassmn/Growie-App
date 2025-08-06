@@ -1,78 +1,61 @@
-import React, { useRef } from 'react';
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Image,
-    StyleSheet,
-    Animated,
-} from 'react-native';
-import { truncateText } from './utils/articleUtils';
+// Lokasi File: ArticleComponents/ArticleCard.js
+
+import React from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+const extractFirstImageUri = (htmlContent) => {
+    if (!htmlContent) return null;
+    const match = htmlContent.match(/<img[^>]+src="([^">]+)"/);
+    return match ? match[1] : null;
+};
 
 const ArticleCard = ({ item, selectionMode, selectedItems, toggleSelection, onCardPress, enterSelectionMode, isLiked, toggleLike }) => {
-    const scaleAnim = useRef(new Animated.Value(1)).current;
+    
+    // --- INTI PERUBAHAN: Logika Thumbnail yang Lebih Cerdas ---
+    // 1. Coba ekstrak gambar dari konten HTML.
+    // 2. Jika tidak ada, gunakan properti 'image' dari item itu sendiri.
+    const thumbnailSource = extractFirstImageUri(item.fullArticle) || item.image;
 
-    const handleLike = () => {
-        Animated.sequence([
-            Animated.timing(scaleAnim, {
-                toValue: 1.5,
-                duration: 100,
-                useNativeDriver: true,
-            }),
-            Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 100,
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            toggleLike(item.id);
-        });
-    };
-
+    const descriptionText = item.description || 'No description available.';
+    const getImageSource = (source) => (typeof source === 'string' ? { uri: source } : source);
+    
     return (
         <TouchableOpacity
-            style={styles.plantCardWrapper}
+            style={styles.cardWrapper}
             onLongPress={() => enterSelectionMode(item.id)}
-            onPress={() => selectionMode ? toggleSelection(item.id) : onCardPress(item)}
+            onPress={() => (selectionMode ? toggleSelection(item.id) : onCardPress(item))}
             activeOpacity={0.9}
         >
             {selectionMode && (
-                <TouchableOpacity
-                    style={styles.plantCardCheckboxContainer}
-                    onPress={() => toggleSelection(item.id)}
-                >
-                    <Image
-                        source={
-                            selectedItems.includes(item.id)
-                                ? require('../../../assets/images/checkbox_checked.png')
-                                : require('../../../assets/images/checkbox_unchecked.png')
-                        }
-                        style={styles.plantCardCheckboxIcon}
-                    />
+                <TouchableOpacity style={styles.checkboxContainer} onPress={() => toggleSelection(item.id)}>
+                    <Image source={ selectedItems.includes(item.id) ? require('../../../assets/images/checkbox_checked.png') : require('../../../assets/images/checkbox_unchecked.png') } style={styles.checkboxIcon}/>
                 </TouchableOpacity>
             )}
-            <View style={[styles.plantCard, selectionMode && styles.plantCardShrink]}>
-                <View style={styles.plantCardTopSection}>
-                    <Image source={item.image} style={styles.plantCardImage} />
-                    <View style={styles.plantCardRightInfo}>
-                        <TouchableOpacity onPress={handleLike} activeOpacity={0.8}>
-                            <Animated.Image
-                                source={
-                                    isLiked
-                                        ? require('../../../assets/images/like_active.png')
-                                        : require('../../../assets/images/like_inactive.png')
-                                }
-                                style={[styles.plantCardHeartButton, { transform: [{ scale: scaleAnim }] }]}
-                            />
+            <View style={styles.card}>
+                <View style={styles.topSection}>
+                    <View style={styles.imageContainer}>
+                        {/* Sekarang menggunakan `thumbnailSource` yang bisa berasal dari dua tempat */}
+                        {thumbnailSource ? (
+                            <Image source={getImageSource(thumbnailSource)} style={styles.mainImage} />
+                        ) : (
+                            <View style={styles.imagePlaceholder}>
+                                <Ionicons name="image-outline" size={40} color="#ced4da" />
+                            </View>
+                        )}
+                    </View>
+                    <View style={styles.rightInfo}>
+                         <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.likeButton}>
+                             <Image source={ isLiked ? require('../../../assets/images/like_active.png') : require('../../../assets/images/like_inactive.png') } style={styles.heartIcon} />
                         </TouchableOpacity>
-                        <Image source={item.avatar} style={styles.plantCardAvatar} />
-                        <Text style={styles.plantCardUsername}>{item.username}</Text>
+                        <Image source={getImageSource(item.avatar)} style={styles.avatar} />
+                        <Text style={styles.username} numberOfLines={1}>{item.username}</Text>
                     </View>
                 </View>
-                <View style={styles.plantCardBottomSection}>
-                    <Text style={styles.plantCardName}>{item.name}</Text>
-                    <Text style={styles.plantCardDescription}>
-                        {truncateText(item.fullArticle, 50)}
+                <View style={styles.bottomSection}>
+                    <Text style={styles.articleName} numberOfLines={2}>{item.name}</Text>
+                    <Text style={styles.articleDescription} numberOfLines={3}>
+                        {descriptionText}
                     </Text>
                 </View>
             </View>
@@ -80,53 +63,24 @@ const ArticleCard = ({ item, selectionMode, selectedItems, toggleSelection, onCa
     );
 };
 
+// Stylesheet tidak perlu diubah.
 const styles = StyleSheet.create({
-    plantCardWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 25,
-        width: '90%',
-        alignSelf: 'center',
-        marginLeft: 4,
-    },
-    plantCardCheckboxContainer: {
-        width: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    plantCardCheckboxIcon: {
-        width: 24,
-        height: 24,
-    },
-    plantCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 6,
-        elevation: 4,
-        flex: 1,
-        width: 330,
-    },
-    plantCardShrink: {
-        width: 400,
-    },
-    plantCardTopSection: { flexDirection: 'row' },
-    plantCardImage: { width: '75%', height: '100%', resizeMode: 'cover' },
-    plantCardRightInfo: { backgroundColor: '#DCF0E4', width: '25%', paddingVertical: 10 },
-    plantCardAvatar: { width: 60, height: 60, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20, alignSelf: 'center', justifyContent: 'center' },
-    plantCardUsername: { fontSize: 14, color: '#448461', marginBottom: 10, justifyContent: 'center', alignSelf: 'center' },
-    plantCardHeartButton: { width: 24, height: 24, alignSelf: 'flex-end', marginRight: 10 },
-    plantCardBottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
-    plantCardName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4 },
-    plantCardDescription: {
-        fontSize: 13,
-        color: '#666',
-        numberOfLines: 6,
-    },
+    cardWrapper: { flexDirection: 'row', alignItems: 'center', marginBottom: 25, paddingHorizontal: 15, },
+    checkboxContainer: { paddingRight: 10, },
+    checkboxIcon: { width: 24, height: 24, },
+    card: { flex: 1, backgroundColor: '#fff', borderRadius: 15, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, elevation: 5, },
+    topSection: { flexDirection: 'row', height: 140 },
+    imageContainer: { width: '75%', height: '100%', },
+    mainImage: { width: '100%', height: '100%', resizeMode: 'cover', },
+    imagePlaceholder: { width: '100%', height: '100%', backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center', borderRightWidth: 1, borderRightColor: '#e9ecef', },
+    rightInfo: { backgroundColor: '#DCF0E4', width: '25%', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+    likeButton: { alignSelf: 'flex-end', padding: 5, },
+    heartIcon: { width: 22, height: 22, },
+    avatar: { width: 55, height: 55, borderRadius: 27.5, borderColor: '#448461', borderWidth: 1.5, backgroundColor: '#f8f9fa' },
+    username: { fontSize: 13, color: '#448461', fontFamily: 'Nunito_700Bold', paddingHorizontal: 2, },
+    bottomSection: { paddingVertical: 15, paddingHorizontal: 20 },
+    articleName: { fontSize: 16, fontFamily: 'Nunito_700Bold', color: '#448461', marginBottom: 6 },
+    articleDescription: { fontSize: 13, fontFamily: 'Nunito_400Regular', color: '#666', lineHeight: 18, },
 });
 
 export default ArticleCard;
