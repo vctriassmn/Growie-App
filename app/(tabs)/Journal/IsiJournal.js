@@ -17,7 +17,7 @@ import {
     ActivityIndicator 
 } from 'react-native';
 import { RichEditor, actions } from 'react-native-pell-rich-editor';
-import { WebView } from 'react-native-webview'; // Import WebView untuk mode baca
+import { WebView } from 'react-native-webview';
 import * as ImagePicker from 'expo-image-picker';
 import { useJournalAndArticle } from '../../../context/JournalAndArticleStore';
 
@@ -131,25 +131,25 @@ export default function IsiJournalScreen() {
                         </TouchableOpacity>
                     </View>
 
+                    {/* Judul (Sticky, di tengah, dan di luar ScrollView) */}
+                    {isEditing ? (
+                        <TextInput
+                            style={styles.titleInput}
+                            value={editedTitle}
+                            onChangeText={setEditedTitle}
+                            placeholder="Tulis Judul di Sini"
+                            placeholderTextColor="#999"
+                        />
+                    ) : (
+                        <Text style={styles.titleText}>{journalEntry.title}</Text>
+                    )}
+
                     {/* Konten yang bisa digulir */}
                     <ScrollView 
                         contentContainerStyle={styles.scrollContainer} 
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                     >
-                        {/* Judul (berubah menjadi TextInput saat mode edit) */}
-                        {isEditing ? (
-                            <TextInput
-                                style={styles.titleInput}
-                                value={editedTitle}
-                                onChangeText={setEditedTitle}
-                                placeholder="Tulis Judul di Sini"
-                                placeholderTextColor="#999"
-                            />
-                        ) : (
-                            <Text style={styles.titleText}>{journalEntry.title}</Text>
-                        )}
-
                         {/* Konten (berubah menjadi RichEditor saat mode edit) */}
                         {isEditing ? (
                             <RichEditor
@@ -160,6 +160,16 @@ export default function IsiJournalScreen() {
                                 style={styles.richEditor}
                                 editorStyle={styles.editorContentStyle}
                                 useContainer={false}
+                                // MODIFIKASI: Menambahkan CSS untuk memastikan teks selalu justify
+                                initialCSSText={`
+                                    body {
+                                        font-family: 'Nunito-Regular';
+                                        color: #448461;
+                                        font-size: 16px;
+                                        line-height: 24px;
+                                        text-align: justify;
+                                    }
+                                `}
                             />
                         ) : (
                             // Tampilkan WebView untuk konten yang tidak bisa diedit
@@ -286,17 +296,19 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontFamily: 'Nunito-ExtraBold',
         color: '#448461',
-        marginVertical: 20,
         lineHeight: 36,
+        textAlign: 'center',
+        paddingBottom: 20,
     },
     titleInput: {
         fontSize: 28,
         fontFamily: 'Nunito-ExtraBold',
         color: '#448461',
-        marginVertical: 20,
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
         paddingBottom: 8,
+        textAlign: 'center',
+        marginBottom: 20,
     },
     errorText: { fontSize: 18, color: 'red', textAlign: 'center', marginTop: 50, fontFamily: 'Nunito-Regular' },
     backLink: { fontSize: 16, color: '#448461', textAlign: 'center', marginTop: 20, fontFamily: 'Nunito-Bold', textDecorationLine: 'underline' },
@@ -305,9 +317,8 @@ const styles = StyleSheet.create({
         minHeight: 1000,
         flex: 1,
     },
-    // Kunci perbaikan: WebView untuk mode baca
     readOnlyWebView: {
-        height: 1000, // Menyesuaikan tinggi
+        height: 1000,
         flex: 1,
         backgroundColor: 'transparent'
     },
@@ -317,7 +328,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Nunito-Regular',
         fontSize: 16,
         lineHeight: 24,
-        textAlign: 'justify',
+        textAlign: 'justify', // Ini tetap dipertahankan untuk styling container
     },
     editToolbarWrapper: {
         position: 'absolute',
