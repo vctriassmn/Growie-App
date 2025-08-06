@@ -361,39 +361,79 @@ export default function Reminder() {
                     </View>
                     
                     <View style={styles.daysSwitchContainer}>
-                      {/* Weekday indicators */}
+                      {/* Display options based on frequency */}
                       <View style={styles.daysContainer}>
-                        {[
-                          {key: 'Mo', display: 'M'}, // Monday
-                          {key: 'Tu', display: 'T'}, // Tuesday
-                          {key: 'W', display: 'W'}, // Wednesday
-                          {key: 'Th', display: 'T'}, // Thursday
-                          {key: 'F', display: 'F'}, // Friday
-                          {key: 'Sa', display: 'S'}, // Saturday
-                          {key: 'Su', display: 'S'}  // Sunday
-                        ].map((dayObj, index) => {
-                          // Untuk hari Kamis (Thursday) dan Minggu (Sunday) yang memiliki key duplikat
-                          // Kita akan menggunakan pendekatan berbasis index untuk mengambil nilai yang tepat
-                          let isActive;
-                          
-                          // Definisikan array untuk menentukan urutan properti dalam object item.days
-                          const dayKeys = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
-                          // Gunakan index untuk mengakses nilai yang tepat
-                          isActive = item.days[dayKeys[index]];
-                          
-                          return (
-                            <Text 
-                              key={index} 
-                              style={[
-                                styles.dayIndicator,
-                                isActive && styles.activeDayIndicator,
-                                !item.active && isActive && styles.inactiveDayIndicator
-                              ]}
-                            >
-                              {dayObj.display}
-                            </Text>
-                          );
-                        })}
+                        {item.frequency === 'weekly' ? (
+                          // For WEEKLY frequency, show Week numbers 1-4
+                          <Text style={[styles.frequencyIndicator, item.active ? styles.activeText : styles.inactiveText]}>
+                            Week: {[1, 2, 3, 4].map((week, index) => {
+                              // Check if this week is active
+                              const isActive = item.selectedWeeks?.includes(week) || false;
+                              
+                              return (
+                                <Text 
+                                  key={index} 
+                                  style={[
+                                    styles.weekIndicator,
+                                    isActive && styles.activeDayIndicator,
+                                    !item.active && isActive && styles.inactiveDayIndicator
+                                  ]}
+                                >
+                                  {week}{index < 3 ? ' ' : ''}
+                                </Text>
+                              );
+                            })}
+                          </Text>
+                        ) : item.frequency === 'monthly' ? (
+                          // For MONTHLY frequency, show "Repeats monthly on the X(st/nd/rd/th)"
+                          <Text style={[styles.frequencyIndicator, item.active ? styles.activeText : styles.inactiveText]}>
+                            {(() => {
+                              const date = item.selectedDate || 1; // Default to 1st if not set
+                              const day = parseInt(date, 10);
+                              
+                              // Calculate the ordinal suffix
+                              let suffix = 'th';
+                              if (day % 10 === 1 && day !== 11) suffix = 'st';
+                              else if (day % 10 === 2 && day !== 12) suffix = 'nd';
+                              else if (day % 10 === 3 && day !== 13) suffix = 'rd';
+                              
+                              return `Repeats monthly on the ${day}${suffix}`;
+                            })()}
+                          </Text>
+                        ) : (
+                          // For DAILY frequency, show weekday indicators as before
+                          [
+                            {key: 'Mo', display: 'M'}, // Monday
+                            {key: 'Tu', display: 'T'}, // Tuesday
+                            {key: 'W', display: 'W'}, // Wednesday
+                            {key: 'Th', display: 'T'}, // Thursday
+                            {key: 'F', display: 'F'}, // Friday
+                            {key: 'Sa', display: 'S'}, // Saturday
+                            {key: 'Su', display: 'S'}  // Sunday
+                          ].map((dayObj, index) => {
+                            // Untuk hari Kamis (Thursday) dan Minggu (Sunday) yang memiliki key duplikat
+                            // Kita akan menggunakan pendekatan berbasis index untuk mengambil nilai yang tepat
+                            let isActive;
+                            
+                            // Definisikan array untuk menentukan urutan properti dalam object item.days
+                            const dayKeys = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+                            // Gunakan index untuk mengakses nilai yang tepat
+                            isActive = item.days[dayKeys[index]];
+                            
+                            return (
+                              <Text 
+                                key={index} 
+                                style={[
+                                  styles.dayIndicator,
+                                  isActive && styles.activeDayIndicator,
+                                  !item.active && isActive && styles.inactiveDayIndicator
+                                ]}
+                              >
+                                {dayObj.display}
+                              </Text>
+                            );
+                          })
+                        )}
                       </View>
                       
                       {/* Custom Toggle Switch */}
@@ -627,12 +667,25 @@ const styles = StyleSheet.create({
   daysContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap', // Allow wrapping for longer texts
+    maxWidth: 180, // Maximum width to prevent overflow
   },
   dayIndicator: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 11,
+    fontSize: 15,
     marginRight: 4,
     color: '#CCCCCC',
+  },
+  weekIndicator: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 15,
+    color: '#CCCCCC',
+  },
+  frequencyIndicator: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 10,
+    marginRight: 4,
+    maxWidth: 130, // Prevent text from wrapping too much
   },
   activeDayIndicator: {
     color: '#448461',

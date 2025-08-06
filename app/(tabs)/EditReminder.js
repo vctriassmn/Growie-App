@@ -167,6 +167,15 @@ export default function EditReminderScreen() {
           setInitialSelectedDays(['mon']);
         }
         
+        // Set week and date selections based on frequency
+        if (currentReminderData.frequency === 'weekly' && currentReminderData.selectedWeeks) {
+          setSelectedWeeks(currentReminderData.selectedWeeks);
+        }
+        
+        if (currentReminderData.frequency === 'monthly' && currentReminderData.selectedDate) {
+          setSelectedDates([currentReminderData.selectedDate]);
+        }
+        
         // Set notes if available
         if (currentReminderData.note) {
           setNotes(currentReminderData.note);
@@ -237,9 +246,14 @@ export default function EditReminderScreen() {
   };
 
   const toggleDate = (d) => {
-    setSelectedDates((prev) =>
-      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-    );
+    // For monthly frequency, allow only one date selection
+    if (repeater === "MONTHLY") {
+      setSelectedDates([d]); // Replace current selection with new date
+    } else {
+      setSelectedDates((prev) =>
+        prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
+      );
+    }
   };
 
   const renderItem = (item) => (
@@ -360,7 +374,7 @@ export default function EditReminderScreen() {
             <Text style={styles.labelInside}>REMINDER NAME</Text>
           </View>
 
-          <View style={styles.section}>
+          <View style={styles.categSection}>
             <View style={styles.categoryRow}>
               {["WATERING", "FERTILIZING", "PRUNING"].map((c) => (
                 <TouchableOpacity
@@ -378,10 +392,11 @@ export default function EditReminderScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={styles.divider} />
           </View>
 
-          <View style={styles.section}>
+          <View style={styles.divider} />
+
+          <View style={styles.repeatSection}>
             <View style={styles.repeaterContainer}>
               <Text style={styles.repeaterLabel}>REPEATER</Text>
               <View style={styles.repeaterOptionsRow}>
@@ -404,7 +419,7 @@ export default function EditReminderScreen() {
             </View>
 
             {repeater === "DAILY" && (
-              <View style={[styles.row, { justifyContent: 'center', marginTop: 10 }]}>
+              <View style={[styles.row, { justifyContent: 'center', marginTop: 11 }]}>
                 {days.map((day) => (
                   <TouchableOpacity
                     key={day.id}
@@ -421,7 +436,7 @@ export default function EditReminderScreen() {
             )}
 
             {repeater === "WEEKLY" && (
-              <View style={[styles.row, { justifyContent: 'center', marginTop: 10 }]}>
+              <View style={[styles.row, { justifyContent: 'center', marginTop: 13 }]}>
                 {[1, 2, 3, 4].map((w) => (
                   <TouchableOpacity
                     key={w}
@@ -441,26 +456,18 @@ export default function EditReminderScreen() {
             )}
 
             {repeater === "MONTHLY" && (
-              <View style={{ marginTop: 10 }}>
+              <View style={[styles.row, { justifyContent: 'flex-start', marginTop: 13}]}>
                 <TouchableOpacity
                   style={styles.chooseDateButton}
                   onPress={() => setShowDateModal(true)}
                 >
                   <Text style={styles.chooseDateText}>Choose Date</Text>
                 </TouchableOpacity>
-                {selectedDates.length > 0 && (
-                  <View style={styles.selectedDatesContainer}>
-                    <Text style={styles.selectedDatesLabel}>Selected Dates:</Text>
-                    <View style={styles.selectedDatesWrapper}>
-                      {selectedDates.map((d) => (
-                        <Text key={d} style={styles.selectedDateItem}>{d}</Text>
-                      ))}
-                    </View>
-                  </View>
-                )}
               </View>
             )}
           </View>
+
+          <View style={styles.divider} />
 
           <View style={styles.notesContainer}>
             <Text style={styles.notesLabel}>NOTES</Text>
@@ -491,6 +498,16 @@ export default function EditReminderScreen() {
               return;
             }
             
+            if (repeater === "WEEKLY" && selectedWeeks.length === 0) {
+              alert('Silakan pilih minimal satu minggu untuk pengulangan mingguan!');
+              return;
+            }
+            
+            if (repeater === "MONTHLY" && selectedDates.length !== 1) {
+              alert('Silakan pilih tepat satu tanggal untuk pengulangan bulanan!');
+              return;
+            }
+            
             // Prepare the updated reminder data
             console.log("Preparing updated reminder");
             
@@ -503,7 +520,11 @@ export default function EditReminderScreen() {
               active: reminderData ? reminderData.active : true, // Preserve active state
               days: {}, // We'll populate this below
               frequency: repeater.toLowerCase(), // Simpan frequency
-              note: notes // Simpan notes
+              note: notes, // Simpan notes
+              // Save week information for weekly frequency
+              selectedWeeks: repeater === "WEEKLY" ? selectedWeeks : [],
+              // Save date information for monthly frequency
+              selectedDate: repeater === "MONTHLY" && selectedDates.length > 0 ? selectedDates[0] : null
             };
 
             // Array indeks yang benar untuk memastikan penempatan huruf yang tepat
@@ -549,24 +570,27 @@ export default function EditReminderScreen() {
               <View key={`week-${weekIndex}`} style={{ flexDirection: 'row', justifyContent: 'center', marginVertical: 2 }}>
                 {[...Array(7)].map((_, dayIndex) => {
                   const dateNum = weekIndex * 7 + dayIndex + 1;
-                  if (dateNum <= 31) {
-                    return (
-                      <TouchableOpacity
-                        key={`date-${dateNum}`}
-                        style={[
-                          styles.dateCircle,
-                          selectedDates.includes(dateNum) && styles.dateCircleSelected,
-                        ]}
-                        onPress={() => toggleDate(dateNum)}
-                      >
-                        <Text style={[
-                          styles.dateText,
-                          selectedDates.includes(dateNum) && styles.dateTextSelected
-                        ]}>{dateNum}</Text>
-                      </TouchableOpacity>
-                    );
+                  // Only render dates 1-31
+                  if (dateNum > 31) {
+                    // Return empty placeholder to maintain grid structure
+                    return <View key={`empty-${dayIndex}`} style={{ width: 40, height: 40, margin: 2, marginHorizontal: 4 }} />;
                   }
-                  return <View key={`empty-${weekIndex}-${dayIndex}`} style={{ width: 40, height: 40, margin: 2 }} />;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={dateNum}
+                      style={[
+                        styles.dateCircle,
+                        selectedDates.includes(dateNum) && styles.dateCircleSelected,
+                      ]}
+                      onPress={() => toggleDate(dateNum)}
+                    >
+                      <Text style={[
+                        styles.dateText,
+                        selectedDates.includes(dateNum) && styles.dateTextSelected
+                      ]}>{dateNum}</Text>
+                    </TouchableOpacity>
+                  );
                 })}
               </View>
             ))}
@@ -607,38 +631,39 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 24, 
     fontFamily: 'Nunito-Bold',
+    fontWeight: 'bold',
     color: '#6A804F',
     flex: 1,
   },
   inputContainer: {
     position: 'relative',
-    marginBottom: 6,
+    // marginBottom: 6,
   },
   labelInside: {
     position: 'absolute',
-    left: 10,
-    top: 8,
+    left: 13,
+    top: 9,
     backgroundColor: "#448461",
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
-    fontSize: 13,
+    fontSize: 8,
     color: '#FFFFFF',
     fontFamily: 'Nunito-Bold',
     zIndex: 1,
-    alignSelf: 'center',
-    
+    alignSelf: 'center'
   },
   inputTransparent: {
     borderWidth: 1.5,
     borderColor: "#7F995E",
     borderRadius: 30,
-    paddingVertical: 10,
-    paddingLeft: 140, // Space for the label
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingLeft: 110, // Space for the label
     paddingRight: 20,
     backgroundColor: 'transparent',
     fontSize: 14,
-    height: 40,
+    height: 35,
   },
   scrollerWrapper: {
     flexDirection: "row",
@@ -760,8 +785,12 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     marginTop: 16, // Increased top margin to create more space below the label
   },
-  section: { 
-    marginVertical: 6 
+  categSection: { 
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  repeatSection: { 
+    marginVertical: 27
   },
   row: { 
     flexDirection: "row", 
@@ -772,23 +801,24 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 15,
+    // marginBottom: 25,
   },
   categoryOption: {
     backgroundColor: "transparent",
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    marginHorizontal: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+    marginHorizontal: 12,
     borderRadius: 18,
     borderWidth: 1.5,
     borderColor: "#7F995E",
+    width: 78,
   },
   categoryOptionActive: {
     backgroundColor: "#FBF2D6",
     borderColor: "#7F995E",
   },
   categoryOptionText: {
-    fontSize: 11,
+    fontSize: 8,
     fontFamily: 'Nunito-Bold',
     color: '#7F995E',
   },
@@ -798,7 +828,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#A5C5A0',
-    marginVertical: 10,
+    // marginBottom: 10,
     width: '100%',
   },
   repeaterContainer: {
@@ -807,26 +837,27 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     padding: 10,
     position: 'relative',
-    paddingLeft: 101, // Space for the label
+    paddingLeft: 83, // Space for the label
     paddingRight: 10,
     // marginBottom: 5,
     backgroundColor: 'transparent',
-    height: 40,
+    height: 35,
     flexDirection: 'row',
     alignItems: 'center',
   },
   repeaterLabel: {
     position: 'absolute',
-    left: 10,
+    left: 12,
     top: 7,
     backgroundColor: "#448461",
     paddingHorizontal: 12,
     paddingVertical: 3,
     borderRadius: 12,
-    fontSize: 13,
+    fontSize: 8,
     color: '#FFFFFF',
     fontFamily: 'Nunito-Bold',
     zIndex: 1,
+    alignSelf: 'center'
   },
   repeaterOptionsRow: {
     flexDirection: 'row',
@@ -836,11 +867,9 @@ const styles = StyleSheet.create({
   },
   repeaterOption: {
     backgroundColor: "#ABC29F",
-    paddingVertical: 5,
-    paddingHorizontal: 2,
     marginHorizontal: 4,
     borderRadius: 18,
-    height: 26,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     flex: 1,
@@ -850,7 +879,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FBF2D6",
   },
   repeaterOptionText: {
-    fontSize: 11,
+    fontSize: 8,
     fontFamily: 'Nunito-Bold',
     color: '#FAFFFB',
   },
@@ -859,13 +888,13 @@ const styles = StyleSheet.create({
   },
   weekOption: {
     backgroundColor: "#ABC29F",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginHorizontal: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 18,
+    marginHorizontal: 4,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 0,
   },
   weekOptionActive: {
     backgroundColor: "#FBF2D6",
@@ -880,15 +909,15 @@ const styles = StyleSheet.create({
   },
   chooseDateButton: {
     backgroundColor: "#FBF2D6",
-    paddingVertical: 8,
-    paddingHorizontal: 24,
+    paddingVertical: 4,
+    paddingHorizontal: 16,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 0,
   },
   chooseDateText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: 'Nunito-Bold',
     color: '#7F995E',
   },
@@ -932,19 +961,20 @@ const styles = StyleSheet.create({
   optionActive: { backgroundColor: "#A5C5A0" },
   // Small circle for days/dates
   circleSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(127, 153, 94, 0.3)", // #7F995E with 30% opacity
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(127, 153, 94, 0.3)",
     justifyContent: "center",
     alignItems: "center",
-    margin: 6,
+    marginBottom: -5,
+    marginHorizontal: 6,
   },
   circleActive: {
     backgroundColor: "#7BAB91", // Solid color when selected
   },
   circleText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Nunito-Bold',
     color: '#D9ECE1', // Text color
   },
