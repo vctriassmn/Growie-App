@@ -1,82 +1,104 @@
-// import React from 'react';
-// import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-// import { Link } from 'expo-router';
-// import { Dimensions } from 'react-native';
-
-
-// // import { plants } from '../data';
-// import { getImage } from '../getImage';
-// const screenWidth = Dimensions.get('window').width;
-
-// // const imageSource = getImage(plant.image);
-
-// const PlantCard = ({ plant }) => (
-//   <Link href={`/plant/${plant.id}`} asChild>
-//     <TouchableOpacity style={styles.card}>
-//       <Image
-//         source={getImage(plant.image)}
-//         resizeMode="cover"
-//       />
-//       <Text style={styles.name}>{plant.name}</Text>
-//       <Text>Age: {plant.age} days</Text>
-//       <Text>Condition: {plant.condition}</Text>
-//     </TouchableOpacity>
-//   </Link>
-// );
-
-// const styles = StyleSheet.create({
-//   card: {
-//     borderWidth: 1,
-//     borderColor: '#ccc',
-//     padding: 12,
-//     marginBottom: 12,
-//     borderRadius: 8,
-//   },
-//   name: {
-//     fontWeight: 'bold',
-//     fontSize: 16,
-//     marginBottom: 4,
-//   },
-// });
-
-// export default PlantCard;
-
-
-
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions } from 'react-native';
-import { Link } from 'expo-router';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { getImage } from '../getImage';
+import { usePlant } from '../../../../context/PlantContext';
 
 const screenWidth = Dimensions.get('window').width;
 
-const PlantCard = ({ plant }) => (
-  <Link href={`/plant/${plant.id}`} asChild>
-    <TouchableOpacity style={styles.card}>
-      {/* Image placeholder */}
-      <Image
-        source={getImage(plant.image || 'placeholder')}
-        style={styles.cardImage}
-        resizeMode="cover"
-      />
+const PlantCard = ({
+  plant,
+  isSelected,
+  isSelecting,
+  setIsSelecting,
+  selectedPlants,
+  setSelectedPlants,
+}) => {
+  const router = useRouter();
+  const { deletePlant } = usePlant();
 
-      {/* Plant info */}
-      <Text style={styles.name}>{plant.name || 'Unnamed'}</Text>
-      <Text style={styles.detail}>{plant.age || '--'} days</Text>
-      {/* <Text style={styles.detail}>Condition: {plant.condition || 'Unknown'}</Text> */}
+  const imageSource =
+    typeof plant.image === 'string'
+      ? plant.image.startsWith('file')
+        ? { uri: plant.image }
+        : getImage(plant.image)
+      : getImage('placeholder');
+
+  const toggleSelect = (id) => {
+    setSelectedPlants((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    );
+  };
+
+  const handleDelete = (id) => {
+    Alert.alert(
+      'Delete Plant',
+      'Are you sure you want to delete this plant?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deletePlant(id) },
+      ]
+    );
+  };
+
+  return (
+    <TouchableOpacity
+      style={{ flex: 1 }} // Tambahkan ini!
+      onLongPress={() => {
+        setIsSelecting(true);
+        setSelectedPlants([plant.id]);
+      }}
+      onPress={() => {
+        if (isSelecting) {
+          toggleSelect(plant.id);
+        } else {
+          router.push(`/plant/${plant.id}`);
+        }
+      }}
+    >
+      <View style={[styles.card, isSelected && styles.selectedCard]}>
+        <Image
+          source={imageSource}
+          style={styles.cardImage}
+          resizeMode="cover"
+        />
+        <View style={styles.cardContent}>
+          <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
+            {plant.name || 'Unnamed'}
+          </Text>
+          <Text style={styles.detail}>
+            {plant.age || '--'} days
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
-  </Link>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1, // Ini penting!
     width: '100%',
     backgroundColor: '#7BAB91',
-    marginBottom: 20,
     borderRadius: 12,
     overflow: 'hidden',
     alignItems: 'center',
+    borderWidth: 0,
   },
+
+  selectedCard: {
+    borderColor: '#42574E',
+    borderWidth: 3,
+  },
+
   cardImage: {
     width: '100%',
     height: screenWidth * 0.3,
@@ -85,19 +107,26 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 0,
     backgroundColor: '#ccc',
   },
+
+  cardContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+
   name: {
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
-    marginTop: 8,
     textAlign: 'center',
   },
+
   detail: {
     fontSize: 13,
     color: 'white',
-    marginTop: 2,
     textAlign: 'center',
-    marginBottom: 8,
+    marginTop: 4,
   },
 });
 

@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../../context/UserContext';
 import { useReminders } from '../../context/ReminderContext';
+import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
 
 // Data dummy (tidak ada perubahan)
 const latestArticlesData = [
@@ -24,7 +25,7 @@ const myGardenData = [
 ];
 
 // Impor Aset (tidak ada perubahan)
-import BellIcon from '../../assets/images/bell.svg'; 
+import BellIcon from '../../assets/images/bell.svg';
 import ProfileBorderSVG from '../../assets/icons/profile.svg';
 const heartIconActive = require('../../assets/images/like_active.png');
 const heartIconInactive = require('../../assets/images/like_inactive.png');
@@ -32,8 +33,8 @@ const heartIconInactive = require('../../assets/images/like_inactive.png');
 // Komponen ArticleCard (tidak ada perubahan di logika)
 const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
   return (
-    <TouchableOpacity 
-      style={styles.articleCardWrapper} 
+    <TouchableOpacity
+      style={styles.articleCardWrapper}
       onPress={() => onCardPress(item)}
       activeOpacity={0.9}
     >
@@ -42,8 +43,8 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
           <Image source={item.image} style={styles.articleImage} />
           <View style={styles.articleRightInfo}>
             <TouchableOpacity style={styles.articleLikeButton} onPress={onLikeToggle}>
-              <Image 
-                source={item.liked ? heartIconActive : heartIconInactive} 
+              <Image
+                source={item.liked ? heartIconActive : heartIconInactive}
                 style={styles.articleLikeIcon}
               />
             </TouchableOpacity>
@@ -64,15 +65,15 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
 export default function HomePage() {
   const router = useRouter(); 
   const navigation = useNavigation();
-  const { profilePicture } = useUser(); // Destructure profilePicture from UserContext
   const { getHomeReminders } = useReminders(); // Get reminders from context
+  const { userName, profilePicture } = useUser();
   const [articles, setArticles] = useState(latestArticlesData);
 
   // Get synchronized reminder data from context (ids 1, 2, 4)
   const homeReminders = getHomeReminders();
 
   const handleLikeToggle = (articleId) => {
-    const updatedArticles = articles.map(article => 
+    const updatedArticles = articles.map(article =>
       article.id === articleId ? { ...article, liked: !article.liked } : article
     );
     setArticles(updatedArticles);
@@ -104,8 +105,9 @@ export default function HomePage() {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => !isPanelUp && Math.abs(gestureState.dy) > 5,
-      onPanResponderRelease: (e, gesture) => {
-        if (gesture.vy < -0.5 || gesture.dy < -100) scrollToArticle();
+      // ✅ Perbaikan: Menggunakan gestureState di sini
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.vy < -0.5 || gestureState.dy < -100) scrollToArticle();
         else scrollToTop();
       },
     })
@@ -127,28 +129,30 @@ export default function HomePage() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topBar} />
-      
-      <ScrollView 
+
+      <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={styles.scrollContainer}
         scrollEnabled={!isPanelUp}
         showsVerticalScrollIndicator={!isPanelUp}
       >
         <View style={styles.paddedContent}>
-            {/* Header dengan Profil SVG */}
-            <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.header}
+              onPress={() => router.push('/Profile')}
+              activeOpacity={0.8}
+            >
               <View style={styles.profileContainer}>
                 {/* Layer Bawah: Bingkai SVG */}
                 <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
-                <Image 
+                <Image
                   source={typeof profilePicture === 'string' ? { uri: profilePicture } : profilePicture}
-                  style={styles.profileImage} 
+                  style={styles.profileImage}
                 />
               </View>
-              <Text style={styles.greetingText}>Hello! akusaygkamu</Text>
-            </View>
-            
-            {/* Sisa konten atas */}
+              <Text style={styles.greetingText}>Hello! {userName}</Text>
+            </TouchableOpacity>
+
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeTitle}>Welcome to Homepage!</Text>
               <TouchableOpacity onPress={() => router.push('/Notification')}>
@@ -196,28 +200,27 @@ export default function HomePage() {
             </View>
         </View>
 
-        {/* Bagian Artikel yang bisa digeser */}
-        <View 
+        <View
           style={styles.articlesSection}
           onLayout={(event) => { articleSectionY.current = event.nativeEvent.layout.y; }}
         >
-          <ScrollView 
-            scrollEnabled={isPanelUp} 
+          <ScrollView
+            scrollEnabled={isPanelUp}
             showsVerticalScrollIndicator={isPanelUp}
-            contentContainerStyle={{ paddingBottom: 50 }} 
+            contentContainerStyle={{ paddingBottom: 50 }}
           >
             <View style={styles.articleHeader} {...panResponder.panHandlers}>
                 <Text style={styles.sectionTitle}>Articles</Text>
-                <TouchableOpacity onPress={() => router.push('/Article')}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/Article')}>
                   <Text style={styles.seeMore}>See more</Text>
                 </TouchableOpacity>
             </View>
-            
+
             {articles.map(article => (
-              <ArticleCard 
-                key={article.id} 
+              <ArticleCard
+                key={article.id}
                 item={article}
-                onCardPress={() => router.push('/Article')}
+                onCardPress={() => router.push({pathname: `/(tabs)/ArticleComponents/${article.id}`,})}
                 onLikeToggle={() => handleLikeToggle(article.id)}
               />
             ))}
@@ -255,7 +258,7 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#FBF2D6', padding: 15, borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginTop: 10, ...shadowStyle, },
   profileContainer: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center', marginRight: 15, },
   profileImage: { width: 50, height: 50, borderRadius: 25, },
-  
+
   // Font diterapkan di sini
   greetingText: { fontSize: 20, color: '#333', fontFamily: 'Nunito-SemiBold' },
   welcomeSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20, },

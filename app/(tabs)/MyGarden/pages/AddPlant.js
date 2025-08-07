@@ -2,14 +2,14 @@ import React, { useState, useContext } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Image, Alert, KeyboardAvoidingView, Platform
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as ImagePicker from 'expo-image-picker';
 import {
   SafeAreaProvider,
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
 
 import { getImage } from '../getImage';
 import { usePlant } from '../../../../context/PlantContext'; // ✅ pakai context
@@ -17,25 +17,19 @@ import { usePlant } from '../../../../context/PlantContext'; // ✅ pakai contex
 import BackIcon from '../../../../assets/icons/back.svg';
 import Edit1Icon from '../../../../assets/icons/editdetail.svg';
 
-export default function EditDetail() {
+export default function AddPlant() {
   const router = useRouter();
+  const { addPlant, plants } = usePlant();
   const insets = useSafeAreaInsets();
-  
-  const { id } = useLocalSearchParams();
-  const { editPlant, plants } = usePlant();
-  const plant = plants.find(p => p.id === parseInt(id));
 
-  const [imageSource, setImageSource] = useState(
-    typeof plant.image === 'string' && plant.image.startsWith('file')
-      ? { uri: plant.image }
-      : getImage(plant.image || 'placeholder')
-  );
-  const [name, setName] = useState(plant.name || '');
-  const [age, setAge] = useState(plant.age?.toString() || '');
-  const [notes, setNotes] = useState(plant.notes || '');
-  const [condition, setCondition] = useState(() => plant.condition );
-  const [waterLevel, setWaterLevel] = useState(plant.waterLevel?.toString() || '');
-  const [waterFrequency, setWaterFrequency] = useState(plant.waterFrequency?.toString() || '');
+  const [imageSource, setImageSource] = useState(getImage('placeholder'));
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [notes, setNotes] = useState('');
+  const [condition, setCondition] = useState('');
+  const [waterLevel, setWaterLevel] = useState('');
+  const [waterFrequency, setWaterFrequency] = useState('');
+  
 
   const handleImagePick = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -55,36 +49,45 @@ export default function EditDetail() {
     }
   };
 
-    const handleSave = async () => {
-        const updatedPlant = {
-            ... plant,
-            name,
-            age: parseInt(age),
-            waterLevel: parseInt(waterLevel),
-            waterFrequency: parseInt(waterFrequency),
-            condition,
-            notes,
-            image: imageSource.uri || plant.image,
-        };
+  const handleSave = async () => {
+    const categories = ['Succulents', 'Flowers', 'Vegetables', 'Herbs', 'Climbers'];
+    const categoryIndex = plants.length % categories.length;
+    const cat = categories[categoryIndex];
+    console.log('Sebelum simpan:', plants.length);
+      const lastId = plants.reduce((maxId, plant) => Math.max(maxId, plant.id), 0);
+      const newId = lastId + 1;
 
-        if (!name || !age || !condition || !waterLevel || !waterFrequency) {
-          Alert.alert("Data Tidak Lengkap", "Isi semua kolom sebelum menyimpan.");
-          return;
-        }
+      const newPlant = {
+          id: newId,
+          name,
+          age: parseInt(age),
+          waterLevel: parseInt(waterLevel),
+          waterFrequency: parseInt(waterFrequency),
+          condition,
+          notes,
+          image: imageSource.uri || 'placeholder',
+          cat,
+      };
+
+      if (!name || !age || !condition || !waterLevel || !waterFrequency) {
+        Alert.alert("Data Tidak Lengkap", "Isi semua kolom sebelum menyimpan.");
+        return;
+      }
 
 
-        // try {
-            await editPlant(updatedPlant);
-            console.log('Sesudah simpan:', updatedPlant);
-            console.log('Sesudah simpan:', plants.length);
-            router.replace(`/plant/${id}`); // Navigasi ke halaman MyGarden setelah simpan
-        // } catch (error) {
-        //     console.error('Gagal simpan tanaman:', error);
-        // }
-    };
+      // try {
+          await addPlant(newPlant);
+          console.log('Sesudah simpan:', newPlant);
+          console.log('Sesudah simpan:', plants.length);
+          router.replace('/(tabs)/MyGarden'); // Navigasi ke halaman MyGarden setelah simpan
+      // } catch (error) {
+      //     console.error('Gagal simpan tanaman:', error);
+      // }
+  };
 
   return (
     <SafeAreaProvider>
+
       <View
         style={{
           paddingTop: insets.top,
@@ -94,17 +97,16 @@ export default function EditDetail() {
         <StatusBar barStyle="light-content" />
         {/* Header atau title */}
       </View>
-
+      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: '#FAFFFB' }}
         keyboardVerticalOffset={-90} // bisa disesuaikan
       >
-
         <ScrollView
           style={styles.container}
           contentContainerStyle={{ paddingBottom: 50 }} // biar bisa scroll sampai bawah
-          keyboardShouldPersistTaps="handled"
+          // keyboardShouldPersistTaps="handled"
         >
           <TouchableOpacity
             style={styles.backButton}
@@ -173,7 +175,7 @@ export default function EditDetail() {
 
             <Text style={styles.label}>Condition</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, marginLeft: 16, gap: 10 }}>
-              {['Healthy', 'Sick', 'Dying'].map((item) => (
+              {['healthy', 'sick', 'dying'].map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={[
@@ -202,12 +204,13 @@ export default function EditDetail() {
             />
 
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveText}>Save Changes</Text>
+              <Text style={styles.saveText}>Add Plant</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaProvider>
+
   );
 }
 
