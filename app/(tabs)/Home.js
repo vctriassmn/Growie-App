@@ -5,7 +5,9 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, Button, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../../context/UserContext';
+import { useReminders } from '../../context/ReminderContext';
 
 // Data dummy (tidak ada perubahan)
 const latestArticlesData = [
@@ -19,11 +21,6 @@ const myGardenData = [
   { id: 'g3', name: 'Cactus', image: require('../../assets/images/cactus.png') },
   { id: 'g4', name: 'Three Musketeers', image: require('../../assets/images/three-musketeers.png') },
   { id: 'g5', name: 'Turtles', image: require('../../assets/images/turtles.png') },
-];
-const remindersData = [
-  { id: 'r1', time: '07.30', task: 'Baby Spinach | Watering' },
-  { id: 'r2', time: '10.30', task: 'Monstera | Watering' },
-  { id: 'r3', time: '16.00', task: 'Water Lily | Pruning' },
 ];
 
 // Impor Aset (tidak ada perubahan)
@@ -66,14 +63,38 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
 // Komponen Utama HomePage (tidak ada perubahan di logika)
 export default function HomePage() {
   const router = useRouter(); 
+  const navigation = useNavigation();
   const { profilePicture } = useUser(); // Destructure profilePicture from UserContext
+  const { getHomeReminders } = useReminders(); // Get reminders from context
   const [articles, setArticles] = useState(latestArticlesData);
+
+  // Get synchronized reminder data from context (ids 1, 2, 4)
+  const homeReminders = getHomeReminders();
 
   const handleLikeToggle = (articleId) => {
     const updatedArticles = articles.map(article => 
       article.id === articleId ? { ...article, liked: !article.liked } : article
     );
     setArticles(updatedArticles);
+  };
+
+  const handleReminderPress = (reminder) => {
+    console.log("Opening EditReminder for reminder:", reminder);
+    
+    // Create a copy of reminder to prevent same object reference
+    const reminderToEdit = {...reminder};
+    
+    // Navigate to EditReminder with the reminder data for editing
+    const params = { 
+      title: 'Edit Reminder',
+      reminderData: reminderToEdit 
+    };
+    
+    console.log("Navigation params:", params);
+    // Use small timeout to ensure navigation works correctly
+    setTimeout(() => {
+      navigation.navigate('EditReminder', params);
+    }, 50);
   };
 
   // Logika PanResponder & Scroll (tidak ada perubahan)
@@ -160,11 +181,16 @@ export default function HomePage() {
                 </TouchableOpacity>
               </View>
               <View>
-                {remindersData.map((reminder) => (
-                  <View key={reminder.id} style={styles.reminderItem}>
-                    <Text style={styles.reminderTime}>{reminder.time}</Text>
-                    <Text style={styles.reminderText}>{reminder.task}</Text>
-                  </View>
+                {homeReminders.map((reminder) => (
+                  <TouchableOpacity 
+                    key={reminder.id} 
+                    style={styles.reminderItem}
+                    onPress={() => handleReminderPress(reminder)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.reminderTime}>{reminder.hour}.{reminder.minute}</Text>
+                    <Text style={styles.reminderText}>{reminder.title} | {reminder.category}</Text>
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>

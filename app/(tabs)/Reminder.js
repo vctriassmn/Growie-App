@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as Font from 'expo-font';
 import { useIsFocused } from '@react-navigation/native';
+import { useReminders } from '../../context/ReminderContext';
 
 export default function Reminder() {
   const navigation = useNavigation();
@@ -13,98 +14,14 @@ export default function Reminder() {
   const isFocused = useIsFocused();
   const [isLoading, setIsLoading] = useState(true);
   
-  // Define all useState hooks at the component's top level
-  const [reminders, setReminders] = useState([
-    { 
-      id: '1', 
-      hour: '07',
-      minute:'30',
-      title: 'Baby Spinach', 
-      category: 'Watering',
-      active: true,
-      days: {Mo: true, Tu: true, W: true, Th: true, F: true, Sa: false, Su: false},
-      frequency: 'Daily',
-      note:'Kasian bayinya'
-    },
-    { 
-      id: '2', 
-      hour: '08',
-      minute:'00',
-      title: 'Peace Lily', 
-      category: 'Watering',
-      active: false, 
-      days: {Mo: true, Tu: true, W: true, Th: true, F: true, Sa: false, Su: false},
-      frequency: 'Daily',
-      note:'Lily, Lily... Yess papa~~'
-    },
-    { 
-      id: '3', 
-      hour: '09',
-      minute:'15',
-      title: 'Snake Plant', 
-      category: 'Fertilizing',
-      active: true, 
-      days: {Mo: false, Tu: false, W: false, Th: false, F: true, Sa: true, Su: true},
-      frequency: 'Daily',
-      note:'Aduh abang bukan maksudku begituuu~~~'
-    },
-    { 
-      id: '4', 
-      hour: '12',
-      minute:'45',
-      title: 'Monstera', 
-      category: 'Pruning',
-      active: false, 
-      days: {Mo: true, Tu: false, W: true, Th: false, F: true, Sa: false, Su: false},
-      frequency: 'Daily',
-      note:'Omooo, ada monster gesss :O'
-    },
-    { 
-      id: '5', 
-      hour: '14',
-      minute:'30',
-      title: 'Fiddle Leaf Fig', 
-      category: 'Watering',
-      active: true, 
-      days: {Mo: true, Tu: false, W: true, Th: false, F: true, Sa: false, Su: false},
-      frequency: 'Daily',
-      note:'Figma kali ya maksudnya???'
-    },
-    { 
-      id: '6', 
-      time: '15.45',
-      hour: '15',
-      minute:'45',
-      title: 'Pothos', 
-      category: 'Fertilizing',
-      active: false, 
-      days: {Mo: false, Tu: true, W: false, Th: true, F: false, Sa: true, Su: false},
-      frequency: 'Daily',
-      note:'Ayo bangun pagi dan berfotosintesis!!'
-    },
-    { 
-      id: '7', 
-      hour: '17',
-      minute:'00',
-      title: 'Orchid', 
-      category: 'Watering',
-      active: true, 
-      days: {Mo: true, Tu: true, W: true, Th: true, F: true, Sa: true, Su: true},
-      frequency: 'Daily',
-      note:'Nama jalan sih ini kataku'
-    },
-    { 
-      id: '8', 
-      hour: '19',
-      minute:'15', 
-      title: 'Rubber Plant', 
-      category: 'Pruning',
-      active: false, 
-      days: {Mo: false, Tu: false, W: false, Th: false, F: false, Sa: true, Su: true},
-      frequency: 'Daily',
-      note:'Berarti ini tanaman penghapus karena rubber?'
-    }
-  ]);
+  // Use reminders from context instead of local state
+  const { 
+    reminders, 
+    setReminders, 
+    updateReminder, 
+    addReminder, 
+    toggleReminderActive 
+  } = useReminders();
 
   // Load fonts using useFonts hook
   const [fontsLoaded] = useFonts({
@@ -129,15 +46,11 @@ export default function Reminder() {
         if (isNewReminder && !reminderExists) {
           // Add the new reminder to the list
           console.log("Adding new reminder");
-          setReminders(prev => [updatedReminder, ...prev]);
+          addReminder(updatedReminder);
         } else if (reminderExists) {
           // Update the existing reminder
           console.log("Updating existing reminder");
-          setReminders(prev => 
-            prev.map(reminder => 
-              reminder.id === updatedReminder.id ? updatedReminder : reminder
-            )
-          );
+          updateReminder(updatedReminder);
         }
         
         // Clear the params after using them
@@ -151,7 +64,7 @@ export default function Reminder() {
       
       return () => clearTimeout(timer);
     }
-  }, [isFocused, navigation]);
+  }, [isFocused, navigation, reminders, addReminder, updateReminder]);
 
   if (!fontsLoaded || isLoading) {
     return (
@@ -200,20 +113,42 @@ export default function Reminder() {
   };
 
   const handleToggleReminder = (id) => {
-    // Update the reminders state to toggle the active property of the reminder with the given id
-    setReminders(prevReminders => 
-      prevReminders.map(reminder => 
-        reminder.id === id 
-          ? { ...reminder, active: !reminder.active } 
-          : reminder
-      )
-    );
+    // Use context function to toggle reminder active state
+    toggleReminderActive(id);
     console.log(`Toggled reminder ${id}`);
   };
 
   const handleDayPress = (day) => {
-    // Navigate to AddReminder with the selected day
-    navigation.navigate('AddReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
+    // Ambil reminder berdasarkan index hari (0-3) untuk id 1-4
+    const reminderIndex = parseInt(day.id); // day.id adalah '0', '1', '2', '3'
+    const targetReminderId = (reminderIndex + 1).toString(); // Konversi ke '1', '2', '3', '4'
+    
+    // Cari reminder dengan id yang sesuai
+    const selectedReminder = reminders.find(reminder => reminder.id === targetReminderId);
+    
+    if (selectedReminder) {
+      console.log("Opening EditReminder for day:", day);
+      console.log("Selected reminder:", selectedReminder);
+      
+      // Buat salinan reminder untuk mencegah referensi objek yang sama
+      const reminderToEdit = {...selectedReminder};
+      
+      // Navigate to EditReminder with the reminder data for editing
+      const params = { 
+        title: `Edit Reminder - ${day.day}, ${day.month} ${day.date}`,
+        reminderData: reminderToEdit 
+      };
+      
+      console.log("Navigation params:", params);
+      // Gunakan timeout kecil untuk memastikan navigasi bekerja dengan benar
+      setTimeout(() => {
+        navigation.navigate('EditReminder', params);
+      }, 50);
+    } else {
+      // Fallback jika reminder tidak ditemukan, arahkan ke AddReminder
+      console.log("No reminder found for id:", targetReminderId);
+      navigation.navigate('AddReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
+    }
   };
 
   const handleEditReminder = (reminder) => {
@@ -249,7 +184,7 @@ export default function Reminder() {
         {/* Upcoming Days */}
         <View style={styles.upcomingContainer}>
           <View style={styles.daysRow}>
-            {upcomingDays.map((day) => (
+            {upcomingDays.map((day, index) => (
               <TouchableOpacity 
                 key={day.id} 
                 style={styles.dayCard}
@@ -397,7 +332,7 @@ export default function Reminder() {
                               else if (day % 10 === 2 && day !== 12) suffix = 'nd';
                               else if (day % 10 === 3 && day !== 13) suffix = 'rd';
                               
-                              return `Repeats monthly on the ${day}${suffix}`;
+                              return `${day}${suffix} every month`;
                             })()}
                           </Text>
                         ) : (
@@ -484,7 +419,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 22,
     paddingTop: 60,
     paddingBottom: 100, // Space for bottom navigation
   },
@@ -558,6 +493,25 @@ const styles = StyleSheet.create({
     bottom: 8,
     right: 8,
     fontStyle: 'italic',
+  },
+  reminderPreview: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    alignItems: 'flex-end',
+  },
+  reminderPreviewTime: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 9,
+    color: '#448461',
+    fontWeight: 'bold',
+  },
+  reminderPreviewTitle: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 8,
+    color: '#7BAB91',
+    maxWidth: 60,
+    textAlign: 'right',
   },
   sectionTitle: {
     fontSize: 28,
@@ -635,20 +589,20 @@ const styles = StyleSheet.create({
   reminderContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    // alignItems: 'center',
     height: '100%',
   },
   reminderTime: {
     fontFamily: 'Nunito-Bold',
     fontWeight: 'bold',
     fontSize: 35,
-    marginStart: 15,
+    marginStart: 10,
     marginBottom: 11,
+    marginTop: 4,
   },
   reminderTitle: {
     fontFamily: 'Nunito-Bold',
     fontWeight: 'bold',
-    marginStart: 15,
+    marginStart: 12,
     fontSize: 19,
   },
   activeText: {
@@ -683,7 +637,7 @@ const styles = StyleSheet.create({
   },
   frequencyIndicator: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 10,
+    fontSize: 12,
     marginRight: 4,
     maxWidth: 130, // Prevent text from wrapping too much
   },

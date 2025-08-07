@@ -8,6 +8,8 @@ import {
   FlatList,
   StyleSheet,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import RNModal from "react-native-modal";
 import { useFonts } from 'expo-font';
@@ -265,7 +267,11 @@ export default function EditReminderScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton} 
@@ -296,7 +302,7 @@ export default function EditReminderScreen() {
         <Text style={styles.title}>{reminderTitle}</Text>
       </View>
 
-      {/* TIME SCROLLER */}
+      {/* TIME SCROLLER - Di luar ScrollView */}
       <View style={styles.scrollerWrapper}>
         {/* HIGHLIGHT di bawah angka, absolute di parent */}
         <View
@@ -321,7 +327,7 @@ export default function EditReminderScreen() {
             keyExtractor={(item) => `hour-${item}`}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
-            decelerationRate="fast"
+            decelerationRate={0.9}
             style={{ flexGrow: 0, zIndex: 2 }}
             initialScrollIndex={hour}
             contentContainerStyle={{
@@ -343,7 +349,7 @@ export default function EditReminderScreen() {
             keyExtractor={(item) => `minute-${item}`}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
-            decelerationRate="fast"
+            decelerationRate={0.9}
             style={{ flexGrow: 0, zIndex: 2 }}
             initialScrollIndex={minute}
             contentContainerStyle={{
@@ -360,8 +366,14 @@ export default function EditReminderScreen() {
         </View>
       </View>
 
-      {/* NON-SCROLLABLE CARD SECTION */}
-      <View style={styles.fixedCardWrapper}>
+      {/* SCROLLABLE CARD SECTION */}
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.fixedCardWrapper}>
         <View style={styles.fixedCard}>
           <View style={styles.inputContainer}>
             <TextInput
@@ -557,7 +569,8 @@ export default function EditReminderScreen() {
         >
           <Text style={styles.saveButtonText}>Save Changes</Text>
         </TouchableOpacity>
-      </View>
+        </View>
+      </ScrollView>
 
       <RNModal isVisible={showDateModal}>
         <View style={styles.modal}>
@@ -603,7 +616,7 @@ export default function EditReminderScreen() {
           </TouchableOpacity>
         </View>
       </RNModal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -611,7 +624,7 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     padding: 16,
-    paddingBottom: 20, // Extra bottom padding to avoid navbar overlap 
+    paddingBottom: 20,
     backgroundColor: "#fff" 
   },
   header: {
@@ -634,6 +647,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#6A804F',
     flex: 1,
+    paddingBottom: 2,
   },
   inputContainer: {
     position: 'relative',
@@ -659,10 +673,10 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     paddingTop: 0,
     paddingBottom: 0,
-    paddingLeft: 110, // Space for the label
+    paddingLeft: 115, // Space for the label
     paddingRight: 20,
     backgroundColor: 'transparent',
-    fontSize: 14,
+    fontSize: 12,
     height: 35,
   },
   scrollerWrapper: {
@@ -714,9 +728,11 @@ const styles = StyleSheet.create({
   },
   // NEW: fixed card wrapper and card with shadow
   fixedCardWrapper: {
+    marginHorizontal: 10,
     marginTop: 8,
     alignItems: 'center',
-    width: '100%',
+    // width: '100%',
+    paddingBottom: 10, // Add padding to ensure save button is visible
   },
   fixedCard: {
     backgroundColor: '#D9ECE1',
@@ -729,8 +745,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.13,
     shadowRadius: 8,
     elevation: 7,
-    marginBottom: 10,
-    minHeight: 430, // Reduced minimum height to prevent navbar overlap
+    marginBottom: 17,
+    // minHeight: 400, // Reduced minimum height to prevent navbar overlap
   },
   label: {
     backgroundColor: "#A5C5A0",
@@ -763,7 +779,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 3,
     borderRadius: 12,
-    fontSize: 13,
+    fontSize: 8,
     color: '#FFFFFF',
     fontFamily: 'Nunito-Bold',
     zIndex: 1,
@@ -807,11 +823,11 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     paddingVertical: 4,
     alignItems: 'center',
-    marginHorizontal: 12,
+    marginHorizontal: 8,
     borderRadius: 18,
     borderWidth: 1.5,
     borderColor: "#7F995E",
-    width: 78,
+    width: 90,
   },
   categoryOptionActive: {
     backgroundColor: "#FBF2D6",
@@ -838,16 +854,16 @@ const styles = StyleSheet.create({
     padding: 10,
     position: 'relative',
     paddingLeft: 83, // Space for the label
-    paddingRight: 10,
+    paddingRight: 7,
     // marginBottom: 5,
     backgroundColor: 'transparent',
-    height: 35,
+    height: 35 ,
     flexDirection: 'row',
     alignItems: 'center',
   },
   repeaterLabel: {
     position: 'absolute',
-    left: 12,
+    left: 11,
     top: 7,
     backgroundColor: "#448461",
     paddingHorizontal: 12,
@@ -867,13 +883,13 @@ const styles = StyleSheet.create({
   },
   repeaterOption: {
     backgroundColor: "#ABC29F",
-    marginHorizontal: 4,
+    marginHorizontal: 3,
     borderRadius: 18,
     height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     flex: 1,
-    minWidth: 70,
+    minWidth: 65,
   },
   repeaterOptionActive: {
     backgroundColor: "#FBF2D6",
@@ -889,7 +905,7 @@ const styles = StyleSheet.create({
   weekOption: {
     backgroundColor: "#ABC29F",
     paddingVertical: 4,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     marginHorizontal: 4,
     borderRadius: 18,
     justifyContent: 'center',
@@ -982,8 +998,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderWidth: 2, // Increased border width for more emphasis
     borderColor: '#694B40', // Changed border color to #694B40
-    paddingVertical: 10,
-    paddingHorizontal: 36, // Increased horizontal padding for better proportions
+    paddingVertical: 7,
+    paddingHorizontal: 25, // Increased horizontal padding for better proportions
     alignItems: "center",
     marginTop: 8,
     borderRadius: 22, // Increased border radius to make it more rounded
@@ -997,7 +1013,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#7F995E', // Changed text color to #7F995E
-    fontSize: 17.5,
+    fontSize: 15,
     fontFamily: 'Nunito-Bold',
     fontWeight: '900', // Adding extra font weight to make it bolder
     letterSpacing: 0.3, // Adding slight letter spacing for better readability
