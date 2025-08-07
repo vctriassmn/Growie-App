@@ -174,7 +174,8 @@ export default function Reminder() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}>
         <View style={styles.headerContainer}>
           {/* PLANT REMINDER Header */}
           <Text style={styles.headerTitle}>PLANT REMINDER</Text>
