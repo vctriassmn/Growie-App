@@ -66,6 +66,7 @@ export default function ArticleSection({ articles }) {
             const clampedY = Math.min(drawerHeight, Math.max(screenHeight * 0.15, newY));
             drawerY.setValue(clampedY);
         },
+        // ✅ Perbaikan: Menggunakan gestureState di sini
         onPanResponderRelease: (_, gestureState) => {
             if (gestureState.dy < -50) {
                 Animated.spring(drawerY, {
@@ -81,6 +82,13 @@ export default function ArticleSection({ articles }) {
         }
     })
   ).current;
+
+  // >>>>>> PERUBAHAN: Fungsi baru untuk navigasi ke detail artikel
+  const handleArticleCardPress = (article) => {
+    router.push({
+        pathname: `/(tabs)/ArticleComponents/${article.id}`,
+    });
+  };
 
   return (
     <Animated.View
@@ -105,7 +113,8 @@ export default function ArticleSection({ articles }) {
             <ArticleCard 
                 key={article.id} 
                 item={article}
-                onCardPress={() => router.push('/Article')}
+                // >>>>>> PERUBAHAN: Panggil fungsi baru dengan data artikel
+                onCardPress={() => handleArticleCardPress(article)}
                 onLikeToggle={() => handleLikeToggle(article.id)}
             />
         ))}
