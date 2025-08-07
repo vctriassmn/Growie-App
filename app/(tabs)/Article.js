@@ -1,7 +1,7 @@
-// Lokasi file: app/(tabs)/Article.js
-
+// article 
+// File: growiie kirim/app/(tabs)/Article.js
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     StyleSheet,
     Text,
@@ -21,16 +21,14 @@ import {
     Nunito_300Light,
     Nunito_500Medium
 } from '@expo-google-fonts/nunito';
-import { useJournalAndArticle } from '../../context/JournalAndArticleStore'; // Adjusted path
-import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
-import { useRouter } from 'expo-router'; // Import useRouter
+import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 
-import ArticleCard from './ArticleComponents/ArticleCard'; // Adjusted path
-import ArticleDetail from './ArticleComponents/ArticleDetail'; // Adjusted path to use default export
+import ArticleCard from './ArticleComponents/ArticleCard';
 
-// Initial static data for other categories (not 'publish')
-// Image paths adjusted relative to this file's new location.
-const initialData = [
+export const initialData = [
     {
         id: '1',
         name: 'How to Plant a New Houseplant',
@@ -76,7 +74,7 @@ If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit d
         id: '3',
         name: 'Snake Plant',
         description: 'Extremely hardy and low-maintenance, perfect for beginners.',
-        image: require('../../assets/images/plant.png'),
+        image: require('../../assets/images/peacelily.png'),
         avatar: require('../../assets/images/pp.jpg'),
         username: 'GreenThumb',
         category: 'trending',
@@ -87,7 +85,7 @@ If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit d
 
 Its upright, sword-like leaves add a modern touch to any decor, and it's also excellent for air purification. I have one in my bedroom and one in the living room, and they always look great with minimal effort.
 
-If you want a plant that won't give you any trouble, the Snake Plant is definitely the way to go. It's almost impossible to kill!
+If you want a plant that won't give you any trouble, the Snake Plant is definitely the way to go. It's almost foolproof!
 `
     },
     {
@@ -149,41 +147,60 @@ Highly recommend a Peace Lily if you want a plant that adds beauty and purpose t
     },
 ];
 
-function ArticleScreen({ navigation }) {
-    const router = useRouter(); // Initialize useRouter
-    const { publishedArticles = [] } = useJournalAndArticle();
+function ArticleScreen() {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+    const { publishedArticles, deletePublishedArticles, likedArticles = new Set(), toggleLike } = useJournalAndArticle();
     const [activeTab, setActiveTab] = useState('all');
-    const [plants, setPlants] = useState(initialData);
     const [searchQuery, setSearchQuery] = useState('');
 
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
-    const [likedItems, setLikedItems] = useState(new Set());
 
-    const [showArticleDetail, setShowArticleDetail] = useState(false);
-    const [selectedArticle, setSelectedArticle] = useState(null);
-
-    useEffect(() => {
+    useFocusEffect(
+        useCallback(() => {
+            if (params.article) {
+                router.setParams({ article: undefined });
+            }
+            setSelectionMode(false);
+            setSelectedItems([]);
+        }, [params.article])
+    );
+    
+    // Perbaikan: Menggunakan useMemo untuk menghindari loop tak terbatas.
+    const allArticles = useMemo(() => {
         const combinedData = [...initialData];
         publishedArticles.forEach(pubArticle => {
             if (!combinedData.some(item => item.id === pubArticle.id)) {
                 combinedData.push(pubArticle);
             }
         });
-        setPlants(combinedData);
+        return combinedData;
     }, [publishedArticles]);
 
-    const toggleLike = useCallback((itemId) => {
-        setLikedItems(prevLikedItems => {
-            const newLikedItems = new Set(prevLikedItems);
-            if (newLikedItems.has(itemId)) {
-                newLikedItems.delete(itemId);
-            } else {
-                newLikedItems.add(itemId);
-            }
-            return newLikedItems;
-        });
-    }, []);
+    const filteredPlants = useMemo(() => {
+        let currentPlants = [];
+
+        if (activeTab === 'all') {
+            currentPlants = allArticles;
+        } else if (activeTab === 'publish') {
+            currentPlants = publishedArticles;
+        } else {
+            currentPlants = allArticles.filter(item => item.category === activeTab);
+        }
+
+        if (searchQuery) {
+            const lowerCaseQuery = searchQuery.toLowerCase();
+            currentPlants = currentPlants.filter(item =>
+                item.name.toLowerCase().includes(lowerCaseQuery) ||
+                item.description.toLowerCase().includes(lowerCaseQuery) ||
+                item.username.toLowerCase().includes(lowerCaseQuery) ||
+                item.fullArticle.toLowerCase().includes(lowerCaseQuery)
+            );
+        }
+
+        return currentPlants;
+    }, [activeTab, searchQuery, allArticles, publishedArticles]);
 
     const tabs = [
         { key: 'all', label: 'All' },
@@ -217,14 +234,17 @@ function ArticleScreen({ navigation }) {
             return;
         }
 
-        const deletableItems = plants.filter(item => selectedItems.includes(item.id) && item.category === 'publish');
+        const deletableItems = allArticles.filter(item => selectedItems.includes(item.id) && item.category === 'publish');
         const nonDeletableItems = selectedItems.filter(id => {
-            const item = plants.find(plant => plant.id === id);
+            const item = allArticles.find(plant => plant.id === id);
             return item && item.category !== 'publish';
         });
 
         if (nonDeletableItems.length > 0 && deletableItems.length === 0) {
-            Alert.alert('Deletion Restricted', 'Only articles with the category "My Publish" can be deleted.');
+            Alert.alert(
+                'Deletion Restricted',
+                'Only articles with the category "My Publish" can be deleted.'
+            );
             return;
         }
 
@@ -240,7 +260,8 @@ function ArticleScreen({ navigation }) {
                     {
                         text: 'Delete Eligible',
                         onPress: () => {
-                            setPlants(plants.filter(item => !(selectedItems.includes(item.id) && item.category === 'publish')));
+                            // Panggil fungsi baru untuk menghapus artikel yang dipublikasikan
+                            deletePublishedArticles(deletableItems.map(item => item.id));
                             exitSelectionMode();
                         },
                         style: 'destructive',
@@ -260,7 +281,8 @@ function ArticleScreen({ navigation }) {
                     {
                         text: 'Delete',
                         onPress: () => {
-                            setPlants(plants.filter((item) => !selectedItems.includes(item.id)));
+                            // Panggil fungsi baru untuk menghapus artikel yang dipublikasikan
+                            deletePublishedArticles(selectedItems);
                             exitSelectionMode();
                         },
                         style: 'destructive',
@@ -271,38 +293,10 @@ function ArticleScreen({ navigation }) {
         }
     };
 
-    const filteredPlants = React.useMemo(() => {
-        let currentPlants = [];
-
-        if (activeTab === 'all') {
-            currentPlants = plants;
-        } else if (activeTab === 'publish') {
-            currentPlants = publishedArticles;
-        } else {
-            currentPlants = plants.filter(item => item.category === activeTab);
-        }
-
-        if (searchQuery) {
-            const lowerCaseQuery = searchQuery.toLowerCase();
-            currentPlants = currentPlants.filter(item =>
-                item.name.toLowerCase().includes(lowerCaseQuery) ||
-                item.description.toLowerCase().includes(lowerCaseQuery) ||
-                item.username.toLowerCase().includes(lowerCaseQuery) ||
-                item.fullArticle.toLowerCase().includes(lowerCaseQuery)
-            );
-        }
-
-        return currentPlants;
-    }, [activeTab, plants, searchQuery, publishedArticles]);
-
-    const handleCardPress = (plant) => {
-        setSelectedArticle(plant);
-        setShowArticleDetail(true);
-    };
-
-    const handleBackFromDetail = () => {
-        setShowArticleDetail(false);
-        setSelectedArticle(null);
+    const handleCardPress = (article) => {
+        router.push({
+            pathname: `/(tabs)/ArticleComponents/${article.id}`,
+        });
     };
 
     const renderItem = ({ item }) => (
@@ -313,7 +307,7 @@ function ArticleScreen({ navigation }) {
             toggleSelection={toggleSelection}
             onCardPress={handleCardPress}
             enterSelectionMode={enterSelectionMode}
-            isLiked={likedItems.has(item.id)}
+            isLiked={likedArticles.has(item.id)}
             toggleLike={toggleLike}
         />
     );
@@ -328,37 +322,18 @@ function ArticleScreen({ navigation }) {
         return null;
     }
 
-    // Modified to navigate to Journal page
     const handleAdd = () => {
         router.push('/(tabs)/Journal');
     };
-
-    if (showArticleDetail && selectedArticle) {
-        return (
-            <ArticleDetail
-                plant={selectedArticle}
-                isLiked={likedItems.has(selectedArticle.id)}
-                toggleLike={toggleLike}
-                onBack={handleBackFromDetail}
-            />
-        );
-    }
 
     return (
         <View style={styles.container}>
             <StatusBar style="light-content" />
 
             <View style={styles.header}>
-                {selectionMode ? (
+                {selectionMode && (
                     <TouchableOpacity onPress={exitSelectionMode} style={styles.headerButtonBatal}>
                         <Text style={styles.headerButtonTextContent}>Cancel</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity
-                        style={styles.headerIcon}
-                        onPress={() => navigation.goBack()}
-                    >
-                        <Ionicons name="chevron-back" size={24} color="#444" />
                     </TouchableOpacity>
                 )}
 
@@ -438,23 +413,13 @@ const styles = StyleSheet.create({
         marginTop: 50,
         paddingHorizontal: 20,
         position: 'relative',
-    },
-    headerIcon: {
-        width: 30,
-        height: 30,
         justifyContent: 'center',
-        alignItems: 'center',
-        position: 'absolute',
-        left: 20,
-        zIndex: 1,
     },
     headerText: {
         fontFamily: 'Nunito-ExtraBold',
         fontSize: 20,
         color: '#448461',
-        position: 'absolute',
-        left: 0,
-        right: 0,
+        position: 'relative',
         textAlign: 'center',
         zIndex: 0,
     },
@@ -472,7 +437,7 @@ const styles = StyleSheet.create({
     },
     headerButtonBatal: {
         position: 'absolute',
-        marginLeft: 20,
+        left: 20,
         backgroundColor: '#A9A8A8',
         paddingVertical: 5,
         paddingHorizontal: 10,
@@ -538,5 +503,4 @@ const styles = StyleSheet.create({
     },
 });
 
-// Explicitly export the component as default
 export default ArticleScreen;

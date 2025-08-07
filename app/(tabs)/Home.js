@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '../../context/UserContext';
+import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
 
 // Data dummy (tidak ada perubahan)
 const latestArticlesData = [
@@ -81,8 +82,9 @@ export default function HomePage() {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => !isPanelUp && Math.abs(gestureState.dy) > 5,
-      onPanResponderRelease: (e, gesture) => {
-        if (gesture.vy < -0.5 || gesture.dy < -100) scrollToArticle();
+      // ✅ Perbaikan: Menggunakan gestureState di sini
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.vy < -0.5 || gestureState.dy < -100) scrollToArticle();
         else scrollToTop();
       },
     })
@@ -190,7 +192,7 @@ export default function HomePage() {
               <ArticleCard
                 key={article.id}
                 item={article}
-                onCardPress={() => router.push('/(tabs)/Article')}
+                onCardPress={() => router.push({pathname: `/(tabs)/ArticleComponents/${article.id}`,})}
                 onLikeToggle={() => handleLikeToggle(article.id)}
               />
             ))}

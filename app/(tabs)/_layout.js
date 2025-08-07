@@ -43,10 +43,9 @@ export default function TabLayout() {
           tabBar={({ navigation, state, descriptors }) => {
             const currentRouteName = state.routes[state.index].name;
 
-            // Jangan tampilkan navbar di halaman-halaman ini
-            if (currentRouteName === 'Journal/ListJournal' || currentRouteName === 'Journal/IsiJournal') {
-              return null;
-            }
+            if (currentRouteName.includes('ArticleComponents') || currentRouteName === 'Journal/ListJournal' || currentRouteName === 'Journal/IsiJournal') {
+    return null;
+}
 
             return (
               <BottomNavBar
