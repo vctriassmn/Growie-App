@@ -36,6 +36,32 @@ const BottomNavBar = ({ navigation, currentRouteName }) => {
         { name: 'MyGarden', uiName: 'My garden', icon: ICONS['My garden'] }, // 'MyGarden' untuk rute, 'My garden' untuk UI
     ];
 
+    // Function to determine if a tab should be active
+    const isTabActive = (tabName) => {
+        // Direct match
+        if (currentRouteName === tabName) {
+            return true;
+        }
+        
+        // Check for sub-pages of each tab
+        switch (tabName) {
+            case 'Reminder':
+                return currentRouteName === 'AddReminder' || currentRouteName === 'EditReminder';
+            case 'Article':
+                return currentRouteName.includes('ArticleComponents');
+            case 'Journal':
+                return currentRouteName.includes('Journal/');
+            case 'MyGarden':
+                return currentRouteName.includes('plant/') || currentRouteName.includes('MyGarden/');
+            default:
+                return false;
+        }
+    };
+
+    // Debug log to help troubleshoot
+    console.log('Current Route Name:', currentRouteName);
+    console.log('Is Reminder Active:', isTabActive('Reminder'));
+
     useEffect(() => {
         const preloadImages = async () => {
             const imageUris = [];
@@ -68,34 +94,38 @@ const BottomNavBar = ({ navigation, currentRouteName }) => {
 
     return (
         <View style={styles.navBarContainer}>
-            {navItems.map((item) => (
-                <TouchableOpacity
-                    key={item.name} // Key harus unik, gunakan nama rute
-                    style={styles.navItem}
-                    onPress={() => handlePress(item.name)}
-                >
-                    <View
-                        style={[
-                            styles.iconContainer,
-                            // currentRouteName juga harus cocok dengan nama rute
-                            currentRouteName === item.name && styles.activeIconBackground,
-                        ]}
+            {navItems.map((item) => {
+                const isActive = isTabActive(item.name);
+                
+                return (
+                    <TouchableOpacity
+                        key={item.name} // Key harus unik, gunakan nama rute
+                        style={styles.navItem}
+                        onPress={() => handlePress(item.name)}
                     >
-                        <Image
-                            source={currentRouteName === item.name ? item.icon.active : item.icon.inactive}
-                            style={styles.icon}
-                        />
-                    </View>
-                    <Text
-                        style={[
-                            styles.navText,
-                            currentRouteName === item.name && styles.activeNavText,
-                        ]}
-                    >
-                        {item.uiName} {/* Tampilkan uiName di teks navbar */}
-                    </Text>
-                </TouchableOpacity>
-            ))}
+                        <View
+                            style={[
+                                styles.iconContainer,
+                                // Use isTabActive function instead of direct comparison
+                                isActive && styles.activeIconBackground,
+                            ]}
+                        >
+                            <Image
+                                source={isActive ? item.icon.active : item.icon.inactive}
+                                style={styles.icon}
+                            />
+                        </View>
+                        <Text
+                            style={[
+                                styles.navText,
+                                isActive && styles.activeNavText,
+                            ]}
+                        >
+                            {item.uiName} {/* Tampilkan uiName di teks navbar */}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
         </View>
     );
 };
