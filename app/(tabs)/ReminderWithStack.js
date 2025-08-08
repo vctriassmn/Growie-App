@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import Reminder from './Reminder';
-import AddReminder from './AddReminder';
+import AddReminder from './addReminder';
 import EditReminder from './EditReminder';
 
 const Stack = createStackNavigator();
@@ -15,7 +15,7 @@ export default function ReminderWithStack() {
         initialRouteName="Reminder"
         screenOptions={{ 
           headerShown: false,
-          detachInactiveScreens: false // Memastikan screen tetap aktif dalam memory
+          detachInactiveScreens: false 
         }}
       >
         <Stack.Screen 
