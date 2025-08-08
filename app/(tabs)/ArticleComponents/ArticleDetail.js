@@ -1,4 +1,5 @@
 // File: growiie kirim/app/(tabs)/ArticleComponents/ArticleDetail.js
+// --- Salin semua kode di bawah ini ---
 
 import React, { useRef } from 'react';
 import {
@@ -14,7 +15,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Nunito_400Regular, Nunito_700Bold } from '@expo-google-fonts/nunito';
 import { Ionicons } from '@expo/vector-icons';
-import { cleanHtml } from './utils/articleUtils';
+
+// Hapus import cleanHtml karena kita akan buat fungsi baru
+// import { cleanHtml } from './utils/articleUtils';
 
 export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -39,7 +42,27 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
     let [fontsLoaded] = useFonts({
         Nunito_400Regular,
         Nunito_700Bold,
+        'Nunito-ExtraBold': require('../../../assets/fonts/Nunito-ExtraBold.ttf'), // Pastikan font ini ada jika digunakan
     });
+
+    // --- FUNGSI BARU UNTUK MERENDER KONTEN ---
+    // Fungsi ini mengubah tag HTML menjadi teks dengan paragraf yang benar
+    const renderArticleContent = (htmlContent) => {
+        if (!htmlContent) {
+            return '';
+        }
+
+        // 1. Ganti tag <br> dan penutup paragraf </p> dengan dua baris baru untuk membuat jarak
+        const withLineBreaks = htmlContent
+            .replace(/<br\s*\/?>/gi, '\n\n')
+            .replace(/<\/p>/gi, '\n\n');
+
+        // 2. Hapus SEMUA sisa tag HTML
+        const plainText = withLineBreaks.replace(/<[^>]*>/g, '');
+
+        // 3. Hapus spasi atau baris baru berlebih di awal/akhir
+        return plainText.trim();
+    };
 
     if (!fontsLoaded) {
         return null;
@@ -93,8 +116,9 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
                     <Image source={plant.photoOfTheDayImage} style={styles.detailPhotoOfDayImage} />
                     <Text style={styles.detailQuoteText}>{plant.quote}</Text>
 
+                    {/* Menggunakan fungsi baru untuk menampilkan konten */}
                     <Text style={styles.detailFullArticleText}>
-                        {cleanHtml(plant.fullArticle)}
+                        {renderArticleContent(plant.fullArticle)}
                     </Text>
                 </View>
             </ScrollView>
@@ -151,7 +175,6 @@ const styles = StyleSheet.create({
         height: '100%',
         resizeMode: 'cover',
     },
-    // ✅ Tambahkan style baru untuk latar belakang warna di detail
     mainColorBackground: {
         width: '100%',
         height: '100%',
@@ -221,15 +244,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         fontFamily: 'Nunito_400Regular'
     },
+    // Style ini sudah benar, perataan justify akan bekerja pada tiap blok teks (paragraf)
     detailFullArticleText: {
         fontSize: 15,
         color: '#333',
         fontFamily: 'Nunito_400Regular',
         lineHeight: 22,
         marginTop: 10,
-        marginBottom: 60
+        marginBottom: 60,
+        textAlign: 'justify',
     },
 });
 
-// Make it a default export
 export default ArticleDetail;
