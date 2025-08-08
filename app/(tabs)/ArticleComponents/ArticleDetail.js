@@ -1,5 +1,4 @@
 // File: growiie kirim/app/(tabs)/ArticleComponents/ArticleDetail.js
-// --- Salin semua kode di bawah ini ---
 
 import React, { useRef } from 'react';
 import {
@@ -42,26 +41,105 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
     let [fontsLoaded] = useFonts({
         Nunito_400Regular,
         Nunito_700Bold,
-        'Nunito-ExtraBold': require('../../../assets/fonts/Nunito-ExtraBold.ttf'), // Pastikan font ini ada jika digunakan
+        'Nunito-ExtraBold': require('../../../assets/fonts/Nunito-ExtraBold.ttf'),
     });
 
     // --- FUNGSI BARU UNTUK MERENDER KONTEN ---
-    // Fungsi ini mengubah tag HTML menjadi teks dengan paragraf yang benar
+    // Fungsi ini sekarang mengurai HTML dan mengembalikan array komponen React Native
     const renderArticleContent = (htmlContent) => {
         if (!htmlContent) {
-            return '';
+            return null;
         }
 
-        // 1. Ganti tag <br> dan penutup paragraf </p> dengan dua baris baru untuk membuat jarak
-        const withLineBreaks = htmlContent
-            .replace(/<br\s*\/?>/gi, '\n\n')
-            .replace(/<\/p>/gi, '\n\n');
+        const components = [];
+        // Regex untuk mencari semua tag <p>, <img>, <b>, <i>, dan <u>
+        const regex = /<p>(.*?)<\/p>|<img[^>]*src="([^"]*)"[^>]*>|<b>(.*?)<\/b>|<i>(.*?)<\/i>|<u>(.*?)<\/u>/gs;
+        let lastIndex = 0;
+        let match;
+        let counter = 0;
 
-        // 2. Hapus SEMUA sisa tag HTML
-        const plainText = withLineBreaks.replace(/<[^>]*>/g, '');
+        while ((match = regex.exec(htmlContent)) !== null) {
+            // Tangani teks di luar tag yang ditemukan
+            const textBefore = htmlContent.substring(lastIndex, match.index).trim();
+            if (textBefore) {
+                components.push(
+                    <Text key={`text-${counter++}`} style={styles.detailFullArticleText}>
+                        {textBefore.replace(/<[^>]*>/g, '')}
+                    </Text>
+                );
+            }
 
-        // 3. Hapus spasi atau baris baru berlebih di awal/akhir
-        return plainText.trim();
+            // Memastikan penangkapan regex sesuai urutan
+            const [fullMatch, pContent, imgUrl, bContent, iContent, uContent] = match;
+
+            if (pContent) {
+                // Merender konten di dalam tag <p>
+                // Tangani tag <b>, <i>, dan <u> di dalam <p>
+                const pComponents = [];
+                const innerRegex = /<b>(.*?)<\/b>|<i>(.*?)<\/i>|<u>(.*?)<\/u>|([^<]+)/gs;
+                let innerMatch;
+                let innerCounter = 0;
+
+                while ((innerMatch = innerRegex.exec(pContent)) !== null) {
+                    const [innerFullMatch, bText, iText, uText, plainText] = innerMatch;
+                    if (bText) {
+                        pComponents.push(<Text key={`b-${innerCounter++}`} style={styles.boldText}>{bText}</Text>);
+                    } else if (iText) {
+                        pComponents.push(<Text key={`i-${innerCounter++}`} style={styles.italicText}>{iText}</Text>);
+                    } else if (uText) {
+                        pComponents.push(<Text key={`u-${innerCounter++}`} style={styles.underlineText}>{uText}</Text>);
+                    } else if (plainText) {
+                        pComponents.push(<Text key={`plain-${innerCounter++}`}>{plainText}</Text>);
+                    }
+                }
+
+                components.push(
+                    <Text key={`paragraph-${counter++}`} style={styles.detailFullArticleText}>
+                        {pComponents}
+                    </Text>
+                );
+            } else if (imgUrl) {
+                // Merender tag <img> sebagai komponen Image
+                components.push(
+                    <Image key={`image-${counter++}`} source={{ uri: imgUrl }} style={styles.detailArticleImage} />
+                );
+            } else if (bContent) {
+                // Merender tag <b> di luar <p>
+                components.push(
+                    <Text key={`bold-${counter++}`} style={[styles.detailFullArticleText, styles.boldText]}>
+                        {bContent}
+                    </Text>
+                );
+            } else if (iContent) {
+                // Merender tag <i> di luar <p>
+                components.push(
+                    <Text key={`italic-${counter++}`} style={[styles.detailFullArticleText, styles.italicText]}>
+                        {iContent}
+                    </Text>
+                );
+            } else if (uContent) {
+                // Merender tag <u> di luar <p>
+                components.push(
+                    <Text key={`underline-${counter++}`} style={[styles.detailFullArticleText, styles.underlineText]}>
+                        {uContent}
+                    </Text>
+                );
+            }
+
+            lastIndex = match.index + fullMatch.length;
+        }
+
+        // Tangani sisa teks setelah loop berakhir
+        const textAfter = htmlContent.substring(lastIndex).trim();
+        if (textAfter) {
+            components.push(
+                <Text key={`final-text-${counter++}`} style={styles.detailFullArticleText}>
+                    {textAfter.replace(/<[^>]*>/g, '')}
+                </Text>
+            );
+        }
+
+        return components;
     };
 
     if (!fontsLoaded) {
@@ -69,6 +147,18 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
     }
 
     const isMainImageAColor = typeof plant.image === 'string' && plant.image.startsWith('#');
+
+    // --- LOGIKA BARU UNTUK MENGAMBIL FOTO PERTAMA ---
+    let photoOfTheDayImage = plant.photoOfTheDayImage; // Gunakan foto default jika tidak ada gambar di artikel
+    let modifiedFullArticle = plant.fullArticle;
+
+    const firstImageRegex = /<img[^>]*src="([^"]*)"[^>]*>/;
+    const firstImageMatch = firstImageRegex.exec(plant.fullArticle);
+
+    if (firstImageMatch && firstImageMatch[1]) {
+        photoOfTheDayImage = { uri: firstImageMatch[1] }; // Ambil URL gambar pertama
+        modifiedFullArticle = plant.fullArticle.replace(firstImageMatch[0], ''); // Hapus tag gambar dari artikel
+    }
 
     return (
         <View style={styles.detailContainer}>
@@ -112,14 +202,18 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
                     <Text style={styles.detailPlantName}>{plant.name}</Text>
                     <Text style={styles.detailDateText}>Date: {plant.date}</Text>
 
-                    <Text style={styles.detailSectionTitle}>📸 Photo of the Day</Text>
-                    <Image source={plant.photoOfTheDayImage} style={styles.detailPhotoOfDayImage} />
-                    <Text style={styles.detailQuoteText}>{plant.quote}</Text>
+                    {/* FOTO PERTAMA DITAMPILKAN DI SINI */}
+                    {photoOfTheDayImage && (
+                        <>
+                            <Text style={styles.detailSectionTitle}>📸 Photo of the Day</Text>
+                            <Image source={photoOfTheDayImage} style={styles.detailPhotoOfDayImage} />
+                            {/* Kutipan juga mungkin perlu dipindahkan, tapi saya biarkan di sini sesuai kode awal */}
+                            <Text style={styles.detailQuoteText}>{plant.quote}</Text>
+                        </>
+                    )}
 
-                    {/* Menggunakan fungsi baru untuk menampilkan konten */}
-                    <Text style={styles.detailFullArticleText}>
-                        {renderArticleContent(plant.fullArticle)}
-                    </Text>
+                    {/* Sisa konten artikel (tanpa foto pertama) ditampilkan di sini */}
+                    {renderArticleContent(modifiedFullArticle)}
                 </View>
             </ScrollView>
         </View>
@@ -244,16 +338,32 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         fontFamily: 'Nunito_400Regular'
     },
-    // Style ini sudah benar, perataan justify akan bekerja pada tiap blok teks (paragraf)
     detailFullArticleText: {
         fontSize: 15,
         color: '#333',
         fontFamily: 'Nunito_400Regular',
         lineHeight: 22,
         marginTop: 10,
-        marginBottom: 60,
+        marginBottom: 10,
         textAlign: 'justify',
     },
+    detailArticleImage: {
+        width: '100%',
+        height: 200,
+        resizeMode: 'cover',
+        borderRadius: 15,
+        marginVertical: 10,
+    },
+    // Menambahkan style baru untuk format teks
+    boldText: {
+        fontFamily: 'Nunito_700Bold',
+    },
+    italicText: {
+        fontStyle: 'italic',
+    },
+    underlineText: {
+        textDecorationLine:'underline',
+    }
 });
 
 export default ArticleDetail;

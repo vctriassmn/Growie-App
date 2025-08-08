@@ -34,7 +34,7 @@ const initialJournalData = {
             id: '3a', 
             title: 'Tunas Pertama Muncul!',
             // Hapus spasi dan baris baru di awal dan akhir string
-            content: `<p>Ya Tuhan! Pagi ini saat saya mengecek, saya melihat ada beberapa tunas hijau kecil yang menyembul dari permukaan tanah! Rasanya luar biasa sekali. Kerja keras (meskipun baru 3 hari) terasa terbayar. Ukurannya masih sangat kecil, tapi ini adalah tanda bahwa mereka hidup dan bertumbuh.</p><img src="${babySpinachUri}" style="width: 100%; border-radius: 15px; margin-top: 10px; margin-bottom: 10px;" /><p>Saya langsung menyiramnya sedikit dengan sangat perlahan. Saya tidak akan memberikan pupuk dulu sampai daunnya sedikit lebih besar. Hari ini adalah hari yang sangat membahagiakan dalam perjalanan berkebun saya.</p>`
+            content: `<p>Ya Tuhan! Pagi ini saat saya mengecek, saya melihat ada beberapa tunas hijau kecil yang menyembul dari permukaan tanah! Rasanya luar biasa sekali. Kerja keras (meskipun baru 3 hari) terasa terbayar. Ukurannya masih sangat kecil, tapi ini adalah tanda bahwa mereka hidup dan bertumbuh.</p><img src="${babySpinachUri}" style="width: 100%; border-radius: 15px; margin-top: 10px; margin-bottom: 10px;" /><p>Saya langsung menyiramnya sedikit dengan sangat perlahan. Saya tidak akan memberikan pupuk dulu sampai daunnya sedikit lebih besar. Hari ini adalah hari yang sangat membahagiakan dalam perjalanan berkebun saya.</p><img src="${babySpinachUri}" style="width: 100%; border-radius: 15px; margin-top: 10px; margin-bottom: 10px;" />`
         },
     ],
     'Nanem Jagung': [
@@ -191,30 +191,33 @@ const updateJournalEntryContent = (folderTitle, entryId, newContent) => {
     };
 
     const publishJournalEntries = (folderTitle, entriesToPublish) => {
-        const newArticles = entriesToPublish.map(entry => {
-            const firstImageMatch = entry.content.match(/<img src="([^"]+)"/);
-            const firstImage = firstImageMatch ? { uri: firstImageMatch[1] } : '#448461'; // ✅ Perbaikan: Menggunakan string warna sebagai fallback
-            
-            const plainText = cleanHtml(entry.content);
-            const description = plainText.substring(0, 50) + '...';
-
-            return {
-                id: `pub-${entry.id}`,
-                name: entry.title,
-                description: description,
-                image: firstImage,
-                avatar: profilePicture,
-                username: userName,
-                category: 'publish',
-                date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-                photoOfTheDayImage: firstImage,
-                quote: `"${entry.title}"`,
-                fullArticle: entry.content,
-            };
-        });
+    const newArticles = entriesToPublish.map(entry => {
+        // Tetap ambil gambar pertama sebagai thumbnail
+        const firstImageMatch = entry.content.match(/<img src="([^"]+)"/);
+        const firstImage = firstImageMatch ? { uri: firstImageMatch[1] } : '#448461'; 
         
-        setPublishedArticles(prev => [...prev, ...newArticles]);
-    };
+        // Tetap simpan konten HTML lengkap tanpa diubah
+        const description = entry.content
+            .replace(/<[^>]*>/g, '')  // ambil teks polos untuk deskripsi singkat
+            .substring(0, 50) + '...';
+
+        return {
+            id: `pub-${entry.id}`,
+            name: entry.title,
+            description: description,
+            image: firstImage,
+            avatar: profilePicture,
+            username: userName,
+            category: 'publish',
+            date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            photoOfTheDayImage: firstImage,
+            quote: `"${entry.title}"`,
+            fullArticle: entry.content,  // Jangan diubah, biarkan HTML lengkap
+        };
+    });
+
+    setPublishedArticles(prev => [...prev, ...newArticles]);
+};
 
     const value = {
         journals,
