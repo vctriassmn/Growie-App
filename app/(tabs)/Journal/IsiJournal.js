@@ -113,7 +113,56 @@ export default function IsiJournalScreen() {
         setShowFontTools(false);
     };
 
-    const handleFormatAction = (action) => richText.current?.sendAction(action);
+    // ----- new: wrap selection in DOM with given tag and get updated HTML back via postMessage
+const handleRichMessage = (event) => {
+  // event comes from RichEditor WebView => event.nativeEvent.data
+  try {
+    const raw = event?.nativeEvent?.data ?? event?.data ?? '';
+    const parsed = JSON.parse(raw);
+    if (parsed?.type === 'CONTENT_UPDATED') {
+      setEditedContent(parsed.html ?? '');
+    } else if (parsed?.type === 'FORMAT_ERROR') {
+      console.warn('Editor format error:', parsed.message);
+    }
+  } catch (e) {
+    // non-json messages can be ignored
+    // console.log('editor message:', raw);
+  }
+};
+
+const applyFormatTag = (tag) => {
+  if (!richText.current) return;
+  richText.current.focusContentEditor?.();
+
+  const js = `(function(){
+    try {
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount) { return; }
+      var range = sel.getRangeAt(0);
+      var frag = range.cloneContents();
+      var wrapper = document.createElement('${tag}');
+      wrapper.appendChild(frag);
+      range.deleteContents();
+      range.insertNode(wrapper);
+      document.body.normalize();
+      var html = document.body.innerHTML;
+      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CONTENT_UPDATED', html: html }));
+    } catch(err) {
+      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'FORMAT_ERROR', message: err.message }));
+    }
+  })(); true;`;
+
+  if (typeof richText.current.commandDOM === 'function') {
+    richText.current.commandDOM(js);
+  }
+
+  // ✅ Sinkronkan ke state
+  richText.current?.getContentHtml().then(html => {
+    setEditedContent(html || '');
+  });
+};
+
+
 
     const handleInsertCheckbox = () => {
         richText.current?.insertHTML(`<div><br/></div>`);
@@ -194,6 +243,7 @@ export default function IsiJournalScreen() {
                             ref={richText}
                             initialContentHTML={editedContent}
                             onChange={(html) => setEditedContent(html || '')}
+                            onMessage={handleRichMessage}
                             placeholder="Tulis ceritamu di sini..."
                             style={styles.richEditor}
                             editorStyle={{
@@ -250,15 +300,27 @@ export default function IsiJournalScreen() {
                     <View style={[styles.editToolbarWrapper, { bottom: keyboardHeight > 0 ? keyboardHeight + 20 : 30 }]} pointerEvents="box-none">
                         {showFontTools && (
                             <View style={styles.fontToolsFlyout}>
-                                <TouchableOpacity onPress={() => handleFormatAction(actions.setBold)}>
-                                    <Image source={iconBold} style={styles.flyoutIcon} />
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleFormatAction(actions.setItalic)}>
-                                    <Image source={iconItalic} style={styles.flyoutIcon} />
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleFormatAction(actions.setUnderline)}>
-                                    <Image source={iconUnderline} style={styles.flyoutIcon} />
-                                </TouchableOpacity>
+                                <TouchableOpacity
+  onPressIn={() => richText.current?.focusContentEditor?.()}
+  onPress={() => applyFormatTag('b')}
+>
+  <Image source={iconBold} style={styles.flyoutIcon} />
+</TouchableOpacity>
+
+<TouchableOpacity
+  onPressIn={() => richText.current?.focusContentEditor?.()}
+  onPress={() => applyFormatTag('i')}
+>
+  <Image source={iconItalic} style={styles.flyoutIcon} />
+</TouchableOpacity>
+
+<TouchableOpacity
+  onPressIn={() => richText.current?.focusContentEditor?.()}
+  onPress={() => applyFormatTag('u')}
+>
+  <Image source={iconUnderline} style={styles.flyoutIcon} />
+</TouchableOpacity>
+
                             </View>
                         )}
                         <View style={styles.editToolbar}>

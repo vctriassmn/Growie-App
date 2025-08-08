@@ -48,7 +48,7 @@ const initialJournalData = {
             id: '2b', 
             title: 'Rencana Penyiraman dan Observasi',
             // Hapus spasi dan baris baru di awal dan akhir string
-            content: `<p>Karena potnya jauh lebih besar, menjaga kelembaban tanah menjadi tantangan baru. Saya harus memastikan air meresap sampai ke bawah tanpa membuat bagian atas terlalu becek.</p><h4>Tugas untuk minggu pertama:</h4><div><input type="checkbox" checked />  Siram setiap 2 hari sekali, atau saat permukaan tanah mulai kering.</div><div><input type="checkbox" />  Periksa hama atau penyakit setiap pagi.</div><div><input type="checkbox" checked />  Memutar pot agar semua sisi mendapat cahaya.</div><br><p>Saya juga menempatkan pot di tempat yang paling banyak terkena sinar matahari di balkon. Jagung butuh banyak sekali cahaya. Ini akan menjadi perjalanan yang menarik.</p>`
+            content: `<p>Karena potnya jauh <b>lebih besar, menjaga kelembaban tanah menjadi tantangan baru</b>. Saya harus memastikan air meresap sampai ke bawah tanpa membuat bagian atas terlalu becek.</p><h4>Tugas untuk minggu pertama:</h4><div><input type="checkbox" checked />  Siram setiap 2 hari sekali, atau saat permukaan tanah mulai kering.</div><div><input type="checkbox" />  Periksa hama atau penyakit setiap pagi.</div><div><input type="checkbox" checked />  Memutar pot agar semua sisi mendapat cahaya.</div><br><p>Saya juga menempatkan pot di tempat yang paling banyak terkena sinar matahari di balkon. Jagung butuh banyak sekali cahaya. Ini akan menjadi perjalanan yang menarik.</p>`
         },
     ],
     'Daily Progress': [],
@@ -134,6 +134,20 @@ export const JournalAndArticleProvider = ({ children }) => {
             return newJournals;
         });
     };
+    const updateJournalEntry = (folderTitle, entryId, updates) => {
+        setJournals(prevJournals => {
+            const newJournals = { ...prevJournals };
+            const folderEntries = newJournals[folderTitle] ? [...newJournals[folderTitle]] : [];
+            const entryIndex = folderEntries.findIndex(entry => entry.id === entryId);
+
+            if (entryIndex !== -1) {
+                folderEntries[entryIndex] = { ...folderEntries[entryIndex], ...updates };
+                newJournals[folderTitle] = folderEntries;
+            }
+            
+            return newJournals;
+        });
+    };
 
     const renameJournalFolder = (oldTitle, newTitle) => {
         if (!newTitle || newTitle === oldTitle) return;
@@ -156,20 +170,21 @@ export const JournalAndArticleProvider = ({ children }) => {
     
     const getJournalEntriesByTitle = (title) => journals[title] || [];
     const getJournalEntryById = (folderTitle, entryId) => (journals[folderTitle] || []).find(entry => entry.id === entryId);
-    const updateJournalEntry = (folderTitle, entryId, updates) => {
-        setJournals(prevJournals => {
-            const newJournals = { ...prevJournals };
-            const folderEntries = newJournals[folderTitle] ? [...newJournals[folderTitle]] : [];
-            const entryIndex = folderEntries.findIndex(entry => entry.id === entryId);
+    // GANTI / TAMBAHKAN di dalam JournalAndArticleProvider (di tempat fungsi lainnya)
+const updateJournalEntryContent = (folderTitle, entryId, newContent) => {
+    setJournals(prevJournals => {
+        const newJournals = { ...prevJournals };
+        const folderEntries = newJournals[folderTitle] ? [...newJournals[folderTitle]] : [];
+        const entryIndex = folderEntries.findIndex(e => e.id === entryId);
 
-            if (entryIndex !== -1) {
-                folderEntries[entryIndex] = { ...folderEntries[entryIndex], ...updates };
-                newJournals[folderTitle] = folderEntries;
-            }
-            
-            return newJournals;
-        });
-    };
+        if (entryIndex !== -1) {
+            folderEntries[entryIndex] = { ...folderEntries[entryIndex], content: newContent };
+            newJournals[folderTitle] = folderEntries;
+        }
+        return newJournals;
+    });
+};
+
 
     const deletePublishedArticles = (articleIdsToDelete) => {
         setPublishedArticles(prevArticles => prevArticles.filter(article => !articleIdsToDelete.includes(article.id)));
@@ -214,13 +229,14 @@ export const JournalAndArticleProvider = ({ children }) => {
         deleteJournalEntries,
         publishJournalEntries,
         getJournalEntryById,
-        updateJournalEntry,
+        updateJournalEntryContent,
         publishedArticles,
         deletePublishedArticles,
         activeTab,
         setActiveTab,
         likedArticles,
         toggleLike,
+        updateJournalEntry,
     };
 
     return (
