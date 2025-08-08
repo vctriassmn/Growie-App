@@ -45,12 +45,6 @@ export default function PlantDetail() {
       : getImage('placeholder');
 
 
-    const [articles, setArticles] = useState( [
-        { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide...', image: require('../../../../assets/images/caramenyiram.png'), avatar: require('../../../../assets/images/Logo.png'), username: 'Growie', liked: false, },
-        { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree...', image: require('../../../../assets/images/plant.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'User123', liked: true, },
-        { id: '3', name: 'Snake Plant', description: 'Extremely hardy and low-maintenance...', image: require('../../../../assets/images/peacelily.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'GreenThumb', liked: false, },
-    ]);
-
     return (
         <SafeAreaProvider>
             <View
@@ -136,7 +130,7 @@ export default function PlantDetail() {
 
             {/* article section */}
             <View style={{ position: 'relative' }}>
-                <ArticleSection articles={articles} />
+                <ArticleSection />
             </View>
 
         </SafeAreaProvider>
@@ -200,7 +194,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
         color: '#448461',
         textAlign: 'justify',
-        // lineHeight: 18,
+        lineHeight: 20,
 
     },
     // --------------------------------------------------------

@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
   },
 
   info: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Nunito-SemiBold',
     color: '#316569',
     marginBottom: 4,
