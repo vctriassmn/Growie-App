@@ -43,9 +43,11 @@ export default function TabLayout() {
           tabBar={({ navigation, state, descriptors }) => {
             const currentRouteName = state.routes[state.index].name;
 
-            // Jangan tampilkan navbar di halaman-halaman ini
-            if (currentRouteName === 'Journal/ListJournal' || currentRouteName === 'Journal/IsiJournal') {
-              return null;
+            // Hide navbar for specific screens (but keep it for AddReminder/EditReminder to show active Reminder tab)
+            if (currentRouteName.includes('ArticleComponents') || 
+                currentRouteName === 'Journal/ListJournal' || 
+                currentRouteName === 'Journal/IsiJournal') {
+                return null;
             }
 
             return (
@@ -72,6 +74,20 @@ export default function TabLayout() {
             name="Reminder"
             options={{
               title: 'Reminder',
+            }}
+          />
+          <Tabs.Screen
+            name="AddReminder"
+            options={{
+              title: 'Add Reminder',
+              href: null, // Hide from tab bar
+            }}
+          />
+          <Tabs.Screen
+            name="EditReminder"
+            options={{
+              title: 'Edit Reminder',
+              href: null, // Hide from tab bar
             }}
           />
           <Tabs.Screen

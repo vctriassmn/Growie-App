@@ -1,9 +1,14 @@
-// Lokasi file: app/(tabs)/Home.js
+
+// import { StyleSheet, Text, View,  } from 'react-native';
+// import { useRouter } from 'expo-router';
 
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
+import { StyleSheet, Text, View, Button, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { useUser } from '../../context/UserContext';
+import { useReminders } from '../../context/ReminderContext';
+import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
 
 // Data dummy (tidak ada perubahan)
 const latestArticlesData = [
@@ -17,11 +22,6 @@ const myGardenData = [
   { id: 'g3', name: 'Cactus', image: require('../../assets/images/cactus.png') },
   { id: 'g4', name: 'Three Musketeers', image: require('../../assets/images/three-musketeers.png') },
   { id: 'g5', name: 'Turtles', image: require('../../assets/images/turtles.png') },
-];
-const remindersData = [
-  { id: 'r1', time: '07.30', task: 'Baby Spinach | Watering' },
-  { id: 'r2', time: '10.30', task: 'Monstera | Watering' },
-  { id: 'r3', time: '16.00', task: 'Water Lily | Pruning' },
 ];
 
 // Impor Aset (tidak ada perubahan)
@@ -63,15 +63,39 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
 
 // Komponen Utama HomePage (tidak ada perubahan di logika)
 export default function HomePage() {
-  const router = useRouter();
+  const router = useRouter(); 
+  const navigation = useNavigation();
+  const { getHomeReminders } = useReminders(); // Get reminders from context
   const { userName, profilePicture } = useUser();
   const [articles, setArticles] = useState(latestArticlesData);
+
+  // Get synchronized reminder data from context (ids 1, 2, 4)
+  const homeReminders = getHomeReminders();
 
   const handleLikeToggle = (articleId) => {
     const updatedArticles = articles.map(article =>
       article.id === articleId ? { ...article, liked: !article.liked } : article
     );
     setArticles(updatedArticles);
+  };
+
+  const handleReminderPress = (reminder) => {
+    console.log("Opening EditReminder for reminder:", reminder);
+    
+    // Create a copy of reminder to prevent same object reference
+    const reminderToEdit = {...reminder};
+    
+    // Navigate to EditReminder with the reminder data for editing
+    const params = { 
+      title: 'Edit Reminder',
+      reminderData: reminderToEdit 
+    };
+    
+    console.log("Navigation params:", params);
+    // Use small timeout to ensure navigation works correctly
+    setTimeout(() => {
+      navigation.navigate('EditReminder', params);
+    }, 50);
   };
 
   // Logika PanResponder & Scroll (tidak ada perubahan)
@@ -81,8 +105,9 @@ export default function HomePage() {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => !isPanelUp && Math.abs(gestureState.dy) > 5,
-      onPanResponderRelease: (e, gesture) => {
-        if (gesture.vy < -0.5 || gesture.dy < -100) scrollToArticle();
+      // ✅ Perbaikan: Menggunakan gestureState di sini
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.vy < -0.5 || gestureState.dy < -100) scrollToArticle();
         else scrollToTop();
       },
     })
@@ -94,7 +119,6 @@ export default function HomePage() {
       scrollViewRef.current.scrollTo({ y: articleSectionY.current, animated: true });
     }
   };
-
   const scrollToTop = () => {
     if (scrollViewRef.current) {
       setIsPanelUp(false);
@@ -119,6 +143,7 @@ export default function HomePage() {
               activeOpacity={0.8}
             >
               <View style={styles.profileContainer}>
+                {/* Layer Bawah: Bingkai SVG */}
                 <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
                 <Image
                   source={typeof profilePicture === 'string' ? { uri: profilePicture } : profilePicture}
@@ -160,11 +185,16 @@ export default function HomePage() {
                 </TouchableOpacity>
               </View>
               <View>
-                {remindersData.map((reminder) => (
-                  <View key={reminder.id} style={styles.reminderItem}>
-                    <Text style={styles.reminderTime}>{reminder.time}</Text>
-                    <Text style={styles.reminderText}>{reminder.task}</Text>
-                  </View>
+                {homeReminders.map((reminder) => (
+                  <TouchableOpacity 
+                    key={reminder.id} 
+                    style={styles.reminderItem}
+                    onPress={() => handleReminderPress(reminder)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.reminderTime}>{reminder.hour}.{reminder.minute}</Text>
+                    <Text style={styles.reminderText}>{reminder.title} | {reminder.category}</Text>
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>
@@ -190,7 +220,7 @@ export default function HomePage() {
               <ArticleCard
                 key={article.id}
                 item={article}
-                onCardPress={() => router.push('/(tabs)/Article')}
+                onCardPress={() => router.push({pathname: `/(tabs)/ArticleComponents/${article.id}`,})}
                 onLikeToggle={() => handleLikeToggle(article.id)}
               />
             ))}
@@ -198,8 +228,16 @@ export default function HomePage() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
+
+// return (
+//   <View style={styles.container}>
+//       <Text style={styles.text}>Ini adalah Halaman Home</Text>
+//       <Button title="Go to Profile" onPress={() => router.push('/Profile')} />
+//     </View>
+//   );
+)}
+
+// const router = useRouter();
 
 // Objek Shadow (tidak ada perubahan)
 const shadowStyle = {

@@ -54,7 +54,7 @@ export default function JournalPage() {
     if (flatListRef.current) {
       setTimeout(() => {
         flatListRef.current.scrollToEnd({ animated: true });
-      }, 50);
+      }, 100);
     }
   };
 

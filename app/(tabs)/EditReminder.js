@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import RNModal from "react-native-modal";
 import { useFonts } from 'expo-font';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 const ITEM_HEIGHT = 18; // Lebih kecil lagi sesuai kebutuhan
@@ -30,56 +30,171 @@ const days = [
   {id: 'sun', label: 'S'}, // Sunday
 ];
 
-export default function AddReminderScreen({ route }) {
+export default function EditReminderScreen() {
   const navigation = useNavigation();
-  const isFocused = useIsFocused();
-  const [hour, setHour] = useState(0); // Ubah default menjadi 0 (00)
-  const [minute, setMinute] = useState(0); // Ubah default menjadi 0 (00)
+  const route = useRoute();
+  const [initialHour, setInitialHour] = useState(8);
+  const [initialMinute, setInitialMinute] = useState(50);
+  const [initialName, setInitialName] = useState("");
+  const [initialCategory, setInitialCategory] = useState("WATERING");
+  const [initialRepeater, setInitialRepeater] = useState("DAILY");
+  const [initialSelectedDays, setInitialSelectedDays] = useState(['mon']);
+  const [initialNotes, setInitialNotes] = useState("");
+  
+  const [hour, setHour] = useState(8);
+  const [minute, setMinute] = useState(50);
   const [name, setName] = useState("");
-  const [category, setCategory] = useState(""); // Kategori default kosong
-  const [repeater, setRepeater] = useState(""); // Repeater default kosong
-  const [selectedDays, setSelectedDays] = useState([]); // Default tidak ada hari yang dipilih
+  const [category, setCategory] = useState("WATERING"); // Default to watering
+  const [repeater, setRepeater] = useState("DAILY"); // Default to daily
+  const [selectedDays, setSelectedDays] = useState(['mon']); // Default to Monday
   const [selectedWeeks, setSelectedWeeks] = useState([]);
   const [selectedDates, setSelectedDates] = useState([]);
   const [notes, setNotes] = useState("");
   const [showDateModal, setShowDateModal] = useState(false);
+  const [reminderId, setReminderId] = useState(null);
 
   const [fontsLoaded] = useFonts({
     'Nunito-Bold': require('../../assets/fonts/Nunito-Bold.ttf'),
   });
 
-  // Handle route params for title
-  const params = route?.params || {};
-  console.log("Route params in AddReminder:", params);
+  // Handle route params and direct props
+  const params = route.params || {};
+  console.log("Route params in EditReminder:", params);
   
-  // Use title from params or default
-  const reminderTitle = params?.title || "Untitled";
+  // Check if reminderData exists in route params
+  const reminderData = params.reminderData || null;
+  console.log("Reminder Data detail in EditReminder:", reminderData);
+  
+  // Title for the screen
+  const reminderTitle = reminderData 
+    ? `${reminderData.title}`
+    : "Edit Reminder";
 
-  // Gunakan useRef untuk menandai bahwa form sudah di-reset
-  const hasReset = useRef(false);
+  // Determine if there are unsaved changes by comparing current values to initial values
+  const hasUnsavedChanges = () => {
+    return hour !== initialHour || 
+           minute !== initialMinute || 
+           name !== initialName || 
+           category !== initialCategory || 
+           repeater !== initialRepeater ||
+           JSON.stringify(selectedDays) !== JSON.stringify(initialSelectedDays) ||
+           notes !== initialNotes;
+  };
 
-  // Reset form hanya sekali ketika halaman difokuskan pertama kali
+  // Populate form with existing reminder data if in edit mode
   useEffect(() => {
-    if (isFocused && !hasReset.current) {
-      // Reset hanya jika belum di-reset sebelumnya pada fokus ini
-      console.log("Resetting form to default values");
-      setHour(0);
-      setMinute(0);
-      setName("");
-      setCategory("");
-      setRepeater("");
-      setSelectedDays([]);
-      setSelectedWeeks([]);
-      setSelectedDates([]);
-      setNotes("");
+    // Tambahkan timeout kecil untuk memastikan parameter telah tersedia
+    const timer = setTimeout(() => {
+      // Akses ulang parameter route untuk memastikan data terbaru
+      const currentParams = route.params || {};
+      const currentReminderData = currentParams.reminderData || null;
       
-      // Tandai bahwa sudah di-reset
-      hasReset.current = true;
-    } else if (!isFocused) {
-      // Reset flag ketika halaman tidak fokus sehingga bisa di-reset lagi nanti
-      hasReset.current = false;
-    }
-  }, [isFocused]);
+      console.log("UseEffect timeout called with reminderData in EditReminder:", currentReminderData);
+      
+      if (currentReminderData) {
+        console.log("Setting data from reminderData in EditReminder");
+        setReminderId(currentReminderData.id);
+        
+        // Set plant name
+        setName(currentReminderData.title || "");
+        setInitialName(currentReminderData.title || "");
+        
+        // Set category
+        if (currentReminderData.category) {
+          const categoryUpper = currentReminderData.category.toUpperCase();
+          console.log("Setting category:", categoryUpper);
+          setCategory(categoryUpper);
+          setInitialCategory(categoryUpper);
+        } else {
+          console.log("No category found, defaulting to WATERING");
+          setCategory("WATERING"); // Default category
+          setInitialCategory("WATERING");
+        }
+      
+        // Set time (hour & minute) langsung dari properti hour dan minute
+        if (currentReminderData.hour && currentReminderData.minute) {
+          const hourInt = parseInt(currentReminderData.hour, 10);
+          const minuteInt = parseInt(currentReminderData.minute, 10);
+          setHour(hourInt);
+          setMinute(minuteInt);
+          setInitialHour(hourInt);
+          setInitialMinute(minuteInt);
+        } else if (currentReminderData.time) {
+          // Fallback untuk format lama dengan properti time
+          const [hourStr, minuteStr] = currentReminderData.time.split('.');
+          const hourInt = parseInt(hourStr, 10);
+          const minuteInt = parseInt(minuteStr, 10);
+          setHour(hourInt);
+          setMinute(minuteInt);
+          setInitialHour(hourInt);
+          setInitialMinute(minuteInt);
+        }
+        
+        // Set repeater sesuai dengan frequency dari currentReminderData
+        if (currentReminderData.frequency) {
+          const repeaterUpper = currentReminderData.frequency.toUpperCase();
+          setRepeater(repeaterUpper);
+          setInitialRepeater(repeaterUpper);
+        } else {
+          setRepeater("DAILY"); // Default ke DAILY jika tidak ada
+          setInitialRepeater("DAILY");
+        }
+        
+        if (currentReminderData.days) {
+          // Urutan hari yang benar dalam days array
+          const dayIds = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+          const dayLetters = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+          
+          const selectedDayIds = [];
+          
+          // Periksa setiap hari dalam urutan yang benar
+          dayLetters.forEach((letter, index) => {
+            if (currentReminderData.days[letter]) {
+              selectedDayIds.push(dayIds[index]);
+            }
+          });
+          
+          console.log("Selected day IDs in EditReminder:", selectedDayIds);
+          
+          // If no days were selected, default to Monday
+          if (selectedDayIds.length === 0) {
+            selectedDayIds.push('mon');
+          }
+          
+          setSelectedDays(selectedDayIds);
+          setInitialSelectedDays([...selectedDayIds]); // Save a copy for comparison
+        } else {
+          // Default to Monday if no days data
+          setSelectedDays(['mon']);
+          setInitialSelectedDays(['mon']);
+        }
+        
+        // Set week and date selections based on frequency
+        if (currentReminderData.frequency === 'weekly' && currentReminderData.selectedWeeks) {
+          setSelectedWeeks(currentReminderData.selectedWeeks);
+        }
+        
+        if (currentReminderData.frequency === 'monthly' && currentReminderData.selectedDate) {
+          setSelectedDates([currentReminderData.selectedDate]);
+        }
+        
+        // Set notes if available
+        if (currentReminderData.note) {
+          setNotes(currentReminderData.note);
+          setInitialNotes(currentReminderData.note);
+        } else if (currentReminderData.notes) {
+          setNotes(currentReminderData.notes);
+          setInitialNotes(currentReminderData.notes);
+        } else {
+          setNotes("");
+          setInitialNotes("");
+        }
+      }
+    }, 100); // timeout 100ms untuk memastikan rute params sudah diproses
+    
+    // Cleanup timer ketika komponen unmount
+    return () => clearTimeout(timer);
+  }, [route.params]); // Membuat useEffect bergantung pada route.params
 
   if (!fontsLoaded) {
     return null;
@@ -107,7 +222,7 @@ export default function AddReminderScreen({ route }) {
           index: minute,
           animated: true,
         });
-      }, 10); // Small timeout to ensure rendering is complete
+      }, 300); // Small timeout to ensure rendering is complete
     }
   }, [hour, minute]);
 
@@ -162,9 +277,7 @@ export default function AddReminderScreen({ route }) {
           style={styles.backButton} 
           onPress={() => {
             // Konfirmasi jika sudah mengubah data
-            if (name || category || repeater || 
-                selectedDays.length > 0 || 
-                notes) {
+            if (hasUnsavedChanges()) {
               Alert.alert(
                 'Konfirmasi',
                 'Perubahan belum disimpan. Yakin ingin kembali?',
@@ -216,7 +329,7 @@ export default function AddReminderScreen({ route }) {
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
             decelerationRate={0.9}
             style={{ flexGrow: 0, zIndex: 2 }}
-            initialScrollIndex={0} // Set ke 0 untuk default 00 jam
+            initialScrollIndex={hour}
             contentContainerStyle={{
               paddingTop: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
               paddingBottom: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
@@ -238,7 +351,7 @@ export default function AddReminderScreen({ route }) {
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
             decelerationRate={0.9}
             style={{ flexGrow: 0, zIndex: 2 }}
-            initialScrollIndex={0} // Set ke 0 untuk default 00 menit
+            initialScrollIndex={minute}
             contentContainerStyle={{
               paddingTop: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
               paddingBottom: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
@@ -261,234 +374,201 @@ export default function AddReminderScreen({ route }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.fixedCardWrapper}>
-          <View style={styles.fixedCard}>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.inputTransparent}
-                value={name}
-                onChangeText={setName}
-                placeholderTextColor="#7A8B7A"
-                placeholder="Enter reminder name"
-              />
-              <Text style={styles.labelInside}>REMINDER NAME</Text>
-            </View>
+        <View style={styles.fixedCard}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.inputTransparent}
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#7A8B7A"
+              placeholder="Enter reminder name"
+            />
+            <Text style={styles.labelInside}>REMINDER NAME</Text>
+          </View>
 
-            <View style={styles.categSection}>
-              <View style={styles.categoryRow}>
-                {["WATERING", "FERTILIZING", "PRUNING"].map((c) => (
+          <View style={styles.categSection}>
+            <View style={styles.categoryRow}>
+              {["WATERING", "FERTILIZING", "PRUNING"].map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={[
+                    styles.categoryOption,
+                    category === c && styles.categoryOptionActive,
+                  ]}
+                  onPress={() => setCategory(c)}
+                >
+                  <Text style={[
+                    styles.categoryOptionText,
+                    category === c && styles.categoryOptionTextActive
+                  ]}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.repeatSection}>
+            <View style={styles.repeaterContainer}>
+              <Text style={styles.repeaterLabel}>REPEATER</Text>
+              <View style={styles.repeaterOptionsRow}>
+                {["DAILY", "WEEKLY", "MONTHLY"].map((r) => (
                   <TouchableOpacity
-                    key={c}
+                    key={r}
                     style={[
-                      styles.categoryOption,
-                      category === c && styles.categoryOptionActive,
+                      styles.repeaterOption,
+                      repeater === r && styles.repeaterOptionActive,
                     ]}
-                    onPress={() => setCategory(c)}
+                    onPress={() => setRepeater(r)}
                   >
                     <Text style={[
-                      styles.categoryOptionText,
-                      category === c && styles.categoryOptionTextActive
-                    ]}>{c}</Text>
+                      styles.repeaterOptionText,
+                      repeater === r && styles.repeaterOptionTextActive
+                    ]}>{r}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
-            <View style={styles.divider} />
-
-            <View style={styles.repeatSection}>
-              <View style={styles.repeaterContainer}>
-                <Text style={styles.repeaterLabel}>REPEATER</Text>
-                <View style={styles.repeaterOptionsRow}>
-                  {["DAILY", "WEEKLY", "MONTHLY"].map((r) => (
-                    <TouchableOpacity
-                      key={r}
-                      style={[
-                        styles.repeaterOption,
-                        repeater === r && styles.repeaterOptionActive,
-                      ]}
-                      onPress={() => {
-                        setRepeater(r);
-                        // Tidak menambahkan hari default untuk repeater DAILY
-                      }}
-                    >
-                      <Text style={[
-                        styles.repeaterOptionText,
-                        repeater === r && styles.repeaterOptionTextActive
-                      ]}>{r}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {repeater === "DAILY" && (
-                <View style={[styles.row, { justifyContent: 'center', marginTop: 11 }]}>
-                  {days.map((day) => (
-                    <TouchableOpacity
-                      key={day.id}
-                      style={[
-                        styles.circleSmall,
-                        selectedDays.includes(day.id) && styles.circleActive,
-                      ]}
-                      onPress={() => toggleDay(day.id)}
-                    >
-                      <Text style={styles.circleText}>{day.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {repeater === "WEEKLY" && (
-                <View style={[styles.row, { justifyContent: 'center', marginTop: 13 }]}>
-                  {[1, 2, 3, 4].map((w) => (
-                    <TouchableOpacity
-                      key={w}
-                      style={[
-                        styles.weekOption,
-                        selectedWeeks.includes(w) && styles.weekOptionActive,
-                      ]}
-                      onPress={() => toggleWeek(w)}
-                    >
-                      <Text style={[
-                        styles.weekOptionText,
-                        selectedWeeks.includes(w) && styles.weekOptionTextActive
-                      ]}>Week {w}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {repeater === "MONTHLY" && (
-                <View style={[styles.row, { justifyContent: 'flex-start', marginTop: 13 }]}>
+            {repeater === "DAILY" && (
+              <View style={[styles.row, { justifyContent: 'center', marginTop: 11 }]}>
+                {days.map((day) => (
                   <TouchableOpacity
-                    style={styles.chooseDateButton}
-                    onPress={() => setShowDateModal(true)}
+                    key={day.id}
+                    style={[
+                      styles.circleSmall,
+                      selectedDays.includes(day.id) && styles.circleActive,
+                    ]}
+                    onPress={() => toggleDay(day.id)}
                   >
-                    <Text style={styles.chooseDateText}>Choose Date</Text>
+                    <Text style={styles.circleText}>{day.label}</Text>
                   </TouchableOpacity>
-                </View>
-              )}
-            </View>
+                ))}
+              </View>
+            )}
 
-            <View style={styles.divider} />
-            
-            <View style={styles.notesContainer}>
-              <Text style={styles.notesLabel}>NOTES</Text>
-              <TextInput
-                style={styles.notesInput}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                placeholder="Write a notes here..."
-                placeholderTextColor="#7A8B7A"
-              />
-            </View>
+            {repeater === "WEEKLY" && (
+              <View style={[styles.row, { justifyContent: 'center', marginTop: 13 }]}>
+                {[1, 2, 3, 4].map((w) => (
+                  <TouchableOpacity
+                    key={w}
+                    style={[
+                      styles.weekOption,
+                      selectedWeeks.includes(w) && styles.weekOptionActive,
+                    ]}
+                    onPress={() => toggleWeek(w)}
+                  >
+                    <Text style={[
+                      styles.weekOptionText,
+                      selectedWeeks.includes(w) && styles.weekOptionTextActive
+                    ]}>Week {w}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {repeater === "MONTHLY" && (
+              <View style={[styles.row, { justifyContent: 'flex-start', marginTop: 13}]}>
+                <TouchableOpacity
+                  style={styles.chooseDateButton}
+                  onPress={() => setShowDateModal(true)}
+                >
+                  <Text style={styles.chooseDateText}>Choose Date</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-          <TouchableOpacity 
-            style={styles.saveButton}
-            onPress={() => {
-              // Validasi data input
-              if (!name.trim()) {
-                alert('Nama reminder tidak boleh kosong!');
-                return;
-              }
-              
-              if (!category) {
-                alert('Silakan pilih kategori reminder!');
-                return;
-              }
-              
-              if (!repeater) {
-                alert('Silakan pilih frekuensi pengulangan!');
-                return;
-              }
-              
-              if (repeater === "DAILY" && selectedDays.length === 0) {
-                alert('Silakan pilih minimal satu hari untuk pengulangan harian!');
-                return;
-              }
-              
-              if (repeater === "WEEKLY" && selectedWeeks.length === 0) {
-                alert('Silakan pilih minimal satu minggu untuk pengulangan mingguan!');
-                return;
-              }
-              
-              if (repeater === "MONTHLY" && selectedDates.length !== 1) {
-                alert('Silakan pilih tepat satu tanggal untuk pengulangan bulanan!');
-                return;
-              }
-              
-              // Prepare the updated reminder data
-              console.log("Preparing new reminder");
-              
-              const updatedReminder = {
-                id: new Date().getTime().toString(), // Generate new ID for new reminder
-                hour: hour.toString().padStart(2, '0'),
-                minute: minute.toString().padStart(2, '0'),
-                title: name,
-                category: category ? category.charAt(0) + category.slice(1).toLowerCase() : "Watering", // Capitalize properly
-                active: true, // New reminders are active by default
-                days: {}, // We'll populate this below
-                frequency: repeater.toLowerCase(), // Simpan frequency
-                note: notes, // Simpan notes
-                // Save week information for weekly frequency
-                selectedWeeks: repeater === "WEEKLY" ? selectedWeeks : [],
-                // Save date information for monthly frequency
-                selectedDate: repeater === "MONTHLY" && selectedDates.length > 0 ? selectedDates[0] : null
-              };
 
-              // Buat pemetaan dari ID hari ke huruf hari
-              const dayIdToLetter = {
-                'mon': 'M', // Monday
-                'tue': 'T', // Tuesday
-                'wed': 'W', // Wednesday
-                'thu': 'T', // Thursday (perhatikan ini sama dengan Tuesday)
-                'fri': 'F', // Friday
-                'sat': 'S', // Saturday
-                'sun': 'S'  // Sunday (perhatikan ini sama dengan Saturday)
-              };
+          <View style={styles.divider} />
 
-              // Array indeks yang benar untuk memastikan penempatan huruf yang tepat
-              // Urutan ini harus sama dengan urutan di Reminder.js
-              const dayIndices = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-              const dayLetters = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
-              
-              // Initialize all days to false
-              dayLetters.forEach(day => {
-                updatedReminder.days[day] = false;
-              });
-              
-              // Set selected days to true
-              selectedDays.forEach(selectedDayId => {
-                // Cari indeks hari yang sesuai
-                const index = dayIndices.indexOf(selectedDayId);
-                if (index !== -1 && index < dayLetters.length) {
-                  updatedReminder.days[dayLetters[index]] = true;
-                }
-              });
-              
-              // Pass the updated reminder back to the Reminder screen
-              console.log("Sending new reminder to Reminder screen:", updatedReminder);
-              
-              // Reset state ke nilai default untuk penggunaan selanjutnya
-              setHour(0);
-              setMinute(0);
-              setName("");
-              setCategory("");
-              setRepeater("");
-              setSelectedDays([]);
-              setSelectedWeeks([]);
-              setSelectedDates([]);
-              setNotes("");
-              
-              // Navigasi kembali ke halaman Reminder dengan data reminder baru
-              navigation.navigate('Reminder', { 
-                updatedReminder: updatedReminder,
-                isNewReminder: true // Always true for AddReminder
-              });
-            }}
-          >
-            <Text style={styles.saveButtonText}>Add Reminder</Text>
-          </TouchableOpacity>
+          <View style={styles.notesContainer}>
+            <Text style={styles.notesLabel}>NOTES</Text>
+            <TextInput
+              style={styles.notesInput}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Add any notes here..."
+              placeholderTextColor="#99918e"
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+        </View>
+
+        {/* SAVE BUTTON */}
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={() => {
+            // Validate form
+            if (!name.trim()) {
+              alert('Please enter a plant name');
+              return;
+            }
+            
+            if (!category) {
+              alert('Please select a category');
+              return;
+            }
+            
+            if (repeater === "WEEKLY" && selectedWeeks.length === 0) {
+              alert('Silakan pilih minimal satu minggu untuk pengulangan mingguan!');
+              return;
+            }
+            
+            if (repeater === "MONTHLY" && selectedDates.length !== 1) {
+              alert('Silakan pilih tepat satu tanggal untuk pengulangan bulanan!');
+              return;
+            }
+            
+            // Prepare the updated reminder data
+            console.log("Preparing updated reminder");
+            
+            const updatedReminder = {
+              id: reminderId || new Date().getTime().toString(), // Use existing ID or create new one
+              hour: hour.toString().padStart(2, '0'),
+              minute: minute.toString().padStart(2, '0'),
+              title: name,
+              category: category ? category.charAt(0) + category.slice(1).toLowerCase() : "Watering", // Capitalize properly
+              active: reminderData ? reminderData.active : true, // Preserve active state
+              days: {}, // We'll populate this below
+              frequency: repeater.toLowerCase(), // Simpan frequency
+              note: notes, // Simpan notes
+              // Save week information for weekly frequency
+              selectedWeeks: repeater === "WEEKLY" ? selectedWeeks : [],
+              // Save date information for monthly frequency
+              selectedDate: repeater === "MONTHLY" && selectedDates.length > 0 ? selectedDates[0] : null
+            };
+
+            // Array indeks yang benar untuk memastikan penempatan huruf yang tepat
+            // Urutan ini harus sama dengan urutan di Reminder.js
+            const dayIndices = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            const dayLetters = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+            
+            // Initialize all days to false
+            dayLetters.forEach(day => {
+              updatedReminder.days[day] = false;
+            });
+            
+            // Set selected days to true
+            selectedDays.forEach(selectedDayId => {
+              // Cari indeks hari yang sesuai
+              const index = dayIndices.indexOf(selectedDayId);
+              if (index !== -1 && index < dayLetters.length) {
+                updatedReminder.days[dayLetters[index]] = true;
+              }
+            });
+            
+            // Pass the updated reminder back to the Reminder screen
+            console.log("Sending updated reminder to Reminder screen:", updatedReminder);
+            
+            navigation.navigate('Reminder', { 
+              updatedReminder: updatedReminder,
+              isNewReminder: false // this is an edit, not a new reminder
+            });
+          }}
+        >
+          <Text style={styles.saveButtonText}>Save Changes</Text>
+        </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -529,8 +609,8 @@ export default function AddReminderScreen({ route }) {
             ))}
           </View>
           <TouchableOpacity
-            onPress={() => setShowDateModal(false)}
             style={styles.doneButton}
+            onPress={() => setShowDateModal(false)}
           >
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
@@ -545,16 +625,8 @@ const styles = StyleSheet.create({
     flex: 1, 
     padding: 16,
     paddingBottom: 20,
-    backgroundColor: "#fff",
+    backgroundColor: "#fff" 
   },
-  // scrollViewContainer: {
-  //   flex: 1,
-  // },
-  // scrollViewContent: {
-  //   paddingHorizontal: 16,
-  //   paddingBottom: 20, // Extra bottom padding to avoid navbar overlap
-  //   flexGrow: 1,
-  // },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -654,6 +726,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
   },
+  // NEW: fixed card wrapper and card with shadow
   fixedCardWrapper: {
     marginHorizontal: 10,
     marginTop: 8,
@@ -723,7 +796,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: 'transparent',
-    fontSize: 12,
+    fontSize: 13,
     height: 100, // Reduced height to fit the card better
     textAlignVertical: 'top',
     marginTop: 16, // Increased top margin to create more space below the label
@@ -738,8 +811,7 @@ const styles = StyleSheet.create({
   row: { 
     flexDirection: "row", 
     flexWrap: "wrap", 
-    marginBottom: 0
-    // marginVertical: 0
+    marginVertical: 2
   },
   // Small option button
   categoryRow: {
@@ -803,7 +875,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
     alignSelf: 'center'
   },
-  // 
   repeaterOptionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -820,7 +891,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 65,
   },
-  // 
   repeaterOptionActive: {
     backgroundColor: "#FBF2D6",
   },
@@ -842,7 +912,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 0,
   },
-  // 
   weekOptionActive: {
     backgroundColor: "#FBF2D6",
   },
@@ -868,18 +937,26 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     color: '#7F995E',
   },
-  // 
-  selectedDateChip: {
+  selectedDatesContainer: {
+    marginTop: 5,
+  },
+  selectedDatesLabel: {
+    fontSize: 13,
+    fontFamily: 'Nunito-Bold',
+    color: '#7F995E',
+    marginBottom: 5,
+  },
+  selectedDatesWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  selectedDateItem: {
     backgroundColor: "rgba(127, 153, 94, 0.2)",
-    paddingVertical: 3,
+    paddingVertical: 4,
     paddingHorizontal: 8,
     margin: 3,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectedDateText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: 'Nunito-Bold',
     color: '#7F995E',
   },
@@ -897,9 +974,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     color: '#2C3A2C',
   },
-  optionActive: { 
-    backgroundColor: "#A5C5A0" 
-  },
+  optionActive: { backgroundColor: "#A5C5A0" },
+  // Small circle for days/dates
   circleSmall: {
     width: 32,
     height: 32,

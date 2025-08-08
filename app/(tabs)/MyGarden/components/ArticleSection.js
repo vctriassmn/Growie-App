@@ -41,8 +41,35 @@ export default function ArticleSection({ articles }) {
           useNativeDriver: true,
         }).start();
       },
+        onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 10,
+        onPanResponderMove: (_, gestureState) => {
+            const newY = drawerY._value + gestureState.dy;
+            const clampedY = Math.min(drawerHeight, Math.max(screenHeight * 0.15, newY));
+            drawerY.setValue(clampedY);
+        },
+        // ✅ Perbaikan: Menggunakan gestureState di sini
+        onPanResponderRelease: (_, gestureState) => {
+            if (gestureState.dy < -50) {
+                Animated.spring(drawerY, {
+                toValue: screenHeight * 0.15, // naik ke atas
+                useNativeDriver: true,
+                }).start();
+            } else {
+                Animated.spring(drawerY, {
+                toValue: screenHeight * 0.82, // turun ke bawah
+                useNativeDriver: true,
+                }).start();
+            }
+        }
     })
   ).current;
+
+  // >>>>>> PERUBAHAN: Fungsi baru untuk navigasi ke detail artikel
+  const handleArticleCardPress = (article) => {
+    router.push({
+        pathname: `/(tabs)/ArticleComponents/${article.id}`,
+    });
+  };
 
   return (
     <Animated.View style={[styles.drawer, { transform: [{ translateY: drawerY }] }]}>
@@ -56,16 +83,14 @@ export default function ArticleSection({ articles }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 180, paddingTop: 15 }}
       >
-        {localArticles.map((article) => (
-          <ArticleCard
-            key={article.id}
-            item={article}
-            onCardPress={() =>
-              router.push('/Article')
-            }
-            isLiked={article.liked}
-            toggleLike={toggleLike}
-          />
+        {articles.map((article) => (
+            <ArticleCard 
+                key={article.id} 
+                item={article}
+                // >>>>>> PERUBAHAN: Panggil fungsi baru dengan data artikel
+                onCardPress={() => handleArticleCardPress(article)}
+                onLikeToggle={() => handleLikeToggle(article.id)}
+            />
         ))}
       </ScrollView>
     </Animated.View>
