@@ -12,14 +12,15 @@ const styles = StyleSheet.create({
   
   main: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#448461',
+    fontFamily: 'Nunito-SemiBold',
+    color: '#316569',
     marginBottom: 4,
   },
 
   info: {
     fontSize: 14,
-    color: '#448461',
+    fontFamily: 'Nunito-SemiBold',
+    color: '#316569',
     marginBottom: 4,
   },
 });

@@ -70,19 +70,6 @@ export default function MyGarden() {
 
   // add plant
   const handleAddPlant = () => {
-    const newId = plants.length > 0 ? Math.max(...plants.map(p => p.id)) + 1 : 1;
-    const newPlant = {
-      id: newId,
-      name: '',
-      age: 0,
-      waterLevel: 0,
-      waterFrequency: 0,
-      condition: '',
-      notes: '',
-      image: PlaceholderImage,
-      cat: '',
-    };
-    addPlant(newPlant);
     router.push('/plant/add');
   };
 
@@ -246,7 +233,7 @@ export default function MyGarden() {
           )}
 
 
-          <View style={{ height: 50, width: screenWidth, backgroundColor: 'transparent' }} />
+          <View style={{ height: 20, width: screenWidth, backgroundColor: 'transparent' }} />
         </ScrollView>
 
         <View style={{ backgroundColor: '#FAFFFB' }}>
@@ -353,6 +340,7 @@ const styles = StyleSheet.create({
     color: '#888',
     width: '100%',
     height: '100%',
+    fontFamily: 'Nunito-SemiBold',
   },
 
   // filter =================================================================
@@ -373,6 +361,7 @@ const styles = StyleSheet.create({
   tabText: {
     color: '#284E43',
     fontWeight: '600',
+    fontFamily: 'Nunito-ExtraBold',
     fontSize: 14,
   },
 
@@ -415,6 +404,7 @@ const styles = StyleSheet.create({
 
   emptyText: {
     fontSize: 16,
+    fontFamily: 'Nunito-SemiBold',
     color: '#888',
     textAlign: 'center',
     paddingHorizontal: 24,
@@ -428,7 +418,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     right: 30,
-    bottom: 86,
+    bottom: 62,
     borderRadius: 30,
     elevation: 8,
     shadowColor: '#000',
@@ -481,6 +471,6 @@ const styles = StyleSheet.create({
   deleteText: {
     color: '#fff',
     fontSize: 16,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-ExtraBold',
   },
 });

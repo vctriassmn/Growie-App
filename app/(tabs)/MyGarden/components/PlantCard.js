@@ -116,14 +116,15 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'Nunito-Black',
     color: 'white',
     textAlign: 'center',
   },
 
   detail: {
     fontSize: 13,
+    fontFamily: 'Nunito-Regular',
     color: 'white',
     textAlign: 'center',
     marginTop: 4,
