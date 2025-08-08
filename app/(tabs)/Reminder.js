@@ -1,84 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Image, Switch, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, Image, Animated, ActivityIndicator } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as Font from 'expo-font';
 import { useIsFocused } from '@react-navigation/native';
+import { useReminders } from '../../context/ReminderContext';
 
 export default function Reminder() {
   const navigation = useNavigation();
+  const route = useRoute();
   const currentDate = new Date();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const isFocused = useIsFocused();
   const [isLoading, setIsLoading] = useState(true);
   
-  // Define all useState hooks at the component's top level
-  const [reminders, setReminders] = useState([
-    { 
-      id: '1', 
-      time: '07:30', 
-      title: 'Baby Spinach', 
-      category: 'Watering',
-      active: true, 
-      days: {M: true, T: true, W: true, Th: true, F: true, S: false, Su: false} 
-    },
-    { 
-      id: '2', 
-      time: '08:00', 
-      title: 'Peace Lily', 
-      category: 'Watering',
-      active: false, 
-      days: {M: true, T: true, W: true, Th: true, F: true, S: false, Su: false} 
-    },
-    { 
-      id: '3', 
-      time: '09:15', 
-      title: 'Snake Plant', 
-      category: 'Fertilizing',
-      active: true, 
-      days: {M: false, T: false, W: false, Th: false, F: true, S: true, Su: true} 
-    },
-    { 
-      id: '4', 
-      time: '12:45', 
-      title: 'Monstera', 
-      category: 'Pruning',
-      active: false, 
-      days: {M: true, T: false, W: true, Th: false, F: true, S: false, Su: false} 
-    },
-    { 
-      id: '5', 
-      time: '14:30', 
-      title: 'Fiddle Leaf Fig', 
-      category: 'Watering',
-      active: true, 
-      days: {M: true, T: false, W: true, Th: false, F: true, S: false, Su: false} 
-    },
-    { 
-      id: '6', 
-      time: '15:45', 
-      title: 'Pothos', 
-      category: 'Fertilizing',
-      active: false, 
-      days: {M: false, T: true, W: false, Th: true, F: false, S: true, Su: false} 
-    },
-    { 
-      id: '7', 
-      time: '17:00', 
-      title: 'Orchid', 
-      category: 'Watering',
-      active: true, 
-      days: {M: true, T: true, W: true, Th: true, F: true, S: true, Su: true} 
-    },
-    { 
-      id: '8', 
-      time: '19:15', 
-      title: 'Rubber Plant', 
-      category: 'Pruning',
-      active: false, 
-      days: {M: false, T: false, W: false, Th: false, F: false, S: true, Su: true} 
-    }
-  ]);
+  // Use reminders from context instead of local state
+  const { 
+    reminders, 
+    setReminders, 
+    updateReminder, 
+    addReminder, 
+    toggleReminderActive 
+  } = useReminders();
 
   // Load fonts using useFonts hook
   const [fontsLoaded] = useFonts({
@@ -86,13 +29,42 @@ export default function Reminder() {
   });
 
   useEffect(() => {
-    // Simulate data loading (in a real app, this would fetch from API or storage)
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [isFocused]);
+    // Check if we have a returned reminder from the addReminder screen
+    if (isFocused && navigation.isFocused()) {
+      console.log("Route params in Reminder.js:", route?.params);
+      const updatedReminder = route?.params?.updatedReminder;
+      const isNewReminder = route?.params?.isNewReminder;
+      
+      console.log("Updated Reminder:", updatedReminder);
+      console.log("Is New Reminder:", isNewReminder);
+
+      if (updatedReminder) {
+        // Cek apakah reminder ini sudah ada dalam array
+        const reminderExists = reminders.some(r => r.id === updatedReminder.id);
+        console.log("Reminder exists:", reminderExists);
+        
+        if (isNewReminder && !reminderExists) {
+          // Add the new reminder to the list
+          console.log("Adding new reminder");
+          addReminder(updatedReminder);
+        } else if (reminderExists) {
+          // Update the existing reminder
+          console.log("Updating existing reminder");
+          updateReminder(updatedReminder);
+        }
+        
+        // Clear the params after using them
+        navigation.setParams({ updatedReminder: null, isNewReminder: null });
+      }
+
+      // Simulate data loading (in a real app, this would fetch from API or storage)
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isFocused, navigation, reminders, addReminder, updateReminder]);
 
   if (!fontsLoaded || isLoading) {
     return (
@@ -141,33 +113,69 @@ export default function Reminder() {
   };
 
   const handleToggleReminder = (id) => {
-    // Update the reminders state to toggle the active property of the reminder with the given id
-    setReminders(prevReminders => 
-      prevReminders.map(reminder => 
-        reminder.id === id 
-          ? { ...reminder, active: !reminder.active } 
-          : reminder
-      )
-    );
+    // Use context function to toggle reminder active state
+    toggleReminderActive(id);
     console.log(`Toggled reminder ${id}`);
   };
 
   const handleDayPress = (day) => {
-    // Navigate to addReminder with the selected day
-    navigation.navigate('addReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
+    // Ambil reminder berdasarkan index hari (0-3) untuk id 1-4
+    const reminderIndex = parseInt(day.id); // day.id adalah '0', '1', '2', '3'
+    const targetReminderId = (reminderIndex + 1).toString(); // Konversi ke '1', '2', '3', '4'
+    
+    // Cari reminder dengan id yang sesuai
+    const selectedReminder = reminders.find(reminder => reminder.id === targetReminderId);
+    
+    if (selectedReminder) {
+      console.log("Opening EditReminder for day:", day);
+      console.log("Selected reminder:", selectedReminder);
+      
+      // Buat salinan reminder untuk mencegah referensi objek yang sama
+      const reminderToEdit = {...selectedReminder};
+      
+      // Navigate to EditReminder with the reminder data for editing
+      const params = { 
+        title: `Edit Reminder - ${day.day}, ${day.month} ${day.date}`,
+        reminderData: reminderToEdit 
+      };
+      
+      console.log("Navigation params:", params);
+      // Gunakan timeout kecil untuk memastikan navigasi bekerja dengan benar
+      setTimeout(() => {
+        navigation.navigate('EditReminder', params);
+      }, 50);
+    } else {
+      // Fallback jika reminder tidak ditemukan, arahkan ke AddReminder
+      console.log("No reminder found for id:", targetReminderId);
+      navigation.navigate('AddReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
+    }
   };
 
   const handleEditReminder = (reminder) => {
-    // Navigate to addReminder with the reminder data for editing
-    navigation.navigate('addReminder', { 
+    console.log("Editing reminder:", reminder);
+    console.log("Reminder ID:", reminder.id);
+    console.log("Reminder Title:", reminder.title);
+    
+    // Buat salinan reminder untuk mencegah referensi objek yang sama
+    const reminderToEdit = {...reminder};
+    
+    // Navigate to EditReminder with the reminder data for editing
+    const params = { 
       title: 'Edit Reminder',
-      reminderData: reminder 
-    });
+      reminderData: reminderToEdit 
+    };
+    
+    console.log("Navigation params:", params);
+    // Gunakan timeout kecil untuk memastikan navigasi bekerja dengan benar
+    setTimeout(() => {
+      navigation.navigate('EditReminder', params);
+    }, 50);
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}>
         <View style={styles.headerContainer}>
           {/* PLANT REMINDER Header */}
           <Text style={styles.headerTitle}>PLANT REMINDER</Text>
@@ -177,7 +185,7 @@ export default function Reminder() {
         {/* Upcoming Days */}
         <View style={styles.upcomingContainer}>
           <View style={styles.daysRow}>
-            {upcomingDays.map((day) => (
+            {upcomingDays.map((day, index) => (
               <TouchableOpacity 
                 key={day.id} 
                 style={styles.dayCard}
@@ -278,7 +286,7 @@ export default function Reminder() {
                         styles.reminderTime,
                         item.active ? styles.activeText : styles.inactiveText
                       ]}>
-                        {item.time}
+                        {item.hour}.{item.minute}
                       </Text>
                       <Text style={[
                         styles.reminderTitle,
@@ -289,31 +297,100 @@ export default function Reminder() {
                     </View>
                     
                     <View style={styles.daysSwitchContainer}>
-                      {/* Weekday indicators */}
+                      {/* Display options based on frequency */}
                       <View style={styles.daysContainer}>
-                        {Object.entries(item.days).map(([day, isActive], index) => (
-                          <Text 
-                            key={index} 
-                            style={[
-                              styles.dayIndicator,
-                              isActive && styles.activeDayIndicator,
-                              !item.active && isActive && styles.inactiveDayIndicator
-                            ]}
-                          >
-                            {day}
+                        {item.frequency === 'weekly' ? (
+                          // For WEEKLY frequency, show Week numbers 1-4
+                          <Text style={[styles.frequencyIndicator, item.active ? styles.activeText : styles.inactiveText]}>
+                            Week: {[1, 2, 3, 4].map((week, index) => {
+                              // Check if this week is active
+                              const isActive = item.selectedWeeks?.includes(week) || false;
+                              
+                              return (
+                                <Text 
+                                  key={index} 
+                                  style={[
+                                    styles.weekIndicator,
+                                    isActive && styles.activeDayIndicator,
+                                    !item.active && isActive && styles.inactiveDayIndicator
+                                  ]}
+                                >
+                                  {week}{index < 3 ? ' ' : ''}
+                                </Text>
+                              );
+                            })}
                           </Text>
-                        ))}
+                        ) : item.frequency === 'monthly' ? (
+                          // For MONTHLY frequency, show "Repeats monthly on the X(st/nd/rd/th)"
+                          <Text style={[styles.frequencyIndicator, item.active ? styles.activeText : styles.inactiveText]}>
+                            {(() => {
+                              const date = item.selectedDate || 1; // Default to 1st if not set
+                              const day = parseInt(date, 10);
+                              
+                              // Calculate the ordinal suffix
+                              let suffix = 'th';
+                              if (day % 10 === 1 && day !== 11) suffix = 'st';
+                              else if (day % 10 === 2 && day !== 12) suffix = 'nd';
+                              else if (day % 10 === 3 && day !== 13) suffix = 'rd';
+                              
+                              return `${day}${suffix} every month`;
+                            })()}
+                          </Text>
+                        ) : (
+                          // For DAILY frequency, show weekday indicators as before
+                          [
+                            {key: 'Mo', display: 'M'}, // Monday
+                            {key: 'Tu', display: 'T'}, // Tuesday
+                            {key: 'W', display: 'W'}, // Wednesday
+                            {key: 'Th', display: 'T'}, // Thursday
+                            {key: 'F', display: 'F'}, // Friday
+                            {key: 'Sa', display: 'S'}, // Saturday
+                            {key: 'Su', display: 'S'}  // Sunday
+                          ].map((dayObj, index) => {
+                            // Untuk hari Kamis (Thursday) dan Minggu (Sunday) yang memiliki key duplikat
+                            // Kita akan menggunakan pendekatan berbasis index untuk mengambil nilai yang tepat
+                            let isActive;
+                            
+                            // Definisikan array untuk menentukan urutan properti dalam object item.days
+                            const dayKeys = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+                            // Gunakan index untuk mengakses nilai yang tepat
+                            isActive = item.days[dayKeys[index]];
+                            
+                            return (
+                              <Text 
+                                key={index} 
+                                style={[
+                                  styles.dayIndicator,
+                                  isActive && styles.activeDayIndicator,
+                                  !item.active && isActive && styles.inactiveDayIndicator
+                                ]}
+                              >
+                                {dayObj.display}
+                              </Text>
+                            );
+                          })
+                        )}
                       </View>
                       
-                      {/* Toggle switch */}
-                      <Switch
-                        trackColor={{ false: '#D9ECE1', true: '#7BAB91' }}
-                        thumbColor={'#fff'}
-                        ios_backgroundColor="#D9ECE1"
-                        onValueChange={() => handleToggleReminder(item.id)}
-                        value={item.active}
-                        style={styles.reminderSwitch}
-                      />
+                      {/* Custom Toggle Switch */}
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => handleToggleReminder(item.id)}
+                        style={styles.switchContainer}
+                      >
+                        <View 
+                          style={[
+                            styles.customSwitch,
+                            item.active ? styles.customSwitchActive : styles.customSwitchInactive
+                          ]}
+                        />
+                        <Animated.View 
+                          style={[
+                            styles.customSwitchThumb,
+                            item.active ? { left: 30 } : { left: 4 }
+                          ]}
+                        />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -326,7 +403,7 @@ export default function Reminder() {
       {/* Add button */}
       <TouchableOpacity 
         style={styles.fab}
-        onPress={() => navigation.navigate('addReminder', { title: 'Add Reminder' })}
+        onPress={() => navigation.navigate('AddReminder', { title: 'Add Reminder' })}
       >
         <Image
           source={require('../../assets/images/add.png')}
@@ -343,7 +420,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 22,
     paddingTop: 60,
     paddingBottom: 100, // Space for bottom navigation
   },
@@ -358,7 +435,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontFamily: 'Nunito',
+    fontFamily: 'Nunito-Bold',
     fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
@@ -366,11 +443,11 @@ const styles = StyleSheet.create({
   divider: {
     height: 2,
     backgroundColor: '#448461',
-    marginBottom: 20,
+    marginBottom: 25,
     width: '70%', // Approximately 4/6 of the screen width
   },
   upcomingContainer: {
-    marginBottom: 25,
+    marginBottom: 45,
     maxHeight: 120,
   },
   daysRow: {
@@ -389,13 +466,13 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 18,
+    fontWeight: 'bold',
+    fontSize: 27,
     color: '#000',
     textAlign: 'left',
-    marginBottom: 8,
   },
   dateContainer: {
-    marginTop: 6,
+    marginStart: 3,
   },
   yearText: {
     fontFamily: 'Nunito-Bold',
@@ -418,16 +495,37 @@ const styles = StyleSheet.create({
     right: 8,
     fontStyle: 'italic',
   },
-  sectionTitle: {
-    fontSize: 20,
+  reminderPreview: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    alignItems: 'flex-end',
+  },
+  reminderPreviewTime: {
     fontFamily: 'Nunito-Bold',
+    fontSize: 9,
+    color: '#448461',
+    fontWeight: 'bold',
+  },
+  reminderPreviewTitle: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 8,
+    color: '#7BAB91',
+    maxWidth: 60,
+    textAlign: 'right',
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontFamily: 'Nunito-Bold',
+    fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
   },
   categoryContainer: {
     flexDirection: 'row',
-    marginVertical: 15,
+    marginBottom: 20,
     justifyContent: 'space-between',
+    width: '60%'
   },
   categoryButton: {
     paddingVertical: 8,
@@ -436,8 +534,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#448461',
     backgroundColor: 'transparent',
-    minWidth: 100,
+    minWidth: 70,
     alignItems: 'center',
+    marginEnd: 15,
   },
   categoryButtonSelected: {
     backgroundColor: '#448461',
@@ -455,14 +554,14 @@ const styles = StyleSheet.create({
   },
   reminderContainer: {
     marginBottom: 16,
-    height: 80,
+    height: 130,
     position: 'relative',
   },
   reminderCardBackground: {
     position: 'absolute',
     top: 0,
-    left: 5,
-    right: 0,
+    left: 0,
+    right: 8,
     bottom: 0,
     borderRadius: 15,
   },
@@ -475,33 +574,37 @@ const styles = StyleSheet.create({
   reminderCard: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 8,
+    left: 12, 
+    right: 0,
     bottom: 0,
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
     paddingHorizontal: 16,
     paddingVertical: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 1, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 6,
   },
   reminderContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     height: '100%',
   },
   reminderTime: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 22,
-    marginBottom: 4,
+    fontWeight: 'bold',
+    fontSize: 35,
+    marginStart: 10,
+    marginBottom: 11,
+    marginTop: 4,
   },
   reminderTitle: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 14,
+    fontWeight: 'bold',
+    marginStart: 12,
+    fontSize: 19,
   },
   activeText: {
     color: '#448461',
@@ -512,25 +615,75 @@ const styles = StyleSheet.create({
   daysSwitchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'absolute',
+    top: 12,
+    right: 12,
   },
   daysContainer: {
     flexDirection: 'row',
-    marginRight: 12,
+    alignItems: 'center',
+    flexWrap: 'wrap', // Allow wrapping for longer texts
+    maxWidth: 180, // Maximum width to prevent overflow
   },
   dayIndicator: {
     fontFamily: 'Nunito-Bold',
-    fontSize: 12,
-    marginRight: 2,
+    fontSize: 15,
+    marginRight: 4,
     color: '#CCCCCC',
+  },
+  weekIndicator: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 15,
+    color: '#CCCCCC',
+  },
+  frequencyIndicator: {
+    fontFamily: 'Nunito-Bold',
+    fontSize: 12,
+    marginRight: 4,
+    maxWidth: 130, // Prevent text from wrapping too much
   },
   activeDayIndicator: {
     color: '#448461',
+    fontWeight: 'bold',
   },
   inactiveDayIndicator: {
     color: '#AAC8B8',
   },
   reminderSwitch: {
-    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+    marginLeft: 6,
+  },
+  customSwitch: {
+    width: 60,
+    height: 32,
+    borderRadius: 16,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  customSwitchActive: {
+    backgroundColor: '#7BAB91',
+  },
+  customSwitchInactive: {
+    backgroundColor: '#D9ECE1',
+  },
+  customSwitchThumb: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+    position: 'absolute',
+    top: 3,
+  },
+  switchContainer: {
+    width: 52,
+    height: 32,
+    position: 'relative',
+    marginLeft: 8,
   },
   fab: {
     position: 'absolute',
