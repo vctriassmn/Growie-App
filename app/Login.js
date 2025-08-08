@@ -64,13 +64,13 @@ export default function LoginPage() {
             <View style={styles.topBar} />
 
             <View style={styles.formContainer}>
-              <Text style={styles.title}>Login</Text> {/* Judul diubah menjadi Login */}
-              <Text style={styles.subtitle}>Sign In to Your account</Text> {/* Subtitle disesuaikan */}
+              <Text style={styles.title}>Login</Text>
+              <Text style={styles.subtitle}>Sign In to Your account</Text>
 
               {/* Input untuk Full Name (digunakan sebagai Username) */}
               <InputWithIcon
                 IconComponent={UsernameIcon}
-                placeholder="Username" // Placeholder diubah menjadi Username
+                placeholder="Username"
                 value={fullName}
                 onChangeText={setFullName}
               />
@@ -87,13 +87,13 @@ export default function LoginPage() {
               {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
 
               <TouchableOpacity style={styles.LoginButton} onPress={handleLogin}>
-                <Text style={styles.LoginButtonText}>Login</Text> {/* Teks tombol diubah menjadi Login */}
+                <Text style={styles.LoginButtonText}>Login</Text>
               </TouchableOpacity>
 
               {/* Bagian "Or Login with" */}
               <View style={styles.dividerContainer}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Or Login with</Text> {/* Teks diubah menjadi Login */}
+                <Text style={styles.dividerText}>Or Login with</Text>
                 <View style={styles.dividerLine} />
               </View>
 
@@ -110,12 +110,14 @@ export default function LoginPage() {
                 </TouchableOpacity>
               </View>
 
-              {/* Bagian "Don't have an account? Register" */}
+              {/* Bagian "Don't have an account? Register" dengan perbaikan nesting */}
               <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/Register')}> {/* Navigasi ke halaman Register */}
-                  <Text style={styles.loginLink}>Register</Text>
-                </TouchableOpacity>
+                <Text style={styles.loginText}>
+                  Don't have an account?{' '}
+                  <Text style={styles.loginLink} onPress={() => router.push('/Register')}>
+                    Register
+                  </Text>
+                </Text>
               </View>
 
             </View>
@@ -126,6 +128,8 @@ export default function LoginPage() {
   );
 }
 
+
+// Stylesheet tidak perlu diubah
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#282828' },
   scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },

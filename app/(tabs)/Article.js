@@ -145,6 +145,45 @@ I keep it in a spot with medium, indirect light, and it seems to love the humidi
 Highly recommend a Peace Lily if you want a plant that adds beauty and purpose to your home.
 `
     },
+    {
+  id: '7',
+  name: 'Tips Merawat Pohon Berry',
+  description: 'Panduan lengkap merawat pohon berry agar tumbuh subur dan berbuah lebat.',
+  image: require('../../assets/images/peacelily.png'), // ganti dengan path gambar pohon berry
+  avatar: require('../../assets/images/pp.jpg'),
+  username: 'BerryGardener',
+  category: 'trending',
+  date: '7 Juli 2025',
+  photoOfTheDayImage: require('../../assets/images/peacelily.png'), 
+  quote: '"Rawat dengan cinta, panen berry yang manis akan datang."',
+  fullArticle: `Merawat pohon berry memang membutuhkan perhatian khusus agar tanaman dapat tumbuh sehat dan menghasilkan buah yang maksimal. Berikut ini beberapa tips penting yang dapat membantu kamu dalam merawat pohon berry:
+
+1. Pemilihan Lokasi Tanam 
+Pilih tempat yang mendapatkan sinar matahari penuh minimal 6-8 jam sehari. Pohon berry menyukai cahaya matahari yang cukup untuk fotosintesis optimal.
+
+2. Media Tanam yang Subur dan Drainase Baik 
+Gunakan tanah yang kaya bahan organik dan memiliki sistem drainase yang baik agar akar tidak tergenang air, yang bisa menyebabkan akar membusuk.
+
+3. Penyiraman yang Tepat 
+Pohon berry membutuhkan kelembapan tanah yang konsisten, terutama saat musim kemarau atau saat tanaman mulai berbuah. Siram secara rutin tapi hindari overwatering.
+
+4. Pemupukan Rutin
+Berikan pupuk kompos atau pupuk organik setiap 2-3 minggu sekali untuk mendukung pertumbuhan dan pembentukan buah. Pupuk dengan kandungan nitrogen, fosfor, dan kalium seimbang sangat dianjurkan.
+
+5. Pemangkasan 
+Lakukan pemangkasan ranting yang kering atau terlalu rimbun agar sirkulasi udara baik dan cahaya bisa merata ke seluruh tanaman. Ini juga membantu mencegah penyakit.
+
+6. Pengendalian Hama dan Penyakit  
+Periksa tanaman secara berkala dari serangan hama seperti kutu daun, ulat, atau jamur. Gunakan insektisida organik atau pestisida ramah lingkungan jika diperlukan.
+
+7. Perhatikan Waktu Panen
+Panen buah berry saat sudah matang sempurna agar mendapatkan rasa manis dan nutrisi maksimal. Biasanya buah akan berubah warna dan mudah dipetik.
+
+Dengan perawatan yang telaten dan konsisten, pohon berry kamu akan tumbuh subur dan memberikan hasil panen yang melimpah setiap musimnya. Selamat mencoba dan nikmati manisnya buah berry hasil kerja kerasmu!`
+  ,
+  isLiked: false
+},
+
 ];
 
 function ArticleScreen() {

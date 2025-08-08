@@ -32,6 +32,7 @@ import ProfileBorderSVG from '../../../../assets/icons/profile.svg';
 //components
 import PlaceholderImage from '../../../../assets/images/mygarden/placeholder.jpg';
 import PlantCard from '../components/PlantCard';
+import { Nunito_400Regular } from '@expo-google-fonts/nunito';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -130,78 +131,96 @@ export default function MyGarden() {
       </>
     ) : (
       <>
-        <ScrollView style={styles.container}>
-          {/* Header ================================================================= */}
-          <View style={{ paddingHorizontal: 20 }}>
-            <TouchableOpacity
-              style={styles.header}
-              onPress={() => router.push('/Profile')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.profileContainer}>
-                <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
-                <Image
-                  source={typeof profilePicture === 'string' ? { uri: profilePicture } : profilePicture}
-                  style={styles.profileImage}
+        <FlatList
+          style={styles.container} // Menggunakan style dari ScrollView sebelumnya
+          data={filteredPlants}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={ // Semua konten di atas daftar masuk ke sini
+            <>
+              <View style={{ paddingHorizontal: 20 }}>
+                <TouchableOpacity
+                  style={styles.header}
+                  onPress={() => router.push('/Profile')}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.profileContainer}>
+                    <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
+                    <Image
+                      source={typeof profilePicture === 'string' ? { uri: profilePicture } : profilePicture}
+                      style={styles.profileImage}
+                    />
+                  </View>
+                  <Text style={styles.greetingText}>Hello! {userName}</Text>
+                </TouchableOpacity>
+
+                <View style={styles.welcomeSection}>
+                  <Text style={styles.welcomeTitle}>Welcome to My Garden!</Text>
+                  <TouchableOpacity onPress={() => router.push('/Notification')}>
+                    <View style={styles.bellContainer}>
+                      <BellIcon width={24} height={24} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Search ================================================================= */}
+              <View style={styles.searchContainer}>
+                <View style={styles.searchIcon}>
+                  <SearchIcon width={24} height={24} />
+                </View>
+                <TextInput
+                  placeholder="Search plants..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  style={styles.searchInput}
                 />
               </View>
-              <Text style={styles.greetingText}>Hello! {userName}</Text>
-            </TouchableOpacity>
 
-            <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeTitle}>Welcome to My Garden!</Text>
-              <TouchableOpacity onPress={() => router.push('/Notification')}>
-                <View style={styles.bellContainer}>
-                  <BellIcon width={24} height={24} />
+              {/* Filter Tabs ================================================================= */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.tabsContainer}
+              >
+                <View style={styles.tabs}>
+                  {['All', 'Succulents', 'Flowers', 'Vegetables', 'Herbs', 'Climbers'].map(tab => (
+                    <TouchableOpacity
+                      key={tab}
+                      style={[
+                        styles.tabButton,
+                        activeCategory === tab && styles.activeTabButton
+                      ]}
+                      onPress={() => setActiveCategory(tab)}
+                    >
+                      <Text
+                        style={[
+                          styles.tabText,
+                          activeCategory === tab && styles.activeTabText
+                        ]}
+                      >
+                        {tab}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              </TouchableOpacity>
+              </ScrollView>
+            </>
+          }
+          renderItem={({ item }) => (
+            <View style={styles.cardWrapper}>
+              <PlantCard
+                plant={item}
+                isSelected={selectedPlants.includes(item.id)}
+                isSelecting={isSelecting}
+                setIsSelecting={setIsSelecting}
+                selectedPlants={selectedPlants}
+                setSelectedPlants={setSelectedPlants}
+              />
             </View>
-          </View>
-
-          {/* Search ================================================================= */}
-          <View style={styles.searchContainer}>
-            <View style={styles.searchIcon}>
-              <SearchIcon width={24} height={24} />
-            </View>
-            <TextInput
-              placeholder="Search plants..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              style={styles.searchInput}
-            />
-          </View>
-
-          {/* Filter Tabs ================================================================= */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabsContainer}
-          >
-            <View style={styles.tabs}>
-              {['All', 'Succulents', 'Flowers', 'Vegetables', 'Herbs', 'Climbers'].map(tab => (
-                <TouchableOpacity
-                  key={tab}
-                  style={[
-                    styles.tabButton,
-                    activeCategory === tab && styles.activeTabButton
-                  ]}
-                  onPress={() => setActiveCategory(tab)}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeCategory === tab && styles.activeTabText
-                    ]}
-                  >
-                    {tab}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-
-          {/* Plant Cards ================================================================= */}
-          {filteredPlants.length === 0 ? (
+          )}
+          ListEmptyComponent={ // Komponen yang ditampilkan jika daftar kosong
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
                 {plants.length === 0
@@ -209,36 +228,18 @@ export default function MyGarden() {
                   : 'No matching plants found.'}
               </Text>
             </View>
-          ) : (
-            <FlatList
-              data={filteredPlants}
-              keyExtractor={(item) => item.id.toString()}
-              numColumns={2}
-              renderItem={({ item }) => (
-                <View style={styles.cardWrapper}>
-                  <PlantCard
-                    plant={item}
-                    isSelected={selectedPlants.includes(item.id)}
-                    isSelecting={isSelecting}
-                    setIsSelecting={setIsSelecting}
-                    selectedPlants={selectedPlants}
-                    setSelectedPlants={setSelectedPlants}
-                  />
-                </View>
-              )}
-              columnWrapperStyle={styles.rowWrapper}
-              contentContainerStyle={styles.cardContainer}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
-
-
-          <View style={{ height: 20, width: screenWidth, backgroundColor: 'transparent' }} />
-        </ScrollView>
+          }
+          columnWrapperStyle={styles.rowWrapper}
+          contentContainerStyle={styles.cardContainer}
+          // Spacer di bawah dipindahkan ke ListFooterComponent
+          ListFooterComponent={<View style={{ height: 20, width: screenWidth, backgroundColor: 'transparent' }} />}
+        />
+        {/* ============================================================================== */}
+        {/* KODE YANG DIUBAH SELESAI DI SINI */}
+        {/* ============================================================================== */}
 
         <View style={{ backgroundColor: '#FAFFFB' }}>
           <TouchableOpacity style={styles.add} onPress={handleAddPlant}>
-            {/* <AddIcon width={60} height={60} /> */}
             <Image
               source={AddIcon}
               style={styles.addbutton}
@@ -277,21 +278,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 10,
+    width: 370,
+    marginLeft: -10,
     ...shadowStyle,
   },
   //profile ---------------------------
   profileContainer: {
-    width: 60,
-    height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
   },
 
   profileImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
+  },
+
+  greetingText:{
+    marginLeft:10,
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: 20,
   },
 
   // greeting --------------------------------
@@ -329,7 +335,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
   },
   searchIcon: {
     fontSize: 18,
@@ -348,7 +354,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     marginVertical: 20,
   },
   tabButton: {
