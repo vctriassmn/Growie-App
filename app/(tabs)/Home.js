@@ -1,7 +1,3 @@
-
-// import { StyleSheet, Text, View,  } from 'react-native';
-// import { useRouter } from 'expo-router';
-
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, Button, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -24,13 +20,13 @@ const myGardenData = [
   { id: 'g5', name: 'Turtles', image: require('../../assets/images/turtles.png') },
 ];
 
-// Impor Aset (tidak ada perubahan)
-import BellIcon from '../../assets/images/bell.svg';
+
+import BellIcon from '../../assets/images/bell.svg'; 
 import ProfileBorderSVG from '../../assets/icons/profile.svg';
+const profilePic = require('../../assets/images/profile-image.png');
 const heartIconActive = require('../../assets/images/like_active.png');
 const heartIconInactive = require('../../assets/images/like_inactive.png');
 
-// Komponen ArticleCard (tidak ada perubahan di logika)
 const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
   return (
     <TouchableOpacity
@@ -61,7 +57,6 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
   );
 };
 
-// Komponen Utama HomePage (tidak ada perubahan di logika)
 export default function HomePage() {
   const router = useRouter(); 
   const navigation = useNavigation();
@@ -119,6 +114,7 @@ export default function HomePage() {
       scrollViewRef.current.scrollTo({ y: articleSectionY.current, animated: true });
     }
   };
+
   const scrollToTop = () => {
     if (scrollViewRef.current) {
       setIsPanelUp(false);
@@ -143,16 +139,11 @@ export default function HomePage() {
               activeOpacity={0.8}
             >
               <View style={styles.profileContainer}>
-                {/* Layer Bawah: Bingkai SVG */}
                 <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
-                <Image
-                  source={typeof profilePicture === 'string' ? { uri: profilePicture } : profilePicture}
-                  style={styles.profileImage}
-                />
+                <Image source={profilePic} style={styles.profileImage} />
               </View>
-              <Text style={styles.greetingText}>Hello! {userName}</Text>
-            </TouchableOpacity>
-
+              <Text style={styles.greetingText}>Hello! akusaygkamu</Text>
+            </View>
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeTitle}>Welcome to Homepage!</Text>
               <TouchableOpacity onPress={() => router.push('/Notification')}>
@@ -200,7 +191,7 @@ export default function HomePage() {
             </View>
         </View>
 
-        <View
+        <View 
           style={styles.articlesSection}
           onLayout={(event) => { articleSectionY.current = event.nativeEvent.layout.y; }}
         >
@@ -228,18 +219,6 @@ export default function HomePage() {
         </View>
       </ScrollView>
     </SafeAreaView>
-
-// return (
-//   <View style={styles.container}>
-//       <Text style={styles.text}>Ini adalah Halaman Home</Text>
-//       <Button title="Go to Profile" onPress={() => router.push('/Profile')} />
-//     </View>
-//   );
-)}
-
-// const router = useRouter();
-
-// Objek Shadow (tidak ada perubahan)
 const shadowStyle = {
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
@@ -249,18 +228,27 @@ const shadowStyle = {
 };
 
 
-// --- PERUBAHAN UTAMA UNTUK FONT ADA DI SINI ---
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F0FBF0' },
   topBar: { height: 30, backgroundColor: '#5D4037' },
   scrollContainer: { paddingBottom: 30, },
   paddedContent: { paddingHorizontal: 20, },
   header: { backgroundColor: '#FBF2D6', padding: 15, borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginTop: 10, ...shadowStyle, },
-  profileContainer: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center', marginRight: 15, },
-  profileImage: { width: 50, height: 50, borderRadius: 25, },
-
-  // Font diterapkan di sini
-  greetingText: { fontSize: 20, color: '#333', fontFamily: 'Nunito-SemiBold' },
+ 
+  profileContainer: {
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  
+  greetingText: { fontSize: 20, fontWeight: 'normal', color: '#333' },
   welcomeSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20, },
   welcomeTitle: { fontSize: 22, color: '#333', fontFamily: 'Nunito-ExtraBold' },
   bellContainer: { width: 35, height: 35, borderRadius: 22, backgroundColor: '#FBF2D6', justifyContent: 'center', alignItems: 'center', marginRight: 5, ...shadowStyle, },
@@ -284,8 +272,8 @@ const styles = StyleSheet.create({
   articleAvatar: { width: 50, height: 50, borderRadius: 25, borderColor: '#448461', borderWidth: 1, marginBottom: 8, },
   articleUsername: { fontSize: 14, color: '#448461', fontFamily: 'Nunito-SemiBold' },
   articleBottomSection: { paddingVertical: 15, paddingHorizontal: 20, },
-  articleName: { fontSize: 16, color: '#333', marginBottom: 4, fontFamily: 'Nunito-SemiBold' },
-  articleDescription: { fontSize: 13, color: '#666', fontFamily: 'Nunito-Regular' },
+  articleName: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 4, },
+  articleDescription: { fontSize: 13, color: '#666', },
   articleLikeButton: { position: 'absolute', top: 10, right: 10, padding: 5, },
   articleLikeIcon: { width: 24, height: 24, },
 });
