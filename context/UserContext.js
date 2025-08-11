@@ -1,71 +1,72 @@
-// context/UserContext.js
-// File ini akan menyimpan state global untuk nama pengguna dan gambar profil.
+// Lokasi file: context/UserContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Pastikan Anda sudah menginstal ini
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Buat Context
+const defaultAvatar = require('../assets/images/avatar.png');
+
 const UserContext = createContext();
 
-// Buat Provider yang akan membungkus komponen lain
 export const UserProvider = ({ children }) => {
-  // State untuk nama pengguna dan gambar profil
-  // Nilai default akan digunakan jika tidak ada data di AsyncStorage
   const [userName, setUserName] = useState('Ann');
-  const [profilePicture, setProfilePicture] = useState('https://placehold.co/150x150/E0E0E0/333333?text=Ann');
+  const [profilePicture, setProfilePicture] = useState(defaultAvatar);
+  const [userHandle, setUserHandle] = useState('');
+  const [email, setEmail] = useState('');
+  // --- UBAH INI: Nilai awal sekarang adalah '-' ---
+  const [phoneNumber, setPhoneNumber] = useState('-');
 
-  // useEffect untuk memuat data dari AsyncStorage saat komponen dimuat
   useEffect(() => {
     const loadUserData = async () => {
       try {
         const storedName = await AsyncStorage.getItem('userName');
         const storedProfilePicture = await AsyncStorage.getItem('profilePicture');
-        if (storedName) {
-          setUserName(storedName);
+        const storedUserHandle = await AsyncStorage.getItem('userHandle');
+        const storedEmail = await AsyncStorage.getItem('email');
+        const storedPhoneNumber = await AsyncStorage.getItem('phoneNumber');
+
+        if (storedName) setUserName(storedName);
+        if (storedProfilePicture) setProfilePicture(storedProfilePicture);
+        else setProfilePicture(defaultAvatar);
+        if (storedUserHandle) setUserHandle(storedUserHandle);
+        if (storedEmail) setEmail(storedEmail);
+        
+        // --- UBAH INI: Logika untuk mengatur nomor telepon ---
+        if (storedPhoneNumber) {
+          setPhoneNumber(storedPhoneNumber);
+        } else {
+          setPhoneNumber('-'); // Jika tidak ada apa-apa di storage, pastikan nilainya '-'
         }
-        if (storedProfilePicture) {
-          setProfilePicture(storedProfilePicture);
-        }
+
       } catch (error) {
         console.error('Gagal memuat data pengguna dari AsyncStorage', error);
       }
     };
     loadUserData();
-  }, []); // [] berarti hanya dijalankan sekali saat mount
+  }, []);
 
-  // useEffect untuk menyimpan nama pengguna ke AsyncStorage setiap kali userName berubah
   useEffect(() => {
-    const saveUserName = async () => {
-      try {
-        await AsyncStorage.setItem('userName', userName);
-      } catch (error) {
-        console.error('Gagal menyimpan nama pengguna ke AsyncStorage', error);
-      }
-    };
-    saveUserName();
-  }, [userName]); // Dijalankan setiap kali userName berubah
+    if (phoneNumber !== null && phoneNumber !== undefined) {
+      AsyncStorage.setItem('phoneNumber', phoneNumber).catch(err => console.error(err));
+    }
+  }, [phoneNumber]);
 
-  // useEffect untuk menyimpan gambar profil ke AsyncStorage setiap kali profilePicture berubah
-  useEffect(() => {
-    const saveProfilePicture = async () => {
-      try {
-        await AsyncStorage.setItem('profilePicture', profilePicture);
-      } catch (error) {
-        console.error('Gagal menyimpan gambar profil ke AsyncStorage', error);
-      }
-    };
-    saveProfilePicture();
-  }, [profilePicture]); // Dijalankan setiap kali profilePicture berubah
+  useEffect(() => { if (userName) AsyncStorage.setItem('userName', userName).catch(err => console.error(err)); }, [userName]);
+  useEffect(() => { if (typeof profilePicture === 'string') AsyncStorage.setItem('profilePicture', profilePicture).catch(err => console.error(err)); }, [profilePicture]);
+  useEffect(() => { if (userHandle) AsyncStorage.setItem('userHandle', userHandle).catch(err => console.error(err)); }, [userHandle]);
+  useEffect(() => { if (email) AsyncStorage.setItem('email', email).catch(err => console.error(err)); }, [email]);
 
   return (
-    // Sediakan nilai userName, setUserName, profilePicture, dan setProfilePicture
-    // kepada semua komponen anak yang dibungkus oleh Provider ini
-    <UserContext.Provider value={{ userName, setUserName, profilePicture, setProfilePicture }}>
+    <UserContext.Provider value={{
+      userName, setUserName,
+      profilePicture, setProfilePicture,
+      userHandle, setUserHandle,
+      email, setEmail,
+      phoneNumber, setPhoneNumber
+    }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-// Hook kustom untuk memudahkan penggunaan context di komponen lain
 export const useUser = () => {
   return useContext(UserContext);
 };

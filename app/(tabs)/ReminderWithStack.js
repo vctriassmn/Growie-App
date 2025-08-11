@@ -4,15 +4,35 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import Reminder from './Reminder';
 import AddReminder from './addReminder';
+import EditReminder from './EditReminder';
 
 const Stack = createStackNavigator();
 
 export default function ReminderWithStack() {
   return (
     <NavigationContainer independent={true}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Reminder" component={ReminderScreen} />
-        <Stack.Screen name="AddReminder" component={AddReminderScreen} />
+      <Stack.Navigator 
+        initialRouteName="Reminder"
+        screenOptions={{ 
+          headerShown: false,
+          detachInactiveScreens: false 
+        }}
+      >
+        <Stack.Screen 
+          name="Reminder" 
+          component={Reminder} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="AddReminder" 
+          component={AddReminder} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="EditReminder" 
+          component={EditReminder}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

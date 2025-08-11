@@ -54,7 +54,7 @@ export default function JournalPage() {
     if (flatListRef.current) {
       setTimeout(() => {
         flatListRef.current.scrollToEnd({ animated: true });
-      }, 50);
+      }, 100);
     }
   };
 
@@ -126,7 +126,7 @@ export default function JournalPage() {
               <TouchableOpacity onPress={handleCancelSelection} style={styles.cancelButton}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-              <Text style={styles.headerTextBold}>Selected ({selectedFolders.length})</Text>
+              <Text style={styles.SelectedText}>Selected ({selectedFolders.length})</Text>
             </>
           ) : (
             <>
@@ -225,14 +225,14 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   deleteButton: {
-    backgroundColor: 'red',
-    width: 60,
-    height: 60,
+    backgroundColor: '#448461',
+    width: 150,
+    height: 50,
     borderRadius: 30,
   },
   deleteButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'Nunito-Bold',
   },
   actionButtonImage: {
@@ -242,11 +242,10 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     position: 'absolute',
-    left: 20,
-    top: -30,
+    right: 30,
   },
   cancelText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#448461',
     fontFamily: 'Nunito-SemiBold',
   },
@@ -254,5 +253,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(68, 132, 97, 0.4)',
     borderRadius: 15,
+  },
+  SelectedText: {
+    fontSize: 16,
+    color: '#448461',
+    fontFamily: 'Nunito-SemiBold',
+    alignItems: 'flex-start',
+    right: 130,
   },
 });

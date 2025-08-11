@@ -1,10 +1,12 @@
-// Lokasi file: app/(tabs)/Home.js
-
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
+import { StyleSheet, Text, View, Button, SafeAreaView, ScrollView, Image, TouchableOpacity, PanResponder } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import { useUser } from '../../context/UserContext';
+import { useReminders } from '../../context/ReminderContext';
+import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
 
-// Data dummy
+// Data dummy (tidak ada perubahan)
 const latestArticlesData = [
   { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide...', image: require('../../assets/images/caramenyiram.png'), avatar: require('../../assets/images/Logo.png'), username: 'Growie', liked: false, },
   { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree...', image: require('../../assets/images/plant.png'), avatar: require('../../assets/images/pp.jpg'), username: 'User123', liked: true, },
@@ -17,24 +19,18 @@ const myGardenData = [
   { id: 'g4', name: 'Three Musketeers', image: require('../../assets/images/three-musketeers.png') },
   { id: 'g5', name: 'Turtles', image: require('../../assets/images/turtles.png') },
 ];
-const remindersData = [
-  { id: 'r1', time: '07.30', task: 'Baby Spinach | Watering' },
-  { id: 'r2', time: '10.30', task: 'Monstera | Watering' },
-  { id: 'r3', time: '16.00', task: 'Water Lily | Pruning' },
-];
 
-// Impor Aset
+
 import BellIcon from '../../assets/images/bell.svg'; 
 import ProfileBorderSVG from '../../assets/icons/profile.svg';
 const profilePic = require('../../assets/images/profile-image.png');
 const heartIconActive = require('../../assets/images/like_active.png');
 const heartIconInactive = require('../../assets/images/like_inactive.png');
 
-// Komponen ArticleCard
 const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
   return (
-    <TouchableOpacity 
-      style={styles.articleCardWrapper} 
+    <TouchableOpacity
+      style={styles.articleCardWrapper}
       onPress={() => onCardPress(item)}
       activeOpacity={0.9}
     >
@@ -43,8 +39,8 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
           <Image source={item.image} style={styles.articleImage} />
           <View style={styles.articleRightInfo}>
             <TouchableOpacity style={styles.articleLikeButton} onPress={onLikeToggle}>
-              <Image 
-                source={item.liked ? heartIconActive : heartIconInactive} 
+              <Image
+                source={item.liked ? heartIconActive : heartIconInactive}
                 style={styles.articleLikeIcon}
               />
             </TouchableOpacity>
@@ -61,27 +57,52 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
   );
 };
 
-// Komponen Utama HomePage
 export default function HomePage() {
   const router = useRouter(); 
+  const navigation = useNavigation();
+  const { getHomeReminders } = useReminders(); // Get reminders from context
+  const { userName, profilePicture } = useUser();
   const [articles, setArticles] = useState(latestArticlesData);
 
+  // Get synchronized reminder data from context (ids 1, 2, 4)
+  const homeReminders = getHomeReminders();
+
   const handleLikeToggle = (articleId) => {
-    const updatedArticles = articles.map(article => 
+    const updatedArticles = articles.map(article =>
       article.id === articleId ? { ...article, liked: !article.liked } : article
     );
     setArticles(updatedArticles);
   };
 
-  // Logika PanResponder & Scroll
+  const handleReminderPress = (reminder) => {
+    console.log("Opening EditReminder for reminder:", reminder);
+    
+    // Create a copy of reminder to prevent same object reference
+    const reminderToEdit = {...reminder};
+    
+    // Navigate to EditReminder with the reminder data for editing
+    const params = { 
+      title: 'Edit Reminder',
+      reminderData: reminderToEdit 
+    };
+    
+    console.log("Navigation params:", params);
+    // Use small timeout to ensure navigation works correctly
+    setTimeout(() => {
+      navigation.navigate('EditReminder', params);
+    }, 50);
+  };
+
+  // Logika PanResponder & Scroll (tidak ada perubahan)
   const scrollViewRef = useRef(null);
   const articleSectionY = useRef(0);
   const [isPanelUp, setIsPanelUp] = useState(false);
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => !isPanelUp && Math.abs(gestureState.dy) > 5,
-      onPanResponderRelease: (e, gesture) => {
-        if (gesture.vy < -0.5 || gesture.dy < -100) scrollToArticle();
+      // ✅ Perbaikan: Menggunakan gestureState di sini
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.vy < -0.5 || gestureState.dy < -100) scrollToArticle();
         else scrollToTop();
       },
     })
@@ -104,23 +125,25 @@ export default function HomePage() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topBar} />
-      
-      <ScrollView 
+
+      <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={styles.scrollContainer}
         scrollEnabled={!isPanelUp}
         showsVerticalScrollIndicator={!isPanelUp}
       >
         <View style={styles.paddedContent}>
-            {/* Header dengan Profil SVG */}
-            <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.header}
+              onPress={() => router.push('/Profile')}
+              activeOpacity={0.8}
+            >
               <View style={styles.profileContainer}>
                 <ProfileBorderSVG width="100%" height="100%" style={{ position: 'absolute' }} />
                 <Image source={profilePic} style={styles.profileImage} />
               </View>
               <Text style={styles.greetingText}>Hello! akusaygkamu</Text>
             </View>
-            
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeTitle}>Welcome to Homepage!</Text>
               <TouchableOpacity onPress={() => router.push('/Notification')}>
@@ -153,11 +176,16 @@ export default function HomePage() {
                 </TouchableOpacity>
               </View>
               <View>
-                {remindersData.map((reminder) => (
-                  <View key={reminder.id} style={styles.reminderItem}>
-                    <Text style={styles.reminderTime}>{reminder.time}</Text>
-                    <Text style={styles.reminderText}>{reminder.task}</Text>
-                  </View>
+                {homeReminders.map((reminder) => (
+                  <TouchableOpacity 
+                    key={reminder.id} 
+                    style={styles.reminderItem}
+                    onPress={() => handleReminderPress(reminder)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.reminderTime}>{reminder.hour}.{reminder.minute}</Text>
+                    <Text style={styles.reminderText}>{reminder.title} | {reminder.category}</Text>
+                  </TouchableOpacity>
                 ))}
               </View>
             </View>
@@ -167,23 +195,23 @@ export default function HomePage() {
           style={styles.articlesSection}
           onLayout={(event) => { articleSectionY.current = event.nativeEvent.layout.y; }}
         >
-          <ScrollView 
-            scrollEnabled={isPanelUp} 
+          <ScrollView
+            scrollEnabled={isPanelUp}
             showsVerticalScrollIndicator={isPanelUp}
-            contentContainerStyle={{ paddingBottom: 50 }} 
+            contentContainerStyle={{ paddingBottom: 50 }}
           >
             <View style={styles.articleHeader} {...panResponder.panHandlers}>
                 <Text style={styles.sectionTitle}>Articles</Text>
-                <TouchableOpacity onPress={() => router.push('/Article')}>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/Article')}>
                   <Text style={styles.seeMore}>See more</Text>
                 </TouchableOpacity>
             </View>
-            
+
             {articles.map(article => (
-              <ArticleCard 
-                key={article.id} 
+              <ArticleCard
+                key={article.id}
                 item={article}
-                onCardPress={() => router.push('/Article')}
+                onCardPress={() => router.push({pathname: `/(tabs)/ArticleComponents/${article.id}`,})}
                 onLikeToggle={() => handleLikeToggle(article.id)}
               />
             ))}
@@ -191,10 +219,6 @@ export default function HomePage() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-// Objek Shadow
 const shadowStyle = {
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
@@ -203,14 +227,14 @@ const shadowStyle = {
   elevation: 5,
 };
 
-// Stylesheet Lengkap
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F0FBF0' },
   topBar: { height: 30, backgroundColor: '#5D4037' },
   scrollContainer: { paddingBottom: 30, },
   paddedContent: { paddingHorizontal: 20, },
   header: { backgroundColor: '#FBF2D6', padding: 15, borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginTop: 10, ...shadowStyle, },
-  
+ 
   profileContainer: {
     width: 60,
     height: 60,
@@ -226,18 +250,18 @@ const styles = StyleSheet.create({
   
   greetingText: { fontSize: 20, fontWeight: 'normal', color: '#333' },
   welcomeSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20, },
-  welcomeTitle: { fontSize: 22, fontWeight: 'bold', color: '#333' },
+  welcomeTitle: { fontSize: 22, color: '#333', fontFamily: 'Nunito-ExtraBold' },
   bellContainer: { width: 35, height: 35, borderRadius: 22, backgroundColor: '#FBF2D6', justifyContent: 'center', alignItems: 'center', marginRight: 5, ...shadowStyle, },
   section: { backgroundColor: '#D9ECE1', borderRadius: 20, paddingTop: 15, paddingBottom: 15, paddingHorizontal: 15, marginBottom: 35, ...shadowStyle, },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  seeMore: { fontSize: 14, color: '#555' },
+  sectionTitle: { fontSize: 18, color: '#333', fontFamily: 'Nunito-SemiBold' },
+  seeMore: { fontSize: 14, color: '#555', fontFamily: 'Nunito-Regular' },
   gardenCard: { backgroundColor: '#FAFFFB', borderRadius: 15, width: 150, height: 180, marginHorizontal: 5, ...shadowStyle, },
   gardenImage: { width: '100%', height: 150, borderTopLeftRadius: 15, borderTopRightRadius: 15 },
-  gardenLabel: { marginTop: 5, fontSize: 13, fontWeight: 'bold', color: '#7BAB91', textAlign: 'center'},
+  gardenLabel: { marginTop: 5, fontSize: 13, color: '#7BAB91', textAlign: 'center', fontFamily: 'Nunito-SemiBold'},
   reminderItem: { backgroundColor: '#7BAB91', borderRadius: 15, paddingVertical: 15, paddingHorizontal: 20, marginBottom: 10, borderLeftWidth: 5, borderLeftColor: '#284E43', ...shadowStyle, },
-  reminderTime: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
-  reminderText: { fontSize: 14, color: '#fff' },
+  reminderTime: { fontSize: 18, color: '#fff', fontFamily: 'Nunito-SemiBold' },
+  reminderText: { fontSize: 14, color: '#fff', fontFamily: 'Nunito-Regular' },
   articlesSection: { backgroundColor: '#fff', borderTopLeftRadius: 45, borderTopRightRadius: 45, marginTop: 5, flex: 1, shadowColor: "#000", shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 20, },
   articleHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 20, marginBottom: 5, marginTop: 15},
   articleCardWrapper: { marginBottom: 20, paddingHorizontal: 20, },
@@ -246,10 +270,10 @@ const styles = StyleSheet.create({
   articleImage: { width: '65%', height: 150, resizeMode: 'cover' },
   articleRightInfo: { backgroundColor: '#DCF0E4', width: '35%', alignItems: 'center', justifyContent: 'center', padding: 10, position: 'relative', },
   articleAvatar: { width: 50, height: 50, borderRadius: 25, borderColor: '#448461', borderWidth: 1, marginBottom: 8, },
-  articleUsername: { fontSize: 14, color: '#448461', fontWeight: '600', },
+  articleUsername: { fontSize: 14, color: '#448461', fontFamily: 'Nunito-SemiBold' },
   articleBottomSection: { paddingVertical: 15, paddingHorizontal: 20, },
   articleName: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 4, },
-  articleDescription: { fontSize: 13, color: '#666', }, // Sebelumnya fontFamily: 'Nunito_400Regular'
+  articleDescription: { fontSize: 13, color: '#666', },
   articleLikeButton: { position: 'absolute', top: 10, right: 10, padding: 5, },
   articleLikeIcon: { width: 24, height: 24, },
 });

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,13 @@ import {
   ScrollView,
   FlatList,
   StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import RNModal from "react-native-modal";
 import { useFonts } from 'expo-font';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 const ITEM_HEIGHT = 18; // Lebih kecil lagi sesuai kebutuhan
@@ -29,12 +32,13 @@ const days = [
 
 export default function AddReminderScreen({ route }) {
   const navigation = useNavigation();
-  const [hour, setHour] = useState(8);
-  const [minute, setMinute] = useState(50);
+  const isFocused = useIsFocused();
+  const [hour, setHour] = useState(0); // Ubah default menjadi 0 (00)
+  const [minute, setMinute] = useState(0); // Ubah default menjadi 0 (00)
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
-  const [repeater, setRepeater] = useState("");
-  const [selectedDays, setSelectedDays] = useState([]);
+  const [category, setCategory] = useState(""); // Kategori default kosong
+  const [repeater, setRepeater] = useState(""); // Repeater default kosong
+  const [selectedDays, setSelectedDays] = useState([]); // Default tidak ada hari yang dipilih
   const [selectedWeeks, setSelectedWeeks] = useState([]);
   const [selectedDates, setSelectedDates] = useState([]);
   const [notes, setNotes] = useState("");
@@ -44,7 +48,38 @@ export default function AddReminderScreen({ route }) {
     'Nunito-Bold': require('../../assets/fonts/Nunito-Bold.ttf'),
   });
 
-  const reminderTitle = route?.params?.title || "Untitled";
+  // Handle route params for title
+  const params = route?.params || {};
+  console.log("Route params in AddReminder:", params);
+  
+  // Use title from params or default
+  const reminderTitle = params?.title || "Untitled";
+
+  // Gunakan useRef untuk menandai bahwa form sudah di-reset
+  const hasReset = useRef(false);
+
+  // Reset form hanya sekali ketika halaman difokuskan pertama kali
+  useEffect(() => {
+    if (isFocused && !hasReset.current) {
+      // Reset hanya jika belum di-reset sebelumnya pada fokus ini
+      console.log("Resetting form to default values");
+      setHour(0);
+      setMinute(0);
+      setName("");
+      setCategory("");
+      setRepeater("");
+      setSelectedDays([]);
+      setSelectedWeeks([]);
+      setSelectedDates([]);
+      setNotes("");
+      
+      // Tandai bahwa sudah di-reset
+      hasReset.current = true;
+    } else if (!isFocused) {
+      // Reset flag ketika halaman tidak fokus sehingga bisa di-reset lagi nanti
+      hasReset.current = false;
+    }
+  }, [isFocused]);
 
   if (!fontsLoaded) {
     return null;
@@ -53,12 +88,35 @@ export default function AddReminderScreen({ route }) {
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
+  // Refs for FlatList to allow scrolling programmatically
+  const hourListRef = useRef(null);
+  const minuteListRef = useRef(null);
+
+  // Scroll to the correct time values when the component mounts
+  useEffect(() => {
+    if (hourListRef.current && minuteListRef.current) {
+      setTimeout(() => {
+        // Scroll to the hour
+        hourListRef.current.scrollToIndex({
+          index: hour,
+          animated: true,
+        });
+        
+        // Scroll to the minute
+        minuteListRef.current.scrollToIndex({
+          index: minute,
+          animated: true,
+        });
+      }, 10); // Small timeout to ensure rendering is complete
+    }
+  }, [hour, minute]);
+
   const onScrollEnd = (e, type) => {
     const index = Math.round(e.nativeEvent.contentOffset.y / (ITEM_HEIGHT + ITEM_GAP));
     if (type === "hour") {
-      setHour(hours[index]);
+      setHour(parseInt(hours[index], 10));
     } else {
-      setMinute(minutes[index]);
+      setMinute(parseInt(minutes[index], 10));
     }
   };
 
@@ -75,9 +133,14 @@ export default function AddReminderScreen({ route }) {
   };
 
   const toggleDate = (d) => {
-    setSelectedDates((prev) =>
-      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-    );
+    // For monthly frequency, allow only one date selection
+    if (repeater === "MONTHLY") {
+      setSelectedDates([d]); // Replace current selection with new date
+    } else {
+      setSelectedDates((prev) =>
+        prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
+      );
+    }
   };
 
   const renderItem = (item) => (
@@ -89,15 +152,44 @@ export default function AddReminderScreen({ route }) {
   );
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Reminder')}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => {
+            // Konfirmasi jika sudah mengubah data
+            if (name || category || repeater || 
+                selectedDays.length > 0 || 
+                notes) {
+              Alert.alert(
+                'Konfirmasi',
+                'Perubahan belum disimpan. Yakin ingin kembali?',
+                [
+                  {
+                    text: 'Batal',
+                    style: 'cancel'
+                  },
+                  {
+                    text: 'Ya, Kembali',
+                    onPress: () => navigation.navigate('Reminder')
+                  }
+                ]
+              );
+            } else {
+              navigation.navigate('Reminder');
+            }
+          }}
+        >
           <Ionicons name="chevron-back" size={24} color="#444" />
         </TouchableOpacity>
         <Text style={styles.title}>{reminderTitle}</Text>
       </View>
 
-      {/* TIME SCROLLER */}
+      {/* TIME SCROLLER - Di luar ScrollView */}
       <View style={styles.scrollerWrapper}>
         {/* HIGHLIGHT di bawah angka, absolute di parent */}
         <View
@@ -117,13 +209,14 @@ export default function AddReminderScreen({ route }) {
         </View>
         <View style={styles.listWrapper}>
           <FlatList
+            ref={hourListRef}
             data={hours}
             keyExtractor={(item) => `hour-${item}`}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
-            decelerationRate="fast"
+            decelerationRate={0.9}
             style={{ flexGrow: 0, zIndex: 2 }}
-            initialScrollIndex={8}
+            initialScrollIndex={0} // Set ke 0 untuk default 00 jam
             contentContainerStyle={{
               paddingTop: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
               paddingBottom: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
@@ -131,17 +224,21 @@ export default function AddReminderScreen({ route }) {
             onMomentumScrollEnd={(e) => onScrollEnd(e, "hour")}
             renderItem={({ item }) => renderItem(item)}
             getItemLayout={(_, index) => ({ length: ITEM_HEIGHT + ITEM_GAP, offset: (ITEM_HEIGHT + ITEM_GAP) * index, index })}
+            onScrollToIndexFailed={(info) => {
+              console.log('Scroll to index failed for hour:', info);
+            }}
           />
         </View>
         <View style={styles.listWrapper}>
           <FlatList
+            ref={minuteListRef}
             data={minutes}
             keyExtractor={(item) => `minute-${item}`}
             showsVerticalScrollIndicator={false}
             snapToInterval={ITEM_HEIGHT + ITEM_GAP}
-            decelerationRate="fast"
+            decelerationRate={0.9}
             style={{ flexGrow: 0, zIndex: 2 }}
-            initialScrollIndex={50}
+            initialScrollIndex={0} // Set ke 0 untuk default 00 menit
             contentContainerStyle={{
               paddingTop: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
               paddingBottom: (ITEM_HEIGHT + ITEM_GAP) * Math.floor(VISIBLE_ITEMS / 2),
@@ -149,136 +246,251 @@ export default function AddReminderScreen({ route }) {
             onMomentumScrollEnd={(e) => onScrollEnd(e, "minute")}
             renderItem={({ item }) => renderItem(item)}
             getItemLayout={(_, index) => ({ length: ITEM_HEIGHT + ITEM_GAP, offset: (ITEM_HEIGHT + ITEM_GAP) * index, index })}
+            onScrollToIndexFailed={(info) => {
+              console.log('Scroll to index failed for minute:', info);
+            }}
           />
         </View>
       </View>
 
-      {/* NON-SCROLLABLE CARD SECTION */}
-      <View style={styles.fixedCardWrapper}>
-        <View style={styles.fixedCard}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputTransparent}
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor="#7A8B7A"
-            />
-            <Text style={styles.labelInside}>REMINDER NAME</Text>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.categoryRow}>
-              {["WATERING", "FERTILIZING", "PRUNING"].map((c) => (
-                <TouchableOpacity
-                  key={c}
-                  style={[
-                    styles.categoryOption,
-                    category === c && styles.categoryOptionActive,
-                  ]}
-                  onPress={() => setCategory(c)}
-                >
-                  <Text style={[
-                    styles.categoryOptionText,
-                    category === c && styles.categoryOptionTextActive
-                  ]}>{c}</Text>
-                </TouchableOpacity>
-              ))}
+      {/* SCROLLABLE CARD SECTION */}
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.fixedCardWrapper}>
+          <View style={styles.fixedCard}>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.inputTransparent}
+                value={name}
+                onChangeText={setName}
+                placeholderTextColor="#7A8B7A"
+                placeholder="Enter reminder name"
+              />
+              <Text style={styles.labelInside}>REMINDER NAME</Text>
             </View>
+
+            <View style={styles.categSection}>
+              <View style={styles.categoryRow}>
+                {["WATERING", "FERTILIZING", "PRUNING"].map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[
+                      styles.categoryOption,
+                      category === c && styles.categoryOptionActive,
+                    ]}
+                    onPress={() => setCategory(c)}
+                  >
+                    <Text style={[
+                      styles.categoryOptionText,
+                      category === c && styles.categoryOptionTextActive
+                    ]}>{c}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             <View style={styles.divider} />
-          </View>
 
-          <View style={styles.section}>
-            <View style={styles.repeaterContainer}>
-              <Text style={styles.repeaterLabel}>REPEATER</Text>
-              <View style={styles.repeaterOptionsRow}>
-                {["DAILY", "WEEKLY", "MONTHLY"].map((r) => (
-                  <TouchableOpacity
-                    key={r}
-                    style={[
-                      styles.repeaterOption,
-                      repeater === r && styles.repeaterOptionActive,
-                    ]}
-                    onPress={() => setRepeater(r)}
-                  >
-                    <Text style={[
-                      styles.repeaterOptionText,
-                      repeater === r && styles.repeaterOptionTextActive
-                    ]}>{r}</Text>
-                  </TouchableOpacity>
-                ))}
+            <View style={styles.repeatSection}>
+              <View style={styles.repeaterContainer}>
+                <Text style={styles.repeaterLabel}>REPEATER</Text>
+                <View style={styles.repeaterOptionsRow}>
+                  {["DAILY", "WEEKLY", "MONTHLY"].map((r) => (
+                    <TouchableOpacity
+                      key={r}
+                      style={[
+                        styles.repeaterOption,
+                        repeater === r && styles.repeaterOptionActive,
+                      ]}
+                      onPress={() => {
+                        setRepeater(r);
+                        // Tidak menambahkan hari default untuk repeater DAILY
+                      }}
+                    >
+                      <Text style={[
+                        styles.repeaterOptionText,
+                        repeater === r && styles.repeaterOptionTextActive
+                      ]}>{r}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
+
+              {repeater === "DAILY" && (
+                <View style={[styles.row, { justifyContent: 'center', marginTop: 11 }]}>
+                  {days.map((day) => (
+                    <TouchableOpacity
+                      key={day.id}
+                      style={[
+                        styles.circleSmall,
+                        selectedDays.includes(day.id) && styles.circleActive,
+                      ]}
+                      onPress={() => toggleDay(day.id)}
+                    >
+                      <Text style={styles.circleText}>{day.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {repeater === "WEEKLY" && (
+                <View style={[styles.row, { justifyContent: 'center', marginTop: 13 }]}>
+                  {[1, 2, 3, 4].map((w) => (
+                    <TouchableOpacity
+                      key={w}
+                      style={[
+                        styles.weekOption,
+                        selectedWeeks.includes(w) && styles.weekOptionActive,
+                      ]}
+                      onPress={() => toggleWeek(w)}
+                    >
+                      <Text style={[
+                        styles.weekOptionText,
+                        selectedWeeks.includes(w) && styles.weekOptionTextActive
+                      ]}>Week {w}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {repeater === "MONTHLY" && (
+                <View style={[styles.row, { justifyContent: 'flex-start', marginTop: 13 }]}>
+                  <TouchableOpacity
+                    style={styles.chooseDateButton}
+                    onPress={() => setShowDateModal(true)}
+                  >
+                    <Text style={styles.chooseDateText}>Choose Date</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
-            {repeater === "DAILY" && (
-              <View style={[styles.row, { justifyContent: 'center', marginTop: 10 }]}>
-                {days.map((day) => (
-                  <TouchableOpacity
-                    key={day.id}
-                    style={[
-                      styles.circleSmall,
-                      selectedDays.includes(day.id) && styles.circleActive,
-                    ]}
-                    onPress={() => toggleDay(day.id)}
-                  >
-                    <Text style={styles.circleText}>{day.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {repeater === "WEEKLY" && (
-              <View style={[styles.row, { justifyContent: 'center', marginTop: 10 }]}>
-                {[1, 2, 3, 4].map((w) => (
-                  <TouchableOpacity
-                    key={w}
-                    style={[
-                      styles.weekOption,
-                      selectedWeeks.includes(w) && styles.weekOptionActive,
-                    ]}
-                    onPress={() => toggleWeek(w)}
-                  >
-                    <Text style={[
-                      styles.weekOptionText,
-                      selectedWeeks.includes(w) && styles.weekOptionTextActive
-                    ]}>Week {w}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {repeater === "MONTHLY" && (
-              <View style={[styles.row, { justifyContent: 'flex-start', marginTop: 10, paddingLeft: 15 }]}>
-                <TouchableOpacity
-                  style={styles.chooseDateButton}
-                  onPress={() => setShowDateModal(true)}
-                >
-                  <Text style={styles.chooseDateText}>Choose Date</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            <View style={styles.divider} />
+            
+            <View style={styles.notesContainer}>
+              <Text style={styles.notesLabel}>NOTES</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                placeholder="Write a notes here..."
+                placeholderTextColor="#7A8B7A"
+              />
+            </View>
           </View>
+          <TouchableOpacity 
+            style={styles.saveButton}
+            onPress={() => {
+              // Validasi data input
+              if (!name.trim()) {
+                alert('Nama reminder tidak boleh kosong!');
+                return;
+              }
+              
+              if (!category) {
+                alert('Silakan pilih kategori reminder!');
+                return;
+              }
+              
+              if (!repeater) {
+                alert('Silakan pilih frekuensi pengulangan!');
+                return;
+              }
+              
+              if (repeater === "DAILY" && selectedDays.length === 0) {
+                alert('Silakan pilih minimal satu hari untuk pengulangan harian!');
+                return;
+              }
+              
+              if (repeater === "WEEKLY" && selectedWeeks.length === 0) {
+                alert('Silakan pilih minimal satu minggu untuk pengulangan mingguan!');
+                return;
+              }
+              
+              if (repeater === "MONTHLY" && selectedDates.length !== 1) {
+                alert('Silakan pilih tepat satu tanggal untuk pengulangan bulanan!');
+                return;
+              }
+              
+              // Prepare the updated reminder data
+              console.log("Preparing new reminder");
+              
+              const updatedReminder = {
+                id: new Date().getTime().toString(), // Generate new ID for new reminder
+                hour: hour.toString().padStart(2, '0'),
+                minute: minute.toString().padStart(2, '0'),
+                title: name,
+                category: category ? category.charAt(0) + category.slice(1).toLowerCase() : "Watering", // Capitalize properly
+                active: true, // New reminders are active by default
+                days: {}, // We'll populate this below
+                frequency: repeater.toLowerCase(), // Simpan frequency
+                note: notes, // Simpan notes
+                // Save week information for weekly frequency
+                selectedWeeks: repeater === "WEEKLY" ? selectedWeeks : [],
+                // Save date information for monthly frequency
+                selectedDate: repeater === "MONTHLY" && selectedDates.length > 0 ? selectedDates[0] : null
+              };
 
-          <View style={styles.divider} />
-          
-          <View style={styles.notesContainer}>
-            <Text style={styles.notesLabel}>NOTES</Text>
-            <TextInput
-              style={styles.notesInput}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              placeholder="Write a notes here..."
-              placeholderTextColor="#7A8B7A"
-            />
-          </View>
+              // Buat pemetaan dari ID hari ke huruf hari
+              const dayIdToLetter = {
+                'mon': 'M', // Monday
+                'tue': 'T', // Tuesday
+                'wed': 'W', // Wednesday
+                'thu': 'T', // Thursday (perhatikan ini sama dengan Tuesday)
+                'fri': 'F', // Friday
+                'sat': 'S', // Saturday
+                'sun': 'S'  // Sunday (perhatikan ini sama dengan Saturday)
+              };
+
+              // Array indeks yang benar untuk memastikan penempatan huruf yang tepat
+              // Urutan ini harus sama dengan urutan di Reminder.js
+              const dayIndices = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+              const dayLetters = ['Mo', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+              
+              // Initialize all days to false
+              dayLetters.forEach(day => {
+                updatedReminder.days[day] = false;
+              });
+              
+              // Set selected days to true
+              selectedDays.forEach(selectedDayId => {
+                // Cari indeks hari yang sesuai
+                const index = dayIndices.indexOf(selectedDayId);
+                if (index !== -1 && index < dayLetters.length) {
+                  updatedReminder.days[dayLetters[index]] = true;
+                }
+              });
+              
+              // Pass the updated reminder back to the Reminder screen
+              console.log("Sending new reminder to Reminder screen:", updatedReminder);
+              
+              // Reset state ke nilai default untuk penggunaan selanjutnya
+              setHour(0);
+              setMinute(0);
+              setName("");
+              setCategory("");
+              setRepeater("");
+              setSelectedDays([]);
+              setSelectedWeeks([]);
+              setSelectedDates([]);
+              setNotes("");
+              
+              // Navigasi kembali ke halaman Reminder dengan data reminder baru
+              navigation.navigate('Reminder', { 
+                updatedReminder: updatedReminder,
+                isNewReminder: true // Always true for AddReminder
+              });
+            }}
+          >
+            <Text style={styles.saveButtonText}>Add Reminder</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={styles.saveButton}
-          onPress={() => navigation.navigate('Reminder')}
-        >
-          <Text style={styles.saveButtonText}>Save Changes</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       <RNModal isVisible={showDateModal}>
         <View style={styles.modal}>
@@ -324,7 +536,7 @@ export default function AddReminderScreen({ route }) {
           </TouchableOpacity>
         </View>
       </RNModal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -332,9 +544,17 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     padding: 16,
-    paddingBottom: 20, // Extra bottom padding to avoid navbar overlap 
-    backgroundColor: "#fff" 
+    paddingBottom: 20,
+    backgroundColor: "#fff",
   },
+  // scrollViewContainer: {
+  //   flex: 1,
+  // },
+  // scrollViewContent: {
+  //   paddingHorizontal: 16,
+  //   paddingBottom: 20, // Extra bottom padding to avoid navbar overlap
+  //   flexGrow: 1,
+  // },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -352,38 +572,40 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 24, 
     fontFamily: 'Nunito-Bold',
+    fontWeight: 'bold',
     color: '#6A804F',
     flex: 1,
+    paddingBottom: 2,
   },
   inputContainer: {
     position: 'relative',
-    marginBottom: 6,
+    // marginBottom: 6,
   },
   labelInside: {
     position: 'absolute',
-    left: 10,
-    top: 8,
+    left: 13,
+    top: 9,
     backgroundColor: "#448461",
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
-    fontSize: 13,
+    fontSize: 8,
     color: '#FFFFFF',
     fontFamily: 'Nunito-Bold',
     zIndex: 1,
-    alignSelf: 'center',
-    
+    alignSelf: 'center'
   },
   inputTransparent: {
     borderWidth: 1.5,
     borderColor: "#7F995E",
     borderRadius: 30,
-    paddingVertical: 10,
-    paddingLeft: 140, // Space for the label
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingLeft: 115, // Space for the label
     paddingRight: 20,
     backgroundColor: 'transparent',
-    fontSize: 14,
-    height: 40,
+    fontSize: 12,
+    height: 35,
   },
   scrollerWrapper: {
     flexDirection: "row",
@@ -432,11 +654,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
   },
-  // NEW: fixed card wrapper and card with shadow
   fixedCardWrapper: {
+    marginHorizontal: 10,
     marginTop: 8,
     alignItems: 'center',
-    width: '100%',
+    // width: '100%',
+    paddingBottom: 10, // Add padding to ensure save button is visible
   },
   fixedCard: {
     backgroundColor: '#D9ECE1',
@@ -449,8 +672,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.13,
     shadowRadius: 8,
     elevation: 7,
-    marginBottom: 10,
-    minHeight: 430, // Reduced minimum height to prevent navbar overlap
+    marginBottom: 17,
+    // minHeight: 400, // Reduced minimum height to prevent navbar overlap
   },
   label: {
     backgroundColor: "#A5C5A0",
@@ -483,7 +706,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 3,
     borderRadius: 12,
-    fontSize: 13,
+    fontSize: 8,
     color: '#FFFFFF',
     fontFamily: 'Nunito-Bold',
     zIndex: 1,
@@ -500,40 +723,46 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: 'transparent',
-    fontSize: 13,
+    fontSize: 12,
     height: 100, // Reduced height to fit the card better
     textAlignVertical: 'top',
     marginTop: 16, // Increased top margin to create more space below the label
   },
-  section: { 
-    marginVertical: 6 
+  categSection: { 
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  repeatSection: { 
+    marginVertical: 27
   },
   row: { 
     flexDirection: "row", 
     flexWrap: "wrap", 
-    marginVertical: 2
+    marginBottom: 0
+    // marginVertical: 0
   },
   // Small option button
   categoryRow: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 15,
+    // marginBottom: 25,
   },
   categoryOption: {
     backgroundColor: "transparent",
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    marginHorizontal: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+    marginHorizontal: 8,
     borderRadius: 18,
     borderWidth: 1.5,
     borderColor: "#7F995E",
+    width: 90,
   },
   categoryOptionActive: {
     backgroundColor: "#FBF2D6",
     borderColor: "#7F995E",
   },
   categoryOptionText: {
-    fontSize: 11,
+    fontSize: 8,
     fontFamily: 'Nunito-Bold',
     color: '#7F995E',
   },
@@ -543,7 +772,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#A5C5A0',
-    marginVertical: 10,
+    // marginBottom: 10,
     width: '100%',
   },
   repeaterContainer: {
@@ -552,27 +781,29 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     padding: 10,
     position: 'relative',
-    paddingLeft: 101, // Space for the label
-    paddingRight: 10,
+    paddingLeft: 83, // Space for the label
+    paddingRight: 7,
     // marginBottom: 5,
     backgroundColor: 'transparent',
-    height: 40,
+    height: 35 ,
     flexDirection: 'row',
     alignItems: 'center',
   },
   repeaterLabel: {
     position: 'absolute',
-    left: 10,
+    left: 11,
     top: 7,
     backgroundColor: "#448461",
     paddingHorizontal: 12,
     paddingVertical: 3,
     borderRadius: 12,
-    fontSize: 13,
+    fontSize: 8,
     color: '#FFFFFF',
     fontFamily: 'Nunito-Bold',
     zIndex: 1,
+    alignSelf: 'center'
   },
+  // 
   repeaterOptionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -581,21 +812,20 @@ const styles = StyleSheet.create({
   },
   repeaterOption: {
     backgroundColor: "#ABC29F",
-    paddingVertical: 5,
-    paddingHorizontal: 2,
-    marginHorizontal: 4,
+    marginHorizontal: 3,
     borderRadius: 18,
-    height: 26,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     flex: 1,
-    minWidth: 70,
+    minWidth: 65,
   },
+  // 
   repeaterOptionActive: {
     backgroundColor: "#FBF2D6",
   },
   repeaterOptionText: {
-    fontSize: 11,
+    fontSize: 8,
     fontFamily: 'Nunito-Bold',
     color: '#FAFFFB',
   },
@@ -604,14 +834,15 @@ const styles = StyleSheet.create({
   },
   weekOption: {
     backgroundColor: "#ABC29F",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginHorizontal: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    marginHorizontal: 4,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 0,
   },
+  // 
   weekOptionActive: {
     backgroundColor: "#FBF2D6",
   },
@@ -625,18 +856,19 @@ const styles = StyleSheet.create({
   },
   chooseDateButton: {
     backgroundColor: "#FBF2D6",
-    paddingVertical: 8,
-    paddingHorizontal: 24,
+    paddingVertical: 4,
+    paddingHorizontal: 16,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 0,
   },
   chooseDateText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: 'Nunito-Bold',
     color: '#7F995E',
   },
+  // 
   selectedDateChip: {
     backgroundColor: "rgba(127, 153, 94, 0.2)",
     paddingVertical: 3,
@@ -665,22 +897,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     color: '#2C3A2C',
   },
-  optionActive: { backgroundColor: "#A5C5A0" },
-  // Small circle for days/dates
+  optionActive: { 
+    backgroundColor: "#A5C5A0" 
+  },
   circleSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(127, 153, 94, 0.3)", // #7F995E with 30% opacity
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(127, 153, 94, 0.3)",
     justifyContent: "center",
     alignItems: "center",
-    margin: 6,
+    marginBottom: -5,
+    marginHorizontal: 6,
   },
   circleActive: {
     backgroundColor: "#7BAB91", // Solid color when selected
   },
   circleText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Nunito-Bold',
     color: '#D9ECE1', // Text color
   },
@@ -688,8 +922,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderWidth: 2, // Increased border width for more emphasis
     borderColor: '#694B40', // Changed border color to #694B40
-    paddingVertical: 10,
-    paddingHorizontal: 36, // Increased horizontal padding for better proportions
+    paddingVertical: 7,
+    paddingHorizontal: 25, // Increased horizontal padding for better proportions
     alignItems: "center",
     marginTop: 8,
     borderRadius: 22, // Increased border radius to make it more rounded
@@ -703,7 +937,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#7F995E', // Changed text color to #7F995E
-    fontSize: 17.5,
+    fontSize: 15,
     fontFamily: 'Nunito-Bold',
     fontWeight: '900', // Adding extra font weight to make it bolder
     letterSpacing: 0.3, // Adding slight letter spacing for better readability

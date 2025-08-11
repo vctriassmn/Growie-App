@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
-import { plants } from '../data';
+import ArticleSection from '../components/ArticleSection'; // sesuaikan path-nya
+import { usePlant } from '../../../../context/PlantContext';
 import { getImage } from '../getImage';
 import WaterStatus from '../components/WaterStatus';
 
@@ -14,46 +19,73 @@ import { Dimensions } from 'react-native';
 import EditIcon from '../../../../assets/icons/edit.svg';
 import BackIcon from '../../../../assets/icons/back.svg';
 
+import { initialData } from '../../Article';
+
+const topArticles = initialData.slice(0, 3);
+
+export const options = {
+  tabBarStyle: { display: 'none' }, 
+  tabBarVisible: false,             
+};
 
 export default function PlantDetail() {
+    const insets = useSafeAreaInsets();
+    
     const { id } = useLocalSearchParams();
+    const { plants, editPlant } = usePlant();
     const plant = plants.find(p => p.id === parseInt(id));
-    const imageSource = getImage(plant.image);
-    const imageExists = !!imageSource; 
     const screenWidth = Dimensions.get('window').width;
     const router = useRouter();
-    
+
+    const imageSource =
+    typeof plant.image === 'string'
+      ? plant.image.startsWith('file')
+        ? { uri: plant.image }
+        : getImage(plant.image)
+      : getImage('placeholder');
+
+
+    const [articles, setArticles] = useState( [
+        { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide...', image: require('../../../../assets/images/caramenyiram.png'), avatar: require('../../../../assets/images/Logo.png'), username: 'Growie', liked: false, },
+        { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree...', image: require('../../../../assets/images/plant.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'User123', liked: true, },
+        { id: '3', name: 'Snake Plant', description: 'Extremely hardy and low-maintenance...', image: require('../../../../assets/images/peacelily.png'), avatar: require('../../../../assets/images/pp.jpg'), username: 'GreenThumb', liked: false, },
+    ]);
+
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#694B40' }}>
-            <StatusBar style="light" backgroundColor="#694B40" />
+        <SafeAreaProvider>
+            <View
+                style={{
+                    paddingTop: insets.top,
+                    backgroundColor: '#694B40',
+                }}
+            >
+                <StatusBar barStyle="light-content" />
+            </View>
+
             <ScrollView style={styles.container}>
                 {/* back button */}
-                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)/MyGarden')}>
                     <BackIcon width={40} height={40} />
                 </TouchableOpacity>
 
                 {/* Image Container */}
                 <View style={styles.imageContainer}>
-                    {imageExists ? (
-                        <Image
-                            source={getImage(plant.image)}
-                            style={{ width: screenWidth, height: screenWidth * 7 / 9 }}
-                            resizeMode="cover"
-                        />
-                    ) : (
-                        <View style={styles.placeholder}>
-                            <Text style={styles.placeholderText}>🪴 No image available</Text>
-                        </View>
-                    )}
+                    <Image
+                        source={imageSource}
+                        style={{ width: screenWidth, height: screenWidth * 7 / 9 }}
+                        resizeMode="cover"
+                    />
                 </View>
+
 
                 <View style={styles.isi}>
                     {/* Header */}
                     <Text style={styles.name}>{plant.name}</Text>
                     <Text style={styles.notes}>{plant.notes}</Text>
 
-                    {/* Header Info */}
+                    {/* plant Info */}
                     <View style={styles.condition}>
+                        {/* water level */}
                         <View style={{ alignItems: 'center', flex: 1 }}>
                             <Text style={styles.title}>Water Level</Text>
 
@@ -62,6 +94,7 @@ export default function PlantDetail() {
                             </View>
                         </View>
                         
+                        {/* age */}
                         <View style={{ alignItems: 'center', flex: 1 }}>
                             <Text style={styles.title}>Age</Text>
 
@@ -71,31 +104,42 @@ export default function PlantDetail() {
                             </View>
                         </View>
 
+                        {/* condition */}
                         <View style={{ alignItems: 'center', flex: 1 }}>
                             <Text style={styles.title}>Condition</Text>
 
                             <View style={[styles.box, {backgroundColor: '#7BAB91'},]}>
+                                {/* ini masih error dikit karena belom diadain gambar conditionnya yaa */}
                                 <Image
-                                    source={getImage(plant.condition)}
+                                    source={require('../../../../assets/images/mygarden/placeholder.jpg')}
                                     style={{width: 50, height: 50, borderRadius: 25, marginBottom: 4}}
                                     resizeMode="cover"
                                 />
                                 <Text style={[styles.info, { color: 'white'}]}>{plant.condition}</Text>
                             </View>
                         </View>
+
                     </View>
+                    <View style={{ height: 150, width: screenWidth, backgroundColor: 'transparent'}}/>
 
                 </View>
             </ScrollView>
 
+            {/* Edit Button */}
             <View style={[styles.container, {flex: 1}]}>
-                <TouchableOpacity style={styles.editButton} onPress={() => router.push('edit-plant')}>
-                    <EditIcon width={60} height={60} />
-                </TouchableOpacity>
+                <Link href={`/plant/${id}/edit`} asChild>
+                    <TouchableOpacity style={styles.editButton}>
+                        <EditIcon width={60} height={60} />
+                    </TouchableOpacity>
+                </Link>
             </View>
 
+            {/* article section */}
+            <View style={{ position: 'relative' }}>
+                <ArticleSection articles={articles} />
+            </View>
 
-        </SafeAreaView>
+        </SafeAreaProvider>
 
     );
 }
@@ -132,10 +176,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    placeholderText: {
-        fontSize: 16,
-        color: '#666',
-    },
     // =======================================================================================
     
     // keterangan / info taneman
@@ -149,17 +189,18 @@ const styles = StyleSheet.create({
     // nama + notes
     name: {
         fontSize: 26,
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-ExtraBold',
         color: '#448461',
         marginBottom: 8,
     },
 
     notes: {
         fontSize: 14,
+        fontFamily: 'Nunito-Regular',
         marginBottom: 4,
         color: '#448461',
         textAlign: 'justify',
-        lineHeight: 22,
+        // lineHeight: 18,
 
     },
     // --------------------------------------------------------
@@ -189,20 +230,21 @@ const styles = StyleSheet.create({
     
     title: {
         fontSize: 14,
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-SemiBold',
         color: 'black',
         marginBottom: 4,
     },
 
     main: {
         fontSize: 28,
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-SemiBold',
         color: '#448461',
         marginBottom: 4,
     },
 
     info: {
         fontSize: 14,
+        fontFamily: 'Nunito-SemiBold',
         color: '#448461',
         marginBottom: 4,
     },
@@ -211,7 +253,7 @@ const styles = StyleSheet.create({
     // button
     editButton: {
         position: 'absolute',
-        bottom: 120,
+        bottom: 110,
         right: 30,
         justifyContent: 'center',
         alignItems: 'center',
@@ -231,10 +273,5 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         zIndex: 999,
     },
-    backText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    }
 
 });

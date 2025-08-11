@@ -1,16 +1,23 @@
+// Lokasi file: app/_layout.js
+
 import { Stack } from 'expo-router';
+// 1. Impor UserProvider dari folder context
+import { UserProvider } from '../context/UserContext';
+import { ReminderProvider } from '../context/ReminderContext';
+import { PlantProvider } from '../context/PlantContext';
 
 export default function RootLayout() {
   return (
-    <Stack>
-      {/* PENTING: StarterPage harus menjadi Stack.Screen PERTAMA */}
-      <Stack.Screen name="StarterPage" options={{ headerShown: false }} />
+    <PlantProvider>
+    <UserProvider>
+      <ReminderProvider>
+        <Stack initialRouteName="Starter" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Starter" />
+          <Stack.Screen name="(tabs)" />
 
-      {/* Ini adalah navigator tab Anda. Ketika onboarding selesai, kita akan navigasi ke sini. */}
-      {/* Nama "(tabs)" harus cocok dengan nama folder Anda: app/(tabs) */}
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-      {/* Anda bisa menambahkan rute lain di sini jika ada */}
-    </Stack>
+        </Stack>
+      </ReminderProvider>
+    </UserProvider>
+    </PlantProvider>
   );
 }

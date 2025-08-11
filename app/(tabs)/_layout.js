@@ -3,16 +3,14 @@ import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
+
 import BottomNavBar from '../../components/navbar';
-import { UserProvider } from '../../context/UserContext';
+// import { UserProvider } from '../../context/UserContext'; // Hapus impor ini jika sudah ada di app/_layout.js
 import { JournalAndArticleProvider } from '../../context/JournalAndArticleStore';
 
-// Mencegah splash screen hilang secara otomatis sebelum font selesai dimuat
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
-  // --- MULAI LOGIKA PEMUATAN FONT ---
-  // Muat semua variasi font yang Anda inginkan dari folder assets/fonts/
   const [fontsLoaded, fontError] = useFonts({
     'Nunito-Light': require('../../assets/fonts/Nunito-Light.ttf'),
     'Nunito-Regular': require('../../assets/fonts/Nunito-Regular.ttf'),
@@ -26,7 +24,6 @@ export default function TabLayout() {
   });
 
   useEffect(() => {
-    // Sembunyikan splash screen setelah font dimuat (atau jika ada error)
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
@@ -36,11 +33,7 @@ export default function TabLayout() {
   if (!fontsLoaded && !fontError) {
     return null;
   }
-  // --- AKHIR LOGIKA PEMUATAN FONT ---
-
-  // Setelah font dimuat, render seluruh aplikasi Anda seperti biasa
   return (
-    <UserProvider>
       <JournalAndArticleProvider>
         <Tabs
           screenOptions={{
@@ -50,9 +43,11 @@ export default function TabLayout() {
           tabBar={({ navigation, state, descriptors }) => {
             const currentRouteName = state.routes[state.index].name;
 
-            // Jangan tampilkan navbar di halaman-halaman ini
-            if (currentRouteName === 'Journal/ListJournal' || currentRouteName === 'Journal/IsiJournal') {
-              return null;
+            // Hide navbar for specific screens (but keep it for AddReminder/EditReminder to show active Reminder tab)
+            if (currentRouteName.includes('ArticleComponents') || 
+                currentRouteName === 'Journal/ListJournal' || 
+                currentRouteName === 'Journal/IsiJournal') {
+                return null;
             }
 
             return (
@@ -82,6 +77,20 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
+            name="AddReminder"
+            options={{
+              title: 'Add Reminder',
+              href: null, // Hide from tab bar
+            }}
+          />
+          <Tabs.Screen
+            name="EditReminder"
+            options={{
+              title: 'Edit Reminder',
+              href: null, // Hide from tab bar
+            }}
+          />
+          <Tabs.Screen
             name="Journal"
             options={{
               title: 'Journal',
@@ -99,9 +108,7 @@ export default function TabLayout() {
               title: 'Profile',
             }}
           />
-          {/* Tambahkan screen lain di bawah <Tabs> jika ada */}
         </Tabs>
       </JournalAndArticleProvider>
-    </UserProvider>
   );
 }

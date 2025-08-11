@@ -1,7 +1,7 @@
-// File: src/app/ArticleScreen.js
-
+// article 
+// File: growiie kirim/app/(tabs)/Article.js
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     StyleSheet,
     Text,
@@ -11,7 +11,6 @@ import {
     TouchableOpacity,
     TextInput,
     FlatList,
-    Animated,
     Keyboard,
     Alert
 } from 'react-native';
@@ -23,179 +22,13 @@ import {
     Nunito_500Medium
 } from '@expo-google-fonts/nunito';
 import { useJournalAndArticle } from '../../context/JournalAndArticleStore';
-import { router } from 'expo-router'; // Import router from expo-router
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 
-// =============================================================================
-// Start of Merged Components
-// =============================================================================
+import ArticleCard from './ArticleComponents/ArticleCard';
 
-// Helper function to truncate text for preview
-const truncateText = (text, maxLength) => {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-};
-
-// Component from plantcard.js
-const PlantCard = ({ item, selectionMode, selectedItems, toggleSelection, onCardPress, enterSelectionMode, isLiked, toggleLike }) => {
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-
-    const handleLike = () => {
-        Animated.sequence([
-            Animated.timing(scaleAnim, {
-                toValue: 1.5,
-                duration: 100,
-                useNativeDriver: true,
-            }),
-            Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 100,
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            toggleLike(item.id); // Use parent's toggleLike
-        });
-    };
-
-    return (
-        <TouchableOpacity
-            style={styles.plantCardWrapper}
-            onLongPress={() => enterSelectionMode(item.id)}
-            onPress={() => selectionMode ? toggleSelection(item.id) : onCardPress(item)} // Call onCardPress
-            activeOpacity={0.9}
-        >
-            {selectionMode && (
-                <TouchableOpacity
-                    style={styles.plantCardCheckboxContainer}
-                    onPress={() => toggleSelection(item.id)}
-                >
-                    <Image
-                        source={
-                            selectedItems.includes(item.id)
-                                ? require('../../assets/images/checkbox_checked.png')
-                                : require('../../assets/images/checkbox_unchecked.png')
-                        }
-                        style={styles.plantCardCheckboxIcon}
-                    />
-                </TouchableOpacity>
-            )}
-            <View style={[styles.plantCard, selectionMode && styles.plantCardShrink]}>
-                <View style={styles.plantCardTopSection}>
-                    <Image source={item.image} style={styles.plantCardImage} />
-                    <View style={styles.plantCardRightInfo}>
-                        <TouchableOpacity onPress={handleLike} activeOpacity={0.8}>
-                            <Animated.Image
-                                source={
-                                    isLiked
-                                        ? require('../../assets/images/like_active.png')
-                                        : require('../../assets/images/like_inactive.png')
-                                }
-                                style={[styles.plantCardHeartButton, { transform: [{ scale: scaleAnim }] }]}
-                            />
-                        </TouchableOpacity>
-                        <Image source={item.avatar} style={styles.plantCardAvatar} />
-                        <Text style={styles.plantCardUsername}>{item.username}</Text>
-                    </View>
-                </View>
-                <View style={styles.plantCardBottomSection}>
-                    <Text style={styles.plantCardName}>{item.name}</Text>
-                    {/* Display truncated fullArticle for preview */}
-                    <Text style={styles.plantCardDescription}>
-                        {truncateText(item.fullArticle, 50)} {/* Display 250 characters from fullArticle */}
-                    </Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
-};
-
-// Component from detail.js
-export function DetailScreen({ plant, isLiked, toggleLike, onBack }) {
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-
-    const handleLikePress = () => {
-        Animated.sequence([
-            Animated.timing(scaleAnim, {
-                toValue: 1.2,
-                duration: 100,
-                useNativeDriver: true,
-            }),
-            Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 100,
-                useNativeDriver: true,
-            }),
-        ]).start(() => {
-            toggleLike(plant.id);
-        });
-    };
-
-    let [fontsLoaded] = useFonts({
-        Nunito_400Regular,
-        Nunito_700Bold,
-    });
-
-    if (!fontsLoaded) {
-        return null;
-    }
-
-    return (
-        <View style={styles.detailContainer}>
-            <StatusBar
-                barStyle="dark-content"
-                backgroundColor="#fff"
-                translucent={false}
-            />
-
-            <View style={styles.detailHeader}>
-                <TouchableOpacity onPress={onBack} style={styles.detailHeaderButton}>
-                    <Image source={require('../../assets/images/weui_back-outlined.png')} style={styles.detailHeaderIcon} />
-                </TouchableOpacity>
-                <Text style={styles.detailHeaderText}>Article</Text>
-                <TouchableOpacity onPress={handleLikePress} style={styles.detailHeaderButton}>
-                    <Animated.Image
-                        source={
-                            isLiked
-                                ? require('../../assets/images/like_active.png')
-                                : require('../../assets/images/like_inactive.png')
-                        }
-                        style={[styles.detailHeaderIcon, { transform: [{ scale: scaleAnim }] }]}
-                    />
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView contentContainerStyle={styles.detailScrollContent}>
-                <View style={styles.detailTopImageSection}>
-                    <Image source={plant.image} style={styles.detailMainPlantImage} />
-                    <View style={styles.detailOverlayInfo}>
-                        <Image source={plant.avatar} style={styles.detailAvatar} />
-                        <Text style={styles.detailUsername}>{plant.username}</Text>
-                    </View>
-                </View>
-
-                <View style={styles.detailContentSection}>
-                    <Text style={styles.detailPlantName}>{plant.name}</Text>
-                    <Text style={styles.detailDateText}>Date: {plant.date}</Text>
-
-                    <Text style={styles.detailSectionTitle}>📸 Photo of the Day</Text>
-                    <Image source={plant.photoOfTheDayImage} style={styles.detailPhotoOfDayImage} />
-                    <Text style={styles.detailQuoteText}>{plant.quote}</Text>
-
-                    <Text style={styles.detailFullArticleText}>
-                        {plant.fullArticle}
-                    </Text>
-                </View>
-            </ScrollView>
-        </View>
-    );
-}
-
-// =============================================================================
-// End of Merged Components
-// =============================================================================
-
-// Initial static data for other categories (not 'publish')
-const initialData = [
+export const initialData = [
     {
         id: '1',
         name: 'How to Plant a New Houseplant',
@@ -241,7 +74,7 @@ If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit d
         id: '3',
         name: 'Snake Plant',
         description: 'Extremely hardy and low-maintenance, perfect for beginners.',
-        image: require('../../assets/images/plant.png'),
+        image: require('../../assets/images/peacelily.png'),
         avatar: require('../../assets/images/pp.jpg'),
         username: 'GreenThumb',
         category: 'trending',
@@ -252,7 +85,7 @@ If you're thinking of getting a Fiddle Leaf Fig, be patient! They can be a bit d
 
 Its upright, sword-like leaves add a modern touch to any decor, and it's also excellent for air purification. I have one in my bedroom and one in the living room, and they always look great with minimal effort.
 
-If you want a plant that won't give you any trouble, the Snake Plant is definitely the way to go. It's almost impossible to kill!
+If you want a plant that won't give you any trouble, the Snake Plant is definitely the way to go. It's almost foolproof!
 `
     },
     {
@@ -314,45 +147,60 @@ Highly recommend a Peace Lily if you want a plant that adds beauty and purpose t
     },
 ];
 
-function ArticleScreen({ navigation }) {
-    // Memberikan nilai default [] untuk publishedArticles untuk menghindari error
-    const { publishedArticles = [] } = useJournalAndArticle();
+function ArticleScreen() {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+    const { publishedArticles, deletePublishedArticles, likedArticles = new Set(), toggleLike } = useJournalAndArticle();
     const [activeTab, setActiveTab] = useState('all');
-    const [plants, setPlants] = useState(initialData);
     const [searchQuery, setSearchQuery] = useState('');
 
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
-    const [likedItems, setLikedItems] = useState(new Set()); // Global state for liked items
 
-    // State to manage showing the detail screen
-    const [showArticleDetail, setShowArticleDetail] = useState(false);
-    const [selectedArticle, setSelectedArticle] = useState(null);
-
-    // Menggabungkan publishedArticles ke dalam data `plants`
-    useEffect(() => {
-        // Buat salinan initialData
+    useFocusEffect(
+        useCallback(() => {
+            if (params.article) {
+                router.setParams({ article: undefined });
+            }
+            setSelectionMode(false);
+            setSelectedItems([]);
+        }, [params.article])
+    );
+    
+    // Perbaikan: Menggunakan useMemo untuk menghindari loop tak terbatas.
+    const allArticles = useMemo(() => {
         const combinedData = [...initialData];
-        // Tambahkan artikel dari publishedArticles jika belum ada
         publishedArticles.forEach(pubArticle => {
             if (!combinedData.some(item => item.id === pubArticle.id)) {
                 combinedData.push(pubArticle);
             }
         });
-        setPlants(combinedData);
+        return combinedData;
     }, [publishedArticles]);
 
-    const toggleLike = useCallback((itemId) => {
-        setLikedItems(prevLikedItems => {
-            const newLikedItems = new Set(prevLikedItems);
-            if (newLikedItems.has(itemId)) {
-                newLikedItems.delete(itemId);
-            } else {
-                newLikedItems.add(itemId);
-            }
-            return newLikedItems;
-        });
-    }, []);
+    const filteredPlants = useMemo(() => {
+        let currentPlants = [];
+
+        if (activeTab === 'all') {
+            currentPlants = allArticles;
+        } else if (activeTab === 'publish') {
+            currentPlants = publishedArticles;
+        } else {
+            currentPlants = allArticles.filter(item => item.category === activeTab);
+        }
+
+        if (searchQuery) {
+            const lowerCaseQuery = searchQuery.toLowerCase();
+            currentPlants = currentPlants.filter(item =>
+                item.name.toLowerCase().includes(lowerCaseQuery) ||
+                item.description.toLowerCase().includes(lowerCaseQuery) ||
+                item.username.toLowerCase().includes(lowerCaseQuery) ||
+                item.fullArticle.toLowerCase().includes(lowerCaseQuery)
+            );
+        }
+
+        return currentPlants;
+    }, [activeTab, searchQuery, allArticles, publishedArticles]);
 
     const tabs = [
         { key: 'all', label: 'All' },
@@ -386,14 +234,17 @@ function ArticleScreen({ navigation }) {
             return;
         }
 
-        const deletableItems = plants.filter(item => selectedItems.includes(item.id) && item.category === 'publish');
+        const deletableItems = allArticles.filter(item => selectedItems.includes(item.id) && item.category === 'publish');
         const nonDeletableItems = selectedItems.filter(id => {
-            const item = plants.find(plant => plant.id === id);
+            const item = allArticles.find(plant => plant.id === id);
             return item && item.category !== 'publish';
         });
 
         if (nonDeletableItems.length > 0 && deletableItems.length === 0) {
-            Alert.alert('Deletion Restricted', 'Only articles with the category "My Publish" can be deleted.');
+            Alert.alert(
+                'Deletion Restricted',
+                'Only articles with the category "My Publish" can be deleted.'
+            );
             return;
         }
 
@@ -409,7 +260,8 @@ function ArticleScreen({ navigation }) {
                     {
                         text: 'Delete Eligible',
                         onPress: () => {
-                            setPlants(plants.filter(item => !(selectedItems.includes(item.id) && item.category === 'publish')));
+                            // Panggil fungsi baru untuk menghapus artikel yang dipublikasikan
+                            deletePublishedArticles(deletableItems.map(item => item.id));
                             exitSelectionMode();
                         },
                         style: 'destructive',
@@ -429,7 +281,8 @@ function ArticleScreen({ navigation }) {
                     {
                         text: 'Delete',
                         onPress: () => {
-                            setPlants(plants.filter((item) => !selectedItems.includes(item.id)));
+                            // Panggil fungsi baru untuk menghapus artikel yang dipublikasikan
+                            deletePublishedArticles(selectedItems);
                             exitSelectionMode();
                         },
                         style: 'destructive',
@@ -440,53 +293,22 @@ function ArticleScreen({ navigation }) {
         }
     };
 
-    const filteredPlants = React.useMemo(() => {
-        let currentPlants = []; // Initialize with an empty array
-
-        if (activeTab === 'all') {
-            // For 'All' tab, use combined initialData and publishedArticles
-            currentPlants = plants;
-        } else if (activeTab === 'publish') {
-            // For 'My Publish' tab, only use publishedArticles
-            currentPlants = publishedArticles;
-        } else {
-            // For other tabs, filter from all available data (initialData + publishedArticles)
-            currentPlants = plants.filter(item => item.category === activeTab);
-        }
-
-        if (searchQuery) {
-            const lowerCaseQuery = searchQuery.toLowerCase();
-            currentPlants = currentPlants.filter(item =>
-                item.name.toLowerCase().includes(lowerCaseQuery) ||
-                item.description.toLowerCase().includes(lowerCaseQuery) ||
-                item.username.toLowerCase().includes(lowerCaseQuery) ||
-                item.fullArticle.toLowerCase().includes(lowerCaseQuery) // Also search in fullArticle
-            );
-        }
-
-        return currentPlants;
-    }, [activeTab, plants, searchQuery, publishedArticles]); // Add publishedArticles as a dependency
-
-    const handleCardPress = (plant) => {
-        setSelectedArticle(plant);
-        setShowArticleDetail(true);
-};
-
-    const handleBackFromDetail = () => {
-        setShowArticleDetail(false);
-        setSelectedArticle(null);
+    const handleCardPress = (article) => {
+        router.push({
+            pathname: `/(tabs)/ArticleComponents/${article.id}`,
+        });
     };
 
     const renderItem = ({ item }) => (
-        <PlantCard
+        <ArticleCard
             item={item}
             selectionMode={selectionMode}
             selectedItems={selectedItems}
             toggleSelection={toggleSelection}
-            onCardPress={handleCardPress} // Pass the new handler
+            onCardPress={handleCardPress}
             enterSelectionMode={enterSelectionMode}
-            isLiked={likedItems.has(item.id)} // Pass liked status
-            toggleLike={toggleLike} // Pass toggle function
+            isLiked={likedArticles.has(item.id)}
+            toggleLike={toggleLike}
         />
     );
     let [fontsLoaded] = useFonts({
@@ -501,35 +323,17 @@ function ArticleScreen({ navigation }) {
     }
 
     const handleAdd = () => {
-        Alert.alert('Add Button Pressed', 'You tapped the add button! Implement your add logic here.');
+        router.push('/(tabs)/Journal');
     };
-
-    if (showArticleDetail && selectedArticle) {
-        return (
-            <DetailScreen
-                plant={selectedArticle}
-                isLiked={likedItems.has(selectedArticle.id)}
-                toggleLike={toggleLike}
-                onBack={handleBackFromDetail} // Pass the new back handler
-            />
-        );
-    }
 
     return (
         <View style={styles.container}>
             <StatusBar style="light-content" />
 
             <View style={styles.header}>
-                {selectionMode ? (
+                {selectionMode && (
                     <TouchableOpacity onPress={exitSelectionMode} style={styles.headerButtonBatal}>
                         <Text style={styles.headerButtonTextContent}>Cancel</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity
-                        style={styles.headerIcon}
-                        onPress={() => navigation.goBack()} // Keep navigation for the main tab back button
-                    >
-                        <Image source={require('../../assets/images/weui_back-outlined.png')} />
                     </TouchableOpacity>
                 )}
 
@@ -598,11 +402,8 @@ function ArticleScreen({ navigation }) {
     );
 }
 
-export default ArticleScreen;
-
 const styles = StyleSheet.create({
-    // Styles from original article.js
-    container: { flex: 1, backgroundColor: '#fff' },
+    container: { flex: 1, backgroundColor: '#fff', width: '100%' },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -612,28 +413,18 @@ const styles = StyleSheet.create({
         marginTop: 50,
         paddingHorizontal: 20,
         position: 'relative',
-    },
-    headerIcon: {
-        width: 30,
-        height: 30,
         justifyContent: 'center',
-        alignItems: 'center',
-        position: 'absolute',
-        left: 20,
-        zIndex: 1,
     },
     headerText: {
-        fontFamily: 'Nunito_700Bold',
+        fontFamily: 'Nunito-ExtraBold',
         fontSize: 20,
         color: '#448461',
-        position: 'absolute',
-        left: 0,
-        right: 0,
+        position: 'relative',
         textAlign: 'center',
         zIndex: 0,
     },
     headerButtonHapus: {
-        fontFamily: 'Nunito_400Regular',
+        fontFamily: 'Nunito_700Bold',
         position: 'absolute',
         right: 20,
         backgroundColor: '#448461',
@@ -646,7 +437,7 @@ const styles = StyleSheet.create({
     },
     headerButtonBatal: {
         position: 'absolute',
-        marginLeft: 20,
+        left: 20,
         backgroundColor: '#A9A8A8',
         paddingVertical: 5,
         paddingHorizontal: 10,
@@ -662,7 +453,7 @@ const styles = StyleSheet.create({
     },
     search: {
         flexDirection: 'row',
-        width: 360,
+        width: '92%',
         height: 40,
         backgroundColor: '#FBF2D6',
         alignItems: 'center',
@@ -671,7 +462,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         paddingHorizontal: 10,
     },
-    filterContainer: { flexDirection: 'row', marginTop: 5, marginLeft: 30 },
+    filterContainer: { flexDirection: 'row', marginTop: 5, marginLeft: 15, marginRight: 15 },
     filterContainergeser: { paddingVertical: 5, paddingRight: 20 },
     tabButton: { borderWidth: 1, borderColor: '#448461', borderRadius: 15, paddingVertical: 8, paddingHorizontal: 16, marginHorizontal: 5 },
     activeTab: { backgroundColor: '#448461' },
@@ -710,171 +501,6 @@ const styles = StyleSheet.create({
         height: 60,
         resizeMode: 'contain',
     },
-
-    // Styles from plantcard.js (prefixed with 'plantCard')
-    plantCardWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-        width: 330,
-        alignSelf: 'center',
-    },
-    plantCardCheckboxContainer: {
-        width: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    plantCardCheckboxIcon: {
-        width: 24,
-        height: 24,
-    },
-    plantCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        overflow: 'hidden',
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 6,
-        elevation: 4,
-        flex: 1,
-        width: 330,
-    },
-    plantCardShrink: {
-        width: 400,
-    },
-    plantCardTopSection: { flexDirection: 'row' },
-    plantCardImage: { width: 230, height: 150, resizeMode: 'cover' },
-    plantCardRightInfo: { backgroundColor: '#DCF0E4', width: 100, paddingVertical: 10 },
-    plantCardAvatar: { width: 50, height: 50, borderRadius: 30, borderColor: '#448461', borderWidth: 1, marginBottom: 5, marginTop: 20, alignSelf: 'center', justifyContent: 'center' },
-    plantCardUsername: { fontSize: 14, color: '#448461', marginBottom: 10, justifyContent: 'center', alignSelf: 'center' },
-    plantCardHeartButton: { width: 24, height: 24, alignSelf: 'flex-end', marginRight: 10 },
-    plantCardBottomSection: { padding: 10, paddingHorizontal: 20, paddingBottom: 20 },
-    plantCardName: { fontSize: 16, fontWeight: 'bold', color: '#448461', marginBottom: 4 },
-    plantCardDescription: {
-        fontSize: 13,
-        color: '#666',
-        numberOfLines: 4, // Limit to 4 lines for preview
-    },
-
-    // Styles from detail.js (prefixed with 'detail')
-    detailContainer: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    detailHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        height: 60,
-        width: '100%',
-        marginTop: 50,
-        paddingHorizontal: 20,
-        justifyContent: 'space-between',
-        backgroundColor: '#fff',
-    },
-    detailHeaderButton: {
-        width: 30,
-        height: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    detailHeaderIcon: {
-        width: 24,
-        height: 24,
-        resizeMode: 'contain',
-    },
-    detailHeaderText: {
-        flex: 1,
-        fontSize: 20,
-        fontFamily: 'Nunito_700Bold',
-        color: '#448461',
-        textAlign: 'center',
-    },
-    detailScrollContent: {
-        paddingBottom: 20,
-    },
-    detailTopImageSection: {
-        width: '100%',
-        height: 250,
-        position: 'relative',
-    },
-    detailMainPlantImage: {
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
-        width: '100%',
-        fontFamily: 'Nunito_700Bold',
-        height: '100%',
-        resizeMode: 'cover',
-    },
-    detailOverlayInfo: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: 'rgba(59, 59, 59, 0.4)',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-    },
-    detailAvatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 30,
-        borderColor: '#fff',
-        borderWidth: 1,
-        marginRight: 10,
-    },
-    detailUsername: {
-        fontSize: 16,
-        fontFamily: 'Nunito_700Bold',
-        color: '#fff',
-    },
-    detailContentSection: {
-        padding: 20,
-    },
-    detailPlantName: {
-        fontSize: 24,
-        fontFamily: 'Nunito_700Bold',
-        color: '#448461',
-        marginBottom: 5,
-    },
-    detailDateText: {
-        fontSize: 14,
-        color: '#666',
-        fontFamily: 'Nunito_400Regular',
-        marginBottom: 20,
-    },
-    detailSectionTitle: {
-        fontSize: 16,
-        color: '#448461',
-        marginTop: 10,
-        fontFamily: 'Nunito_700Bold',
-        marginBottom: 10,
-    },
-    detailPhotoOfDayImage: {
-        width: '100%',
-        height: 200,
-        resizeMode: 'cover',
-        borderRadius: 8,
-        marginBottom: 10,
-    },
-    detailQuoteText: {
-        fontSize: 15,
-        fontStyle: 'italic',
-        color: '#888',
-        textAlign: 'center',
-        marginVertical: 15,
-        paddingHorizontal: 10,
-        fontFamily: 'Nunito_400Regular'
-    },
-    detailFullArticleText: {
-        fontSize: 15,
-        color: '#333',
-        fontFamily: 'Nunito_400Regular',
-        lineHeight: 22,
-        marginTop: 10,
-        marginBottom: 60
-    },
 });
+
+export default ArticleScreen;
