@@ -147,7 +147,7 @@ export default function Reminder() {
     } else {
       // Fallback jika reminder tidak ditemukan, arahkan ke AddReminder
       console.log("No reminder found for id:", targetReminderId);
-      navigation.navigate('AddReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
+      navigation.navigate('addReminder', { title: `Add Reminder for ${day.day}, ${day.month} ${day.date}` });
     }
   };
 
@@ -434,9 +434,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   headerTitle: {
-    fontSize: 28,
-    fontFamily: 'Nunito-Bold',
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontFamily: 'Nunito-ExtraBold',
     color: '#000',
     marginBottom: 8,
   },
@@ -444,7 +443,7 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: '#448461',
     marginBottom: 25,
-    width: '70%', // Approximately 4/6 of the screen width
+    width: '70%', 
   },
   upcomingContainer: {
     marginBottom: 45,
@@ -460,14 +459,13 @@ const styles = StyleSheet.create({
     padding: 10,
     height: 115,
     borderRadius: 10,
-    width: '23%', // Adjusted to fit 4 cards with small spacing
+    width: '23%', 
     justifyContent: 'flex-start',
     position: 'relative',
   },
   dayName: {
-    fontFamily: 'Nunito-Bold',
-    fontWeight: 'bold',
-    fontSize: 27,
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 24,
     color: '#000',
     textAlign: 'left',
   },
@@ -475,18 +473,18 @@ const styles = StyleSheet.create({
     marginStart: 3,
   },
   yearText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 10,
     color: '#000',
     opacity: 0.7,
   },
   dateText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 10,
     color: '#000',
   },
   seeMoreText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-Regular',
     fontSize: 10,
     color: '#7BAB91',
     opacity: 0.8,
@@ -502,22 +500,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   reminderPreviewTime: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 9,
     color: '#448461',
-    fontWeight: 'bold',
   },
   reminderPreviewTitle: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 8,
     color: '#7BAB91',
     maxWidth: 60,
     textAlign: 'right',
   },
   sectionTitle: {
-    fontSize: 28,
-    fontFamily: 'Nunito-Bold',
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontFamily: 'Nunito-ExtraBold',
     color: '#000',
     marginBottom: 8,
   },
@@ -542,7 +538,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#448461',
   },
   categoryText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 14,
     color: '#448461',
   },
@@ -554,7 +550,7 @@ const styles = StyleSheet.create({
   },
   reminderContainer: {
     marginBottom: 16,
-    height: 130,
+    height: 110,
     position: 'relative',
   },
   reminderCardBackground: {
@@ -593,18 +589,16 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   reminderTime: {
-    fontFamily: 'Nunito-Bold',
-    fontWeight: 'bold',
-    fontSize: 35,
+    fontFamily: 'Nunito-ExtraBold',
+    fontSize: 30,
     marginStart: 10,
     marginBottom: 11,
     marginTop: 4,
   },
   reminderTitle: {
-    fontFamily: 'Nunito-Bold',
-    fontWeight: 'bold',
+    fontFamily: 'Nunito-SemiBold',
     marginStart: 12,
-    fontSize: 19,
+    fontSize: 16,
   },
   activeText: {
     color: '#448461',
@@ -622,29 +616,28 @@ const styles = StyleSheet.create({
   daysContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap', // Allow wrapping for longer texts
-    maxWidth: 180, // Maximum width to prevent overflow
+    flexWrap: 'wrap', 
+    maxWidth: 180, 
   },
   dayIndicator: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 15,
     marginRight: 4,
     color: '#CCCCCC',
   },
   weekIndicator: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 15,
     color: '#CCCCCC',
   },
   frequencyIndicator: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 12,
     marginRight: 4,
     maxWidth: 130, // Prevent text from wrapping too much
   },
   activeDayIndicator: {
     color: '#448461',
-    fontWeight: 'bold',
   },
   inactiveDayIndicator: {
     color: '#AAC8B8',
@@ -712,7 +705,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   emptyText: {
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-SemiBold',
     fontSize: 16,
     color: '#999',
   }

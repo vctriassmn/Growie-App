@@ -137,16 +137,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
     color: '#333',
+    fontFamily: 'Nunito-Black',
   },
   description: {
     fontSize: 16,
     textAlign: 'center',
     color: '#666',
     paddingHorizontal: 20,
+    fontFamily: 'Nunito-Regular',
   },
   dotContainer: {
     flexDirection: 'row',
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   activeDot: {
-    backgroundColor: '#5c8d5c',
+    backgroundColor: '#448461',
   },
   inactiveDot: {
     backgroundColor: '#ccc',
@@ -185,9 +186,10 @@ const styles = StyleSheet.create({
   navText: {
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Nunito-SemiBold',
   },
   nextButton: {
-    backgroundColor: '#5c8d5c',
+    backgroundColor: '#448461',
     paddingVertical: 10,
     paddingHorizontal: 25,
     borderRadius: 25,
@@ -195,6 +197,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 16,
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Nunito-SemiBold',
   },
 });

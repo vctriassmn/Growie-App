@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import Reminder from './Reminder';
-import AddReminder from './addReminder';
+import AddReminder from './AddReminder';
 import EditReminder from './EditReminder';
 
 const Stack = createStackNavigator();

@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     plantCardUsername: {
-        fontSize: 14,
+        fontSize: 10,
         color: '#448461',
         marginBottom: 10,
     },

@@ -332,6 +332,8 @@ function ArticleScreen() {
         }
     };
 
+    
+
     const handleCardPress = (article) => {
         router.push({
             pathname: `/(tabs)/ArticleComponents/${article.id}`,

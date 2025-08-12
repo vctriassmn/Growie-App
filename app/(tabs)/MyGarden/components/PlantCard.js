@@ -60,7 +60,8 @@ const PlantCard = ({
         if (isSelecting) {
           toggleSelect(plant.id);
         } else {
-          router.push(`/plant/${plant.id}`);
+          // Navigasi ke rute dinamis yang baru
+          router.push(`/plant/${plant.id}`); 
         }
       }}
     >
