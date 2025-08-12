@@ -274,7 +274,7 @@ setTimeout(() => {
                     cssText: `* { text-align: justify !important; } p { text-align: justify !important; }`, 
                 }}
                 useContainer={false}
-                initialCSSText={`body, p, div { font-family: 'Nunito-Regular'; color: #448461; font-size: 16px; line-height: 24px; text-align: justify !important; }`}
+                initialCSSText={`body, p, div { font-family: 'Nunito-Regular'; color: #448461; font-size: 14px; line-height: 24px; text-align: justify !important; }`}
             />
         ) : (
             <AutoHeightWebView
@@ -299,7 +299,7 @@ setTimeout(() => {
                                 u { text-decoration: underline; }
                                 input[type="checkbox"] {
                                     appearance: none;
-                                    width: 18px; height: 18px; border: 2px solid #694B40; border-radius: 4px;
+                                    width: 20px; height: 20px; border: 2px solid #694B40; border-radius: 4px;
                                     vertical-align: middle; margin-right: 8px; position: relative;
                                 }
                                 input[type="checkbox"]:checked {

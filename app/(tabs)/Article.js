@@ -149,12 +149,12 @@ Highly recommend a Peace Lily if you want a plant that adds beauty and purpose t
   id: '7',
   name: 'Tips Merawat Pohon Berry',
   description: 'Panduan lengkap merawat pohon berry agar tumbuh subur dan berbuah lebat.',
-  image: require('../../assets/images/peacelily.png'), // ganti dengan path gambar pohon berry
+  image: require('../../assets/images/berry.png'), // ganti dengan path gambar pohon berry
   avatar: require('../../assets/images/pp.jpg'),
   username: 'BerryGardener',
   category: 'trending',
   date: '7 Juli 2025',
-  photoOfTheDayImage: require('../../assets/images/peacelily.png'), 
+  photoOfTheDayImage: require('../../assets/images/berry.png'), 
   quote: '"Rawat dengan cinta, panen berry yang manis akan datang."',
   fullArticle: `Merawat pohon berry memang membutuhkan perhatian khusus agar tanaman dapat tumbuh sehat dan menghasilkan buah yang maksimal. Berikut ini beberapa tips penting yang dapat membantu kamu dalam merawat pohon berry:
 

@@ -28,7 +28,7 @@ const initialJournalData = {
             id: '2a-unique', 
             title: 'Checklist Perawatan Hari Ini',
             // Hapus spasi dan baris baru di awal dan akhir string
-            content: `<p>Belum ada perubahan signifikan yang terlihat, tapi penting untuk menjaga rutinitas. Berikut adalah daftar tugas untuk hari ini:</p><div style="margin-top: 10px;"><div><input type="checkbox" checked />  Memeriksa kelembaban tanah (terasa masih lembab).</div><div><input type="checkbox" />  Memastikan drainase pot tidak tersumbat.</div><div><input type="checkbox" checked />  Memutar pot agar semua sisi mendapat cahaya.</div><div><input type="checkbox" />  Memberi semangat pada benih (ini bagian terpenting!).</div></div><p style="margin-top: 15px;">Semoga besok atau lusa sudah ada tanda-tanda kehidupan. Sabar adalah kunci dalam berkebun!</p>`
+            content: `<p>Belum ada perubahan signifikan yang terlihat, tapi penting untuk menjaga rutinitas. Berikut adalah daftar tugas untuk hari ini:</p><div style="margin-top: 10px;"><div><input type="checkbox" checked /> Memeriksa kelembaban tanah (terasa masih lembab).</div><div><input type="checkbox" /> Memastikan drainase pot tidak tersumbat.</div><div><input type="checkbox" checked /> Memutar pot agar semua sisi mendapat cahaya.</div><div><input type="checkbox" /> sMemberi semangat pada benih (ini bagian terpenting!).</div></div><p style="margin-top: 15px;">Semoga besok atau lusa sudah ada tanda-tanda kehidupan. Sabar adalah kunci dalam berkebun!</p>`
         },
         { 
             id: '3a', 

@@ -13,9 +13,9 @@ import { Animated } from 'react-native';
 
 // Data dummy
 const latestArticlesData = [
-  { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide...', image: require('../../assets/images/caramenyiram.png'), avatar: require('../../assets/images/Logo.png'), username: 'Growie', liked: false, },
-  { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree...', image: require('../../assets/images/plant.png'), avatar: require('../../assets/images/pp.jpg'), username: 'User123', liked: true, },
-  { id: '3', name: 'Snake Plant', description: 'Extremely hardy and low-maintenance...', image: require('../../assets/images/peacelily.png'), avatar: require('../../assets/images/pp.jpg'), username: 'GreenThumb', liked: false, },
+  { id: '1', name: 'How to Plant a New Houseplant', description: 'A beginner-friendly guide to planting any houseplant, from pot selection to first watering.', image: require('../../assets/images/caramenyiram.png'), avatar: require('../../assets/images/Logo.png'), username: 'Growie', liked: false, },
+  { id: '2', name: 'Fiddle Leaf Fig', description: 'A popular indoor tree with large, violin-shaped leaves.', image: require('../../assets/images/plant.png'), avatar: require('../../assets/images/pp.jpg'), username: 'User123', liked: true, },
+  { id: '3', name: 'Snake Plant', description: 'Extremely hardy and low-maintenance, perfect for beginners.', image: require('../../assets/images/peacelily.png'), avatar: require('../../assets/images/pp.jpg'), username: 'GreenThumb', liked: false, },
 ];
 
 // Impor Aset
@@ -68,7 +68,14 @@ const ArticleCard = ({ item, onCardPress, onLikeToggle }) => {
         </View>
         <View style={styles.articleBottomSection}>
           <Text style={styles.articleName}>{item.name}</Text>
-          <Text style={styles.articleDescription} numberOfLines={2}>{item.description}</Text>
+          <Text 
+  style={styles.articleDescription}
+  numberOfLines={1}
+  ellipsizeMode="tail"
+>
+  {item.description}
+</Text>
+
         </View>
       </View>
     </TouchableOpacity>
@@ -257,7 +264,7 @@ header: {
   bellContainer: { width: 35, height: 35, borderRadius: 22, backgroundColor: '#FBF2D6', justifyContent: 'center', alignItems: 'center', marginRight: 15, ...shadowStyle, },
   section: { backgroundColor: '#D9ECE1', borderRadius: 20, paddingTop: 15, paddingBottom: 15, paddingHorizontal: 15, marginBottom: 35, ...shadowStyle, },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, },
-  sectionTitle: { fontSize: 18, color: '#333', fontFamily: 'Nunito-SemiBold' },
+  sectionTitle: { fontSize: 18, color: '#333', fontFamily: 'Nunito-ExtraBold' },
   seeMore: { fontSize: 14, color: '#555', fontFamily: 'Nunito-Regular' },
   
   // --- PERBAIKAN STYLE KARTU TAMAN DI SINI ---
@@ -306,8 +313,17 @@ header: {
   articleAvatar: { width: 50, height: 50, borderRadius: 25, borderColor: '#448461', borderWidth: 1, marginBottom: 8, },
   articleUsername: { fontSize: 14, color: '#448461', fontFamily: 'Nunito-SemiBold' },
   articleBottomSection: { paddingVertical: 15, paddingHorizontal: 20, },
-  articleName: { fontSize: 16, color: '#333', marginBottom: 4, fontFamily: 'Nunito-SemiBold' },
-  articleDescription: { fontSize: 13, color: '#666', fontFamily: 'Nunito-Regular' },
+  articleName: { 
+        fontSize: 16,
+        fontFamily: 'Nunito-ExtraBold',
+        color: '#448461',
+        marginBottom: 4,
+   },
+  articleDescription: { 
+        fontSize: 13,
+        color: '#666',
+        numberOfLines: 6,
+        fontFamily: 'Nunito-Regular',},
   articleLikeButton: { position: 'absolute', top: 10, right: 10, padding: 5, },
   articleLikeIcon: { width: 24, height: 24, },
 });
