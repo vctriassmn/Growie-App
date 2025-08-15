@@ -4,7 +4,7 @@
     "slug": "Growie",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app_logo.png",
+    "icon": "./assets/images/app_logo(1).png",
     "scheme": "growieux",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,8 +13,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/app_logo.png",
-        "backgroundColor": "white"
+        "foregroundImage": "./assets/images/app_logo(1).png",
+        "backgroundColor": "./assets/images/app_logo(1).png"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.hzx88.Growie_UX"
@@ -22,14 +22,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/app_logo.png"
+      "favicon": "./assets/images/app_logo(1).png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/app_logo.png",
+          "image": "./assets/images/app_logo(1).png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

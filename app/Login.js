@@ -54,23 +54,29 @@ export default function LoginPage() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+  behavior={Platform.OS === "ios" ? "padding" : "padding"}
+  keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+  style={{ flex: 1 }}
+>
+
+        <ScrollView
+  keyboardShouldPersistTaps="handled"
+  contentContainerStyle={{ flexGrow: 1 }}
+>
+
           <View style={styles.container}>
             <View style={styles.topBar} />
 
             <View style={styles.formContainer}>
-              <Text style={styles.title}>Login</Text> {/* Judul diubah menjadi Login */}
-              <Text style={styles.subtitle}>Sign In to Your account</Text> {/* Subtitle disesuaikan */}
+              <Text style={styles.title}>Login</Text>
+              <Text style={styles.subtitle}>Sign In to Your account</Text>
 
               {/* Input untuk Full Name (digunakan sebagai Username) */}
               <InputWithIcon
                 IconComponent={UsernameIcon}
-                placeholder="Username" // Placeholder diubah menjadi Username
+                placeholder="Username"
                 value={fullName}
                 onChangeText={setFullName}
               />
@@ -87,13 +93,13 @@ export default function LoginPage() {
               {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
 
               <TouchableOpacity style={styles.LoginButton} onPress={handleLogin}>
-                <Text style={styles.LoginButtonText}>Login</Text> {/* Teks tombol diubah menjadi Login */}
+                <Text style={styles.LoginButtonText}>Login</Text>
               </TouchableOpacity>
 
               {/* Bagian "Or Login with" */}
               <View style={styles.dividerContainer}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Or Login with</Text> {/* Teks diubah menjadi Login */}
+                <Text style={styles.dividerText}>Or Login with</Text>
                 <View style={styles.dividerLine} />
               </View>
 
@@ -110,12 +116,14 @@ export default function LoginPage() {
                 </TouchableOpacity>
               </View>
 
-              {/* Bagian "Don't have an account? Register" */}
+              {/* Bagian "Don't have an account? Register" dengan perbaikan nesting */}
               <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/Register')}> {/* Navigasi ke halaman Register */}
-                  <Text style={styles.loginLink}>Register</Text>
-                </TouchableOpacity>
+                <Text style={styles.loginText}>
+                  Don't have an account?{' '}
+                  <Text style={styles.loginLink} onPress={() => router.push('/Register')}>
+                    Register
+                  </Text>
+                </Text>
               </View>
 
             </View>
@@ -126,9 +134,11 @@ export default function LoginPage() {
   );
 }
 
+
+// Stylesheet tidak perlu diubah
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#282828' },
-  scrollContainer: { flexGrow: 1, justifyContent: 'space-between' },
+  scrollContainer: { flexGrow: 1},
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   topBar: { height: 35, backgroundColor: '#D9D9D9' },
   formContainer: {
@@ -139,12 +149,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontFamily: 'Nunito-Black',
+    color: '#448461',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
+    fontFamily: 'Nunito-SemiBold',
     color: '#757575',
     marginBottom: 50,
   },
@@ -157,6 +168,7 @@ const styles = StyleSheet.create({
     height: 55,
     paddingHorizontal: 15,
     marginBottom: 25,
+    fontFamily: 'Nunito-Regular',
   },
   icon: {
     marginRight: 10,
@@ -165,15 +177,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333',
+    fontFamily: 'Nunito-SemiBold',
   },
   errorMessage: {
     color: '#FF0000',
     marginBottom: 15,
     fontSize: 14,
     textAlign: 'center',
+    fontFamily: 'Nunito-SemiBold',
   },
   LoginButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#448461',
     borderRadius: 30,
     width: '100%',
     paddingVertical: 15,
@@ -183,7 +197,7 @@ const styles = StyleSheet.create({
   LoginButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Nunito-ExtraBold',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -199,6 +213,7 @@ const styles = StyleSheet.create({
   dividerText: {
     marginHorizontal: 10,
     color: '#757575',
+    fontFamily: 'Nunito-Regular',
   },
   socialContainer: {
     flexDirection: 'row',
@@ -214,9 +229,10 @@ const styles = StyleSheet.create({
   },
   loginText: {
     color: '#757575',
+    fontFamily: 'Nunito-SemiBold',
   },
   loginLink: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
+    color: '#448461',
+    fontFamily: 'Nunito-ExtraBold',
   },
 });

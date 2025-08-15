@@ -92,7 +92,6 @@ const styles = StyleSheet.create({
   },
   topBar: {
     height: 30,
-    backgroundColor: '#5D4037',
   },
   scrollContainer: {
     padding: 20,
@@ -104,12 +103,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomColor: '#f0f0f0',
+    fontFamily: 'Nunito-Regular',
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
     color: '#000000',
+    fontFamily: 'Nunito-Extrabold',
   },
   backButton: {
     padding: 5,
@@ -121,24 +121,27 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   cardSuccess: {
-    backgroundColor: '#E6F5E6',
+    backgroundColor: '#D9ECE1',
   },
   cardMissed: {
-    backgroundColor: '#FBE8E8',
+    backgroundColor: '#E6BDBD',
   },
   titleText: {
     fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 4,
+    fontFamily: 'Nunito-Extrabold',
   },
   titleSuccess: {
-    color: '#388E3C',
+    color: '#448461',
+    fontFamily: 'Nunito-Extrabold',
   },
   titleMissed: {
-    color: '#D32F2F',
+    color: '#AE0000',
+    fontFamily: 'Nunito-Extrabold',
   },
   messageText: {
     fontSize: 14,
     color: '#666666',
+    fontFamily: 'Nunito-Regular',
   },
 });

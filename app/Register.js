@@ -53,9 +53,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <KeyboardAvoidingView
+  behavior={Platform.OS === "ios" ? "padding" : "padding"}
+  keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+  style={{ flex: 1 }}
+>
+
+        <ScrollView
+  keyboardShouldPersistTaps="handled"
+  contentContainerStyle={{ flexGrow: 1 }}
+>
+
           <View style={styles.container}>
             <View style={styles.topBar} />
             <View style={styles.formContainer}>
@@ -92,7 +101,6 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'space-between',
   },
   container: {
     flex: 1,
@@ -111,14 +119,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontFamily: 'Nunito-Black',
+    color: '#448461',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
     color: '#757575',
     marginBottom: 40,
+    fontFamily: 'Nunito-SemiBold',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -129,6 +138,7 @@ const styles = StyleSheet.create({
     height: 55,
     paddingHorizontal: 15,
     marginBottom: 20,
+    fontFamily: 'Nunito-SemiBold',
   },
   icon: {
     marginRight: 10,
@@ -137,25 +147,28 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333',
+    fontFamily: 'Nunito-SemiBold',
   },
   errorMessage: {
     color: '#FF0000',
     marginBottom: 15,
     fontSize: 14,
     textAlign: 'center',
+    fontFamily: 'Nunito-Regular',
   },
   registerButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#448461',
     borderRadius: 30,
     width: '100%',
     paddingVertical: 15,
     alignItems: 'center',
     marginTop: 10,
+
   },
   registerButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Nunito-ExtraBold',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -171,6 +184,7 @@ const styles = StyleSheet.create({
   dividerText: {
     marginHorizontal: 10,
     color: '#757575',
+    fontFamily: 'Nunito-SemiBold',
   },
   socialContainer: {
     flexDirection: 'row',
@@ -186,9 +200,10 @@ const styles = StyleSheet.create({
   },
   loginText: {
     color: '#757575',
+    fontFamily: 'Nunito-SemiBold',
   },
   loginLink: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
+    color: '#448461',
+    fontFamily: 'Nunito-ExtraBold',
   },
 });

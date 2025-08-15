@@ -168,6 +168,15 @@ const applyFormatTag = (tag) => {
         richText.current?.insertHTML(`<div><br/></div>`);
         richText.current?.insertHTML(`<div style="display: block;"><input type="checkbox" />&nbsp;</div>`);
     };
+    const [isLoadingContent, setIsLoadingContent] = useState(true);
+
+useEffect(() => {
+    if (journalEntry) {
+        setEditedTitle(journalEntry.title);
+        setEditedContent(journalEntry.content);
+        setIsLoadingContent(false); // loading selesai saat data siap
+    }
+}, [journalEntry]);
 
     const handleInsertImage = async () => {
         richText.current?.focusContentEditor();
@@ -187,13 +196,18 @@ const applyFormatTag = (tag) => {
             const base64 = result.assets[0].base64;
             const mime = result.assets[0].mimeType || 'image/jpeg';
             const imageHtml = `
-                <div style="margin-top: 16px; margin-bottom: 16px;">
-                    <img src="data:${mime};base64,${base64}" style="width: 100%; border-radius: 15px; display: block; margin: auto;" />
-                </div>
-            `;
+    <div style="margin-top: 12px;">
+        <img src="data:${mime};base64,${base64}" 
+             style="width: 100%; border-radius: 15px; display: block; margin: auto;" />
+    </div>
+`;
 
-            richText.current?.insertHTML(imageHtml);
-            setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
+richText.current?.insertHTML(imageHtml);
+
+setTimeout(() => {
+    scrollRef.current?.scrollToEnd({ animated: true });
+}, 200);
+
         }
     };
 
@@ -224,77 +238,85 @@ const applyFormatTag = (tag) => {
                         onChangeText={setEditedTitle}
                         placeholder="Tulis Judul di Sini"
                         placeholderTextColor="#999"
-                        onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 200)}
+                        onFocus={() => setTimeout(() => scrollRef.current?.scrollToPosition(0, 0, true), 200)}
                     />
                 ) : (
                     <Text style={styles.titleText}>{journalEntry.title}</Text>
                 )}
 
                 <KeyboardAwareScrollView
-                    ref={scrollRef}
-                    enableOnAndroid={true}
-                    keyboardOpeningTime={0}
-                    extraScrollHeight={keyboardHeight + 20}
-                    contentContainerStyle={styles.scrollContainer}
-                    showsVerticalScrollIndicator={false}
-                >
-                    {isEditing ? (
-                        <RichEditor
-                            ref={richText}
-                            initialContentHTML={editedContent}
-                            onChange={(html) => setEditedContent(html || '')}
-                            onMessage={handleRichMessage}
-                            placeholder="Tulis ceritamu di sini..."
-                            style={styles.richEditor}
-                            editorStyle={{
-                                backgroundColor: 'transparent',
-                                color: '#448461',
-                                fontFamily: 'Nunito-Regular',
-                                fontSize: 16,
-                                lineHeight: 24,
-                                textAlign: 'justify',
-                                cssText: `* { text-align: justify !important; } p { text-align: justify !important; }`, 
-                            }}
-                            useContainer={false}
-                            initialCSSText={`body, p, div { font-family: 'Nunito-Regular'; color: #448461; font-size: 16px; line-height: 24px; text-align: justify !important; }`}
-                        />
-                    ) : (
-                        <AutoHeightWebView content={`
-                            <html>
-                                <head>
-                                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                                    <style>
-                                        body {
-                                            font-family: 'Nunito-Regular', sans-serif;
-                                            color: #448461;
-                                            font-size: 16px;
-                                            line-height: 24px;
-                                            text-align: justify;
-                                            margin: 0;
-                                            padding: 0;
-                                        }
-                                        img { max-width: 100%; height: auto; border-radius: 15px; }
-                                        b, strong { font-family: 'Nunito-ExtraBold'; }
-                                        i, em { font-style: italic; }
-                                        u { text-decoration: underline; }
-                                        input[type="checkbox"] {
-                                            appearance: none;
-                                            width: 18px; height: 18px; border: 2px solid #694B40; border-radius: 4px;
-                                            vertical-align: middle; margin-right: 8px; position: relative;
-                                        }
-                                        input[type="checkbox"]:checked {
-                                            background-color: #694B40; border-color: #694B40;
-                                        }
-                                        input[type="checkbox"]:checked::after {
-                                            content: '✓'; font-size: 14px; color: white; position: absolute; top: -4px; left: 1px;
-                                        }
-                                    </style>
-                                </head>
-                                <body>${journalEntry.content}</body>
-                            </html>
-                        `} />
-                    )}
-                </KeyboardAwareScrollView>
+    ref={scrollRef}
+    enableOnAndroid={true}
+    keyboardOpeningTime={0}
+    extraScrollHeight={keyboardHeight + 20}
+    contentContainerStyle={styles.scrollContainer}
+    showsVerticalScrollIndicator={false}
+>
+    {isLoadingContent ? (
+        <ActivityIndicator size="large" color="#448461" style={{ marginTop: 50 }} />
+    ) : (
+        isEditing ? (
+            <RichEditor
+                key={entryId}  // Supaya rerender bersih saat buka jurnal baru
+                ref={richText}
+                initialContentHTML={editedContent}
+                onChange={(html) => setEditedContent(html || '')}
+                onMessage={handleRichMessage}
+                placeholder="Tulis ceritamu di sini..."
+                style={styles.richEditor}
+                editorStyle={{
+                    backgroundColor: 'transparent',
+                    color: '#448461',
+                    fontFamily: 'Nunito-Regular',
+                    fontSize: 16,
+                    lineHeight: 24,
+                    textAlign: 'justify',
+                    cssText: `* { text-align: justify !important; } p { text-align: justify !important; }`, 
+                }}
+                useContainer={false}
+                initialCSSText={`body, p, div { font-family: 'Nunito-Regular'; color: #448461; font-size: 14px; line-height: 24px; text-align: justify !important; }`}
+            />
+        ) : (
+            <AutoHeightWebView
+                key={entryId}
+                content={`
+                    <html>
+                        <head>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                            <style>
+                                body {
+                                    font-family: 'Nunito-Regular';
+                                    color: #448461;
+                                    font-size: 16px;
+                                    line-height: 24px;
+                                    text-align: justify;
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                img { max-width: 100%; height: auto; border-radius: 15px; }
+                                b, strong { font-family: 'Nunito-ExtraBold'; }
+                                i, em { font-style: italic; }
+                                u { text-decoration: underline; }
+                                input[type="checkbox"] {
+                                    appearance: none;
+                                    width: 20px; height: 20px; border: 2px solid #694B40; border-radius: 4px;
+                                    vertical-align: middle; margin-right: 8px; position: relative;
+                                }
+                                input[type="checkbox"]:checked {
+                                    background-color: #694B40; border-color: #694B40;
+                                }
+                                input[type="checkbox"]:checked::after {
+                                    content: '✓'; font-size: 14px; color: white; position: absolute; top: -4px; left: 1px;
+                                }
+                            </style>
+                        </head>
+                        <body>${journalEntry.content}</body>
+                    </html>
+                `}
+            />
+        )
+    )}
+</KeyboardAwareScrollView>
 
                 {isEditing && (
                     <View style={[styles.editToolbarWrapper, { bottom: keyboardHeight > 0 ? keyboardHeight + 20 : 30 }]} pointerEvents="box-none">

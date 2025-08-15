@@ -14,6 +14,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Nunito_400Regular, Nunito_700Bold } from '@expo-google-fonts/nunito';
 import { Ionicons } from '@expo/vector-icons';
+import CheckBox from '@react-native-community/checkbox';
+
+
 
 // Hapus import cleanHtml karena kita akan buat fungsi baru
 // import { cleanHtml } from './utils/articleUtils';
@@ -103,8 +106,19 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
                 components.push(
                     <Image key={`image-${counter++}`} source={{ uri: imgUrl }} style={styles.detailArticleImage} />
                 );
+            } else if (checkboxTag) {
+            const isChecked = /checked/.test(checkboxTag);
+            components.push(
+                <View key={`checkbox-container-${counter}`} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }}>
+                     <CheckBox
+                        key={`checkbox-${counter++}`}s
+                        value={isChecked}
+                        onValueChange={() => {}}
+                        style={{ marginVertical: 0 }}
+                    />
+                </View>
+            );
             } else if (bContent) {
-                // Merender tag <b> di luar <p>
                 components.push(
                     <Text key={`bold-${counter++}`} style={[styles.detailFullArticleText, styles.boldText]}>
                         {bContent}

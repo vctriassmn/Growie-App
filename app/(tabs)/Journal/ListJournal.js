@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     },
     fabImageButton: {
         position: 'absolute',
-        bottom: 120,
+        bottom: 110,
         right: SPACING,
         width: 60,
         height: 60,

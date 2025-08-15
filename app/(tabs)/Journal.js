@@ -223,6 +223,7 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: '#5c8d5c',
     borderRadius: 30,
+    bottom:110,
   },
   deleteButton: {
     backgroundColor: '#448461',
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Nunito-Bold',
+    fontFamily: 'Nunito-Regular',
   },
   actionButtonImage: {
     width: 60,

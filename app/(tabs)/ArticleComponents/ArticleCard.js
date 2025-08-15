@@ -79,11 +79,15 @@ const ArticleCard = ({ item, selectionMode, selectedItems, toggleSelection, onCa
                     </View>
                 </View>
                 <View style={styles.plantCardBottomSection}>
-                    <Text style={styles.plantCardName}>{item.name}</Text>
-                    <Text style={styles.plantCardDescription}>
-                        {truncateText(cleanHtml(item.fullArticle), 50)}
-                    </Text>
-                </View>
+    <Text style={styles.plantCardName}>{item.name}</Text>
+    <Text
+        style={styles.plantCardDescription}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+    >
+        {cleanHtml(item.fullArticle)}
+    </Text>
+</View>
             </View>
         </TouchableOpacity>
     );
@@ -132,7 +136,6 @@ const styles = StyleSheet.create({
         height: '100%',
         resizeMode: 'cover',
     },
-    // ✅ Tambahkan style baru untuk latar belakang warna
     colorBackground: {
         width: '75%',
         height: '100%',
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     plantCardUsername: {
-        fontSize: 14,
+        fontSize: 10,
         color: '#448461',
         marginBottom: 10,
     },
@@ -178,14 +181,15 @@ const styles = StyleSheet.create({
     },
     plantCardName: {
         fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: 'Nunito-ExtraBold',
         color: '#448461',
         marginBottom: 4,
     },
     plantCardDescription: {
-        fontSize: 13,
+        fontSize: 12,
         color: '#666',
         numberOfLines: 6,
+        fontFamily: 'Nunito-Regular',
     },
 });
 
