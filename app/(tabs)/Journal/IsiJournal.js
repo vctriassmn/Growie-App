@@ -166,7 +166,7 @@ const applyFormatTag = (tag) => {
 
     const handleInsertCheckbox = () => {
         richText.current?.insertHTML(`<div><br/></div>`);
-        richText.current?.insertHTML(`<div style="display: block;"><input type="checkbox" />&nbsp;</div>`);
+        richText.current?.insertHTML(`<div style="display: block;"><input type="checkbox" /></div>`);
     };
     const [isLoadingContent, setIsLoadingContent] = useState(true);
 

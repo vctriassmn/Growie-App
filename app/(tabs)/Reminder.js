@@ -178,7 +178,7 @@ export default function Reminder() {
       showsVerticalScrollIndicator={false}>
         <View style={styles.headerContainer}>
           {/* PLANT REMINDER Header */}
-          <Text style={styles.headerTitle}>PLANT REMINDER</Text>
+          <Text style={styles.headerTitle}>Plant Reminder</Text>
           <View style={styles.divider} />
         </View>
 
@@ -203,7 +203,7 @@ export default function Reminder() {
         </View>
 
         {/* MY REMINDERS Section */}
-        <Text style={styles.sectionTitle}>MY REMINDERS</Text>
+        <Text style={styles.sectionTitle}>My Reminders</Text>
         <View style={styles.divider} />
 
         {/* Category Filter */}

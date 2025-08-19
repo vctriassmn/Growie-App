@@ -275,7 +275,7 @@ const styles = StyleSheet.create({ /* ... KODE STYLES ANDA YANG LAMA, TIDAK PERL
   cardWrapper: { flex: 1, maxWidth: '50%', backgroundColor: '#fff', borderRadius: 12, padding: 10 },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 64, paddingBottom: 64 },
   emptyText: { fontSize: 16, fontFamily: 'Nunito-SemiBold', color: '#888', textAlign: 'center', paddingHorizontal: 24 },
-  add: { position: 'absolute', width: 60, height: 60, alignItems: 'center', justifyContent: 'center', right: 30, bottom: 62, borderRadius: 30, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 5 },
+  add: { position: 'absolute', width: 60, height: 60, alignItems: 'center', justifyContent: 'center', right: 30, bottom: 95, borderRadius: 30, elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 5 },
   addbutton: { width: 60, height: 60, resizeMode: 'contain' },
   selectHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 30, backgroundColor: '#FAFFFB' },
   selectTitle: { fontSize: 16, color: '#42574E', fontFamily: 'Nunito-SemiBold', alignItems: 'flex-start' },

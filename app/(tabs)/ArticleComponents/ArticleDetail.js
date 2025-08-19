@@ -53,6 +53,9 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
         if (!htmlContent) {
             return null;
         }
+        
+        // --- MODIFIKASI --- Menambahkan replace untuk &nbsp; di sini
+        const modifiedHtmlContent = htmlContent.replace(/&nbsp;/g, '');
 
         const components = [];
         // Regex untuk mencari semua tag <p>, <img>, <b>, <i>, dan <u>
@@ -61,9 +64,10 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
         let match;
         let counter = 0;
 
-        while ((match = regex.exec(htmlContent)) !== null) {
+        // --- MODIFIKASI --- Menggunakan modifiedHtmlContent
+        while ((match = regex.exec(modifiedHtmlContent)) !== null) {
             // Tangani teks di luar tag yang ditemukan
-            const textBefore = htmlContent.substring(lastIndex, match.index).trim();
+            const textBefore = modifiedHtmlContent.substring(lastIndex, match.index).trim();
             if (textBefore) {
                 components.push(
                     <Text key={`text-${counter++}`} style={styles.detailFullArticleText}>
@@ -106,18 +110,6 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
                 components.push(
                     <Image key={`image-${counter++}`} source={{ uri: imgUrl }} style={styles.detailArticleImage} />
                 );
-            } else if (checkboxTag) {
-            const isChecked = /checked/.test(checkboxTag);
-            components.push(
-                <View key={`checkbox-container-${counter}`} style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }}>
-                     <CheckBox
-                        key={`checkbox-${counter++}`}s
-                        value={isChecked}
-                        onValueChange={() => {}}
-                        style={{ marginVertical: 0 }}
-                    />
-                </View>
-            );
             } else if (bContent) {
                 components.push(
                     <Text key={`bold-${counter++}`} style={[styles.detailFullArticleText, styles.boldText]}>
@@ -143,12 +135,11 @@ export function ArticleDetail({ plant, isLiked, toggleLike, onBack }) {
             lastIndex = match.index + fullMatch.length;
         }
 
-        // Tangani sisa teks setelah loop berakhir
-        const textAfter = htmlContent.substring(lastIndex).trim();
+        const textAfter = modifiedHtmlContent.substring(lastIndex).trim();
         if (textAfter) {
             components.push(
                 <Text key={`final-text-${counter++}`} style={styles.detailFullArticleText}>
-                    {textAfter.replace(/<[^>]*>/g, '')}
+                    {textAfter.replace(/<[^>]*>/g, ' ')}
                 </Text>
             );
         }
