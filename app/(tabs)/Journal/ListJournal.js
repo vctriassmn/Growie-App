@@ -52,16 +52,14 @@ export default function ListJournalScreen() {
     }, [isEditingTitle]);
 
     const handleSaveTitle = () => {
-        if (tempTitle && tempTitle !== folderTitle) {
-            renameJournalFolder(folderTitle, tempTitle);
-            router.replace({
-                pathname: '/Journal/ListJournal', 
-                params: { folderTitle: tempTitle }
-            });
-        }
-        Keyboard.dismiss();
-        setIsEditingTitle(false);
+    if (tempTitle && tempTitle !== folderTitle) {
+        renameJournalFolder(folderTitle, tempTitle);
+        router.setParams({ folderTitle: tempTitle }); // ✅ update param aja
+    }
+    Keyboard.dismiss();
+    setIsEditingTitle(false);
     };
+
 
     // --- PERUBAHAN 1: Buat entri baru dengan format { title, content } ---
     const handleAddJournal = () => {
@@ -160,12 +158,10 @@ export default function ListJournalScreen() {
             }
         };
 
-        // Fungsi untuk membersihkan HTML dari string untuk pratinjau
-        const cleanContentPreview = (htmlContent) => {
-            if (!htmlContent) return '';
-            return htmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-        };
-
+const cleanContentPreview = (htmlContent) => {
+        if (!htmlContent) return '';
+        return htmlContent.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    };
         return (
             <TouchableOpacity onPress={handlePress}>
                 <View style={styles.entryRow}>
